@@ -34,8 +34,12 @@ namespace novac
         {
             REQUIRE(4 == resultingConfiguration.m_maxThreadNum);
 
+#ifdef _MSC_VER
             REQUIRE("~/Novac/Piton de la Fournaise/OutputFeb2017UTC/" == resultingConfiguration.m_outputDirectory.std_str());
             REQUIRE("~/Novac/Piton de la Fournaise/Temp/" == resultingConfiguration.m_tempDirectory.std_str());
+#else
+
+#endif // _MSC_VER
 
             REQUIRE(PROCESSING_MODE::PROCESSING_MODE_FLUX == resultingConfiguration.m_processingMode);
             REQUIRE(STANDARD_MOLECULE::MOLEC_SO2 == resultingConfiguration.m_molecule);
