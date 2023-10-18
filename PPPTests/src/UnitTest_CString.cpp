@@ -65,8 +65,8 @@ namespace novac
             CString apa{ "apa" };
             CString banan{ "banan" };
 
-            REQUIRE(banan.Compare(apa) > 0);
-            REQUIRE(apa.Compare(banan) < 0);
+            REQUIRE(0 < banan.Compare(apa));
+            REQUIRE(0 > apa.Compare(banan));
         }
     }
 
