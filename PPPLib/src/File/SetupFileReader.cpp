@@ -78,6 +78,7 @@ void CSetupFileReader::Parse_Instrument(Configuration::CInstrumentConfiguration&
 
 // Parse for location area and store in the LocationConfiguration object
 void CSetupFileReader::Parse_Location(Configuration::CLocationConfiguration& loc) {
+
     Configuration::CInstrumentLocation location;
 
     // parse the file, one line at a time.
@@ -90,7 +91,7 @@ void CSetupFileReader::Parse_Location(Configuration::CLocationConfiguration& loc
         if (szToken == nullptr || strlen(szToken) < 3)
             continue;
 
-        if (novac::Equals(szToken, "/location", 8)) {
+        if (novac::Equals(szToken, "/location", 9)) {
             // insert the information that we have into the array and return.
             loc.InsertLocation(location);
             return;

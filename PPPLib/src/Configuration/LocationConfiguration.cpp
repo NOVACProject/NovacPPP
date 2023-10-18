@@ -1,7 +1,14 @@
 #include <PPPLib/Configuration/LocationConfiguration.h>
+#include <sstream>
 
 namespace Configuration
 {
+    std::ostream& operator << (std::ostream& out, const CInstrumentLocation& location)
+    {
+        out << "[" << location.m_locationName << "]: " << location.m_validFrom << " to " << location.m_validTo;
+        return out;
+    }
+
     void CLocationConfiguration::Clear()
     {
         m_locationNum = 0;
@@ -14,7 +21,9 @@ namespace Configuration
     void CLocationConfiguration::InsertLocation(const CInstrumentLocation& loc)
     {
         if (m_locationNum == MAX_N_LOCATIONS)
+        {
             return;
+        }
 
         // insert the location into the array
         m_location[m_locationNum] = loc;
@@ -41,30 +50,40 @@ namespace Configuration
         return m_locationNum;
     }
 
-    int CLocationConfiguration::CheckSettings() const
+    void CLocationConfiguration::CheckSettings() const
     {
-        // make sure that at least one fit-window is defined
         if (m_locationNum == 0)
-            return 1;
+        {
+            throw std::invalid_argument("No location defined");
+        }
 
         // Check the time ranges
-        for (int k = 0; k < m_locationNum; ++k) {
+        for (int k = 0; k < m_locationNum; ++k)
+        {
             // check that the time range is valid
-            if (m_location[k].m_validFrom >= m_location[k].m_validTo) {
-                return 2;
+            if (m_location[k].m_validFrom >= m_location[k].m_validTo) 
+            {
+                std::stringstream msg;
+                msg << "Time range number " << k << " is invalid. Valid from (" << m_location[k].m_validFrom << ") is is not before Valid to (" << m_location[k].m_validTo << ")";
+                throw std::invalid_argument(msg.str());
             }
+            
             // check if this time range overlaps some other 
-            for (int j = k + 1; j < m_locationNum; ++j) {
-                if ((m_location[k].m_validFrom < m_location[j].m_validFrom) && (m_location[k].m_validTo > m_location[j].m_validFrom)) {
-                    return 3;
+            for (int j = k + 1; j < m_locationNum; ++j) 
+            {
+                if ((m_location[k].m_validFrom < m_location[j].m_validFrom) && (m_location[k].m_validTo > m_location[j].m_validFrom)) 
+                {
+                    std::stringstream msg;
+                    msg << "Time ranges: (" << m_location[k] << ") and (" << m_location[j] << ") are overlapping.";
+                    throw std::invalid_argument(msg.str());
                 }
-                else if ((m_location[j].m_validFrom < m_location[k].m_validFrom) && (m_location[j].m_validTo > m_location[k].m_validFrom)) {
-                    return 3;
+                else if ((m_location[j].m_validFrom < m_location[k].m_validFrom) && (m_location[j].m_validTo > m_location[k].m_validFrom)) 
+                {
+                    std::stringstream msg;
+                    msg << "Time ranges: (" << m_location[k] << ") and (" << m_location[j] << ") are overlapping.";
+                    throw std::invalid_argument(msg.str());
                 }
             }
         }
-
-        return 0; // all is ok.
     }
-
 }

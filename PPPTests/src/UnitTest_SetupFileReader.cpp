@@ -39,21 +39,29 @@ namespace novac
         {
             const auto* instrumentConfiguration = resultingConfiguration.GetInstrument(std::string("D2J2134"));
             REQUIRE(nullptr != instrumentConfiguration);
+            REQUIRE(1 == instrumentConfiguration->m_location.GetLocationNum());
+            REQUIRE_NOTHROW(instrumentConfiguration->m_location.CheckSettings());
         }
 
         {
             const auto* instrumentConfiguration = resultingConfiguration.GetInstrument(std::string("I2J8550"));
             REQUIRE(nullptr != instrumentConfiguration);
+            REQUIRE(1 == instrumentConfiguration->m_location.GetLocationNum());
+            REQUIRE_NOTHROW(instrumentConfiguration->m_location.CheckSettings());
         }
 
         {
             const auto* instrumentConfiguration = resultingConfiguration.GetInstrument(std::string("I2J8549"));
             REQUIRE(nullptr != instrumentConfiguration);
+            REQUIRE(1 == instrumentConfiguration->m_location.GetLocationNum());
+            REQUIRE_NOTHROW(instrumentConfiguration->m_location.CheckSettings());
         }
 
         {
             const auto* instrumentConfiguration = resultingConfiguration.GetInstrument(std::string("I2J8552"));
             REQUIRE(nullptr != instrumentConfiguration);
+            REQUIRE(1 == instrumentConfiguration->m_location.GetLocationNum());
+            REQUIRE_NOTHROW(instrumentConfiguration->m_location.CheckSettings());
         }
     }
 }

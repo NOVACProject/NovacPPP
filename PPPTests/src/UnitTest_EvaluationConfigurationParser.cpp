@@ -94,6 +94,8 @@ namespace novac
 
         }
 
+        REQUIRE_NOTHROW(resultingEvaluationSettings.CheckSettings());
+
         // Expected first evaluation fit window
         {
             novac::CFitWindow window;

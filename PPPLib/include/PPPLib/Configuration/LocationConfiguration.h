@@ -31,11 +31,8 @@ namespace Configuration
 
         /** This goes through the settings for the locations to test that the settings
             make sense.
-            @return 0 if all is ok
-            @return 1 if no locations is defined for this spectrometer
-            @return 2 if at least one locations has an in-valid time range (e.g. start>stop)
-            @return 3 if there are two locations with overlapping definition time */
-        int CheckSettings() const;
+            @throw std::invalid_argument with an error message if the settings are not valid */
+        void CheckSettings() const;
 
     private:
 
@@ -43,7 +40,7 @@ namespace Configuration
         static const int MAX_N_LOCATIONS = 32;
 
         /** The number of locations that are defined for this instrument */
-        int m_locationNum;
+        int m_locationNum = 0;
 
         /** Array holding the locations that are configured for this
             instrument. Each of these also contains the time-frame

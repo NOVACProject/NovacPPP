@@ -538,79 +538,47 @@ int CPostProcessing::CheckProcessingSettings() const
     novac::CString errorMessage;
     CDateTime now;
 
-    // Check that no instrument is duplicated in the list of instruments...
-    for (int j = 0; j < g_setup.NumberOfInstruments(); ++j)
-    {
-        for (int k = j + 1; k < g_setup.NumberOfInstruments(); ++k)
+    try {
+
+        // Check that no instrument is duplicated in the list of instruments...
+        for (int j = 0; j < g_setup.NumberOfInstruments(); ++j)
         {
-            if (Equals(g_setup.m_instrument[j].m_serial, g_setup.m_instrument[k].m_serial))
+            for (int k = j + 1; k < g_setup.NumberOfInstruments(); ++k)
             {
-                errorMessage.Format("The instrument %s is defined twice in setup.xml. If the instrument has two locations then define the instrument once but with two locations. Exiting post processsing.", (const char*)g_setup.m_instrument[k].m_serial);
-                ShowError(errorMessage);
-                return 1;
+                if (Equals(g_setup.m_instrument[j].m_serial, g_setup.m_instrument[k].m_serial))
+                {
+                    errorMessage.Format("The instrument %s is defined twice in setup.xml. If the instrument has two locations then define the instrument once but with two locations. Exiting post processsing.", (const char*)g_setup.m_instrument[k].m_serial);
+                    ShowError(errorMessage);
+                    return 1;
+                }
             }
+        }
+
+
+        // Check that, for each spectrometer, there's only one fit-window defined
+        // at each instant
+        for (int j = 0; j < g_setup.NumberOfInstruments(); ++j)
+        {
+            if (g_setup.m_instrument[j].m_eval.NumberOfFitWindows() == 1)
+            {
+                continue;
+            }
+            g_setup.m_instrument[j].m_eval.CheckSettings();
+        }
+
+        // Check that, for each spectrometer, there's only one location defined at each instant
+        for (int j = 0; j < g_setup.NumberOfInstruments(); ++j)
+        {
+            if (g_setup.m_instrument[j].m_location.GetLocationNum() == 1)
+            {
+                continue;
+            }
+            g_setup.m_instrument[j].m_location.CheckSettings();
         }
     }
-
-
-    // Check that, for each spectrometer, there's only one fit-window defined
-    // at each instant
-    for (int j = 0; j < g_setup.NumberOfInstruments(); ++j)
-    {
-        if (g_setup.m_instrument[j].m_eval.NumberOfFitWindows() == 1)
-        {
-            continue;
-        }
-        else
-        {
-            int ret = g_setup.m_instrument[j].m_eval.CheckSettings();
-            switch (ret)
-            {
-            case 0: break; // this is fine
-            case 1:
-                errorMessage.Format("No fit window defined for %s. Exiting", (const char*)g_setup.m_instrument[j].m_serial);
-                ShowError(errorMessage);
-                return 1;
-            case 2:
-                errorMessage.Format("Invalid time range found for fit window defined for %s. Exiting", (const char*)g_setup.m_instrument[j].m_serial);
-                ShowError(errorMessage);
-                return 1;
-            case 3:
-                errorMessage.Format("At least two fit windows defined for %s have overlapping time ranges. Exiting", (const char*)g_setup.m_instrument[j].m_serial);
-                ShowError(errorMessage);
-                return 1;
-            }
-        }
-    }
-
-    // Check that, for each spectrometer, there's only one location defined
-    // at each instant
-    for (int j = 0; j < g_setup.NumberOfInstruments(); ++j)
-    {
-        if (g_setup.m_instrument[j].m_location.GetLocationNum() == 1)
-        {
-            continue;
-        }
-        else
-        {
-            int ret = g_setup.m_instrument[j].m_location.CheckSettings();
-            switch (ret)
-            {
-            case 0: break; // this is fine
-            case 1:
-                errorMessage.Format("No location defined for %s. Exiting", (const char*)g_setup.m_instrument[j].m_serial);
-                ShowError(errorMessage);
-                return 1;
-            case 2:
-                errorMessage.Format("Invalid time range found for location defined for %s. Exiting", (const char*)g_setup.m_instrument[j].m_serial);
-                ShowError(errorMessage);
-                return 1;
-            case 3:
-                errorMessage.Format("At least two location defined for %s have overlapping time ranges. Exiting", (const char*)g_setup.m_instrument[j].m_serial);
-                ShowError(errorMessage);
-                return 1;
-            }
-        }
+    catch (std::invalid_argument& ex) {
+        ShowError(ex.what());
+        return 1;
     }
 
     return 0;

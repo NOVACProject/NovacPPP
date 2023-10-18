@@ -58,11 +58,8 @@ namespace Configuration
 
         /** This goes through the settings for the fit-windows to test that the settings
             make sense.
-            @return 0 if all is ok
-            @return 1 if no fit-window is defined for this spectrometer
-            @return 2 if at least one fit-window has an in-valid time range (e.g. start>stop)
-            @return 3 if there are two fit-windows with overlapping definition time */
-        int CheckSettings() const;
+            @throw std::invalid_argument with an error message if the settings are not valid */
+        void CheckSettings() const;
 
     private:
 
