@@ -3,8 +3,7 @@
 #include <PPPLib/MFC/CString.h>
 #include <SpectralEvaluation/DateTime.h>
 #include <SpectralEvaluation/GPSData.h>
-
-#include "../MeteorologySource.h"
+#include <PPPLib/Meteorology/MeteorologySource.h>
 
 #ifndef WINDFIELD_H
 #define WINDFIELD_H

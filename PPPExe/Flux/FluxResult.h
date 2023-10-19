@@ -2,7 +2,8 @@
 
 #include "../Common/Common.h"
 #include <SpectralEvaluation/DateTime.h>
-#include "../Meteorology/WindField.h"
+#include <PPPLib/Meteorology/MeteorologySource.h>
+#include <PPPLib/Meteorology/WindField.h>
 #include "../Geometry/PlumeHeight.h"
 #include <PPPLib/MFC/CString.h>
 

@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- This is the configuration file for the evaluation of spectra in the NOVAC Post Processing Program -->
+
+<EvaluationConfiguration>
+	<serial>ABC80</serial>
+	<fitWindow>
+		<channel>0</channel>
+		<name>SO2</name>
+		<validFrom>1999.01.01T12:13:14</validFrom>
+		<validTo>2029.12.31T14:15:16</validTo>
+		<specLength>2048</specLength>
+		<interlaceStep>1</interlaceStep>
+		<polyOrder>3</polyOrder>
+		<fitType>2</fitType>
+		<fitLow>405</fitLow>
+		<fitHigh>503</fitHigh>
+		<Reference>
+			<name></name>
+			<path>C:\SO2_reference.txt</path>
+			<shiftOption>1</shiftOption>
+			<shiftValue>0.000000</shiftValue>
+			<squeezeOption>1</squeezeOption>
+			<squeezeValue>0.000000</squeezeValue>
+			<columnOption>0</columnOption>
+		</Reference>
+	</fitWindow>
+	<fitWindow>
+		<channel>0</channel>
+		<name>SO2</name>
+		<validFrom>1999.01.01T12:13:14</validFrom>
+		<validTo>2029.12.31T14:15:16</validTo>
+		<specLength>2048</specLength>
+		<interlaceStep>1</interlaceStep>
+		<polyOrder>3</polyOrder>
+		<fitType>2</fitType>
+		<fitLow>405</fitLow>
+		<fitHigh>503</fitHigh>
+		<Reference>
+			<name></name>
+			<path>C:\SO2_reference.txt</path>
+			<shiftOption>1</shiftOption>
+			<shiftValue>0.000000</shiftValue>
+			<squeezeOption>1</squeezeOption>
+			<squeezeValue>0.000000</squeezeValue>
+			<columnOption>0</columnOption>
+		</Reference>
+	</fitWindow>
+	<DarkCorrection>
+		<validFrom>1999.01.01T12:13:14</validFrom>
+		<validTo>2029.12.31T14:15:16</validTo>
+		<dark>USER</dark>
+		<darkCurrentSpec></darkCurrentSpec>
+		<offsetSpec>C:\some_user_supplied_dark_spectrum_file.txt</offsetSpec>
+	</DarkCorrection>
+	<Calibration>
+		<initialCalibrationFile>/mnt/this/is_the_initial/instrument_calibration_file.clb</initialCalibrationFile>
+		<initialInstrumentLineshapeFile>/mnt/this/is_the_initial/instrument_lineshape_file.slf</initialInstrumentLineshapeFile>
+	</Calibration>
+</EvaluationConfiguration>

@@ -2,7 +2,7 @@
 
 #include <SpectralEvaluation/DateTime.h>
 #include "Geometry/GeometryCalculator.h"
-#include "Meteorology/WindDataBase.h"
+#include <PPPLib/Meteorology/WindDataBase.h>
 #include "Geometry/PlumeDataBase.h"
 #include "Flux/FluxResult.h"
 #include "Evaluation/ExtendedScanResult.h"

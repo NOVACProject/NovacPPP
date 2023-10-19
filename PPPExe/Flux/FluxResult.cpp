@@ -1,4 +1,5 @@
 #include "FluxResult.h"
+#include <PPPLib/Meteorology/WindField.h>
 
 using namespace Flux;
 

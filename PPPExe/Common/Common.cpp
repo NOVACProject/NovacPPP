@@ -17,7 +17,7 @@
 #include <SpectralEvaluation/Flux/Flux.h>
 
 #include "../Geometry/PlumeHeight.h"
-#include "../Meteorology/WindField.h"
+#include <PPPLib/Meteorology/WindField.h>
 
 extern novac::CVolcanoInfo g_volcanoes; // <-- the list of volcanoes
 

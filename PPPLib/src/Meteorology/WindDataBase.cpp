@@ -1,7 +1,6 @@
-#include "WindDataBase.h"
+#include <PPPLib/Meteorology/WindDataBase.h>
+#include <PPPLib/Gps.h>
 #include <math.h>
-
-#include "../Common/Common.h"
 
 using namespace Meteorology;
 using namespace novac;
@@ -424,7 +423,7 @@ bool CWindDataBase::GetWindField_Nearest(const CDateTime &time, const CGPSData &
         const CGPSData &pos = GetLocation(k);
 
         // compare the position with the given one
-        double dist = Common::GPSDistance(location.m_latitude, location.m_longitude, pos.m_latitude, pos.m_longitude);
+        double dist = Gps::GpsMath::GPSDistance(location.m_latitude, location.m_longitude, pos.m_latitude, pos.m_longitude);
         if (dist < smallestDistance) {
             closestPoint = k;
             smallestDistance = dist;
@@ -442,7 +441,7 @@ bool CWindDataBase::GetWindField_Nearest(const CDateTime &time, const CGPSData &
 // This function calculates the wind-field as a bi-linear interpolation of
 //	the wind-field in the nearest four datapoints in the database
 //	This assumes that the grid is regular
-bool CWindDataBase::GetWindField_Bilinear(const CDateTime &time, const CGPSData &location, CWindField &windField) const {
+bool CWindDataBase::GetWindField_Bilinear(const CDateTime& /*time*/, const CGPSData& /*location*/, CWindField& /*windField*/) const {
 
     //// First make a reasonability check to make sure that the database is ok with this
     //if(time.windData.GetCount() < 4)

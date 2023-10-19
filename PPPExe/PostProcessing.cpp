@@ -35,7 +35,7 @@
 
 #include "WindMeasurement/WindSpeedCalculator.h"
 
-#include "Meteorology/XMLWindFileReader.h"
+#include <PPPLib/Meteorology/XMLWindFileReader.h>
 #include <PPPLib/File/Filesystem.h>
 #include "Common/EvaluationLogFileHandler.h"
 
@@ -49,7 +49,7 @@
 #include "PostProcessingStatistics.h"
 
 // we need to be able to download data from the FTP-server
-#include "Communication/FTPServerConnection.h"
+#include <PPPLib/Communication/FTPServerConnection.h>
 
 #include <Poco/DirectoryIterator.h>
 #include <Poco/Exception.h>

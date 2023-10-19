@@ -6,11 +6,9 @@ cmake_minimum_required (VERSION 3.6)
 
 # Define the different groups of files
 add_subdirectory(Common)
-add_subdirectory(Communication)
 add_subdirectory(Evaluation)
 add_subdirectory(Flux)
 add_subdirectory(Geometry)
-add_subdirectory(Meteorology)
 add_subdirectory(Stratosphere)
 add_subdirectory(WindMeasurement)
 
@@ -22,7 +20,6 @@ add_executable(NovacPPP
     ${CMAKE_CURRENT_LIST_DIR}/ContinuationOfProcessing.h
     ${CMAKE_CURRENT_LIST_DIR}/FileInfo.cpp
     ${CMAKE_CURRENT_LIST_DIR}/FileInfo.h
-    ${CMAKE_CURRENT_LIST_DIR}/MeteorologySource.h
     ${CMAKE_CURRENT_LIST_DIR}/NovacPPP.cpp
     ${CMAKE_CURRENT_LIST_DIR}/ObservatoryInfo.cpp
     ${CMAKE_CURRENT_LIST_DIR}/ObservatoryInfo.h
@@ -39,16 +36,12 @@ add_executable(NovacPPP
     ${NPP_COMMON_SPECTRA_SOURCES}
     ${NPP_COMMON_SPECTRUM_FORMAT_HEADERS}
     ${NPP_COMMON_SPECTRUM_FORMAT_SOURCES}
-    ${NPP_COMMUNICATION_HEADERS}
-    ${NPP_COMMUNICATION_SOURCES}
     ${NPP_EVALUATION_HEADERS}
     ${NPP_EVALUATION_SOURCES}
     ${NPP_FLUX_HEADERS}
     ${NPP_FLUX_SOURCES}
     ${NPP_GEOMETRY_HEADERS}
     ${NPP_GEOMETRY_SOURCES}
-    ${NPP_METEOROLOGY_HEADERS}
-    ${NPP_METEOROLOGY_SOURCES}
     ${NPP_STRATOSPHERE_HEADERS}
     ${NPP_STRATOSPHERE_SOURCES}
     ${NPP_WINDMEASUREMENT_HEADERS}
@@ -75,22 +68,18 @@ ENDIF()
 IF(WIN32)
     #Organize the files into folders, for ease of use (Windows and Visual Studio only)
     source_group("Header Files\\Common"                 FILES ${NPP_COMMON_HEADERS})
-    source_group("Header Files\\Communication"          FILES ${NPP_COMMUNICATION_HEADERS})
     source_group("Header Files\\Configuration"          FILES ${NPP_CONFIGURATION_HEADERS})
     source_group("Header Files\\Evaluation"             FILES ${NPP_EVALUATION_HEADERS})
     source_group("Header Files\\Flux"                   FILES ${NPP_FLUX_HEADERS})
     source_group("Header Files\\Geometry"               FILES ${NPP_GEOMETRY_HEADERS})
-    source_group("Header Files\\Meteorology"            FILES ${NPP_METEOROLOGY_HEADERS})
     source_group("Header Files\\Stratosphere"           FILES ${NPP_STRATOSPHERE_HEADERS})
     source_group("Header Files\\WindMeasurement"        FILES ${NPP_WINDMEASUREMENT_HEADERS})
 
     source_group("Source Files\\Common"                 FILES ${NPP_COMMON_SOURCES})
-    source_group("Source Files\\Communication"          FILES ${NPP_COMMUNICATION_SOURCES})
     source_group("Source Files\\Configuration"          FILES ${NPP_CONFIGURATION_SOURCES})
     source_group("Source Files\\Evaluation"             FILES ${NPP_EVALUATION_SOURCES})
     source_group("Source Files\\Flux"                   FILES ${NPP_FLUX_SOURCES})
     source_group("Source Files\\Geometry"               FILES ${NPP_GEOMETRY_SOURCES})
-    source_group("Source Files\\Meteorology"            FILES ${NPP_METEOROLOGY_SOURCES})
     source_group("Source Files\\Stratosphere"           FILES ${NPP_STRATOSPHERE_SOURCES})
     source_group("Source Files\\WindMeasurement"        FILES ${NPP_WINDMEASUREMENT_SOURCES})
 endif()

@@ -20,6 +20,7 @@ add_executable(PPPTests
     ${CMAKE_CURRENT_LIST_DIR}/src/UnitTest_PostCalibrationStatistics.cpp
     ${CMAKE_CURRENT_LIST_DIR}/src/UnitTest_ProcessingFileReader.cpp
     ${CMAKE_CURRENT_LIST_DIR}/src/UnitTest_SetupFileReader.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/src/UnitTest_XmlWindFileReader.cpp
 )
 
 target_link_libraries(PPPTests PRIVATE PPPLib)

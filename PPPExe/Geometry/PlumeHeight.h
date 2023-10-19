@@ -1,10 +1,11 @@
 #pragma once
 
-#include "../MeteorologySource.h"
+#include <PPPLib/Meteorology/MeteorologySource.h>
 #include <SpectralEvaluation/DateTime.h>
 
 #ifndef PLUMEHEIGHT_H
 #define PLUMEHEIGHT_H
+
 
 namespace Geometry {
 

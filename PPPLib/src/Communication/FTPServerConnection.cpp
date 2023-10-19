@@ -1,8 +1,7 @@
-#include "FTPServerConnection.h"
-
-#include "../Common/Common.h"
+#include <PPPLib/Communication/FTPServerConnection.h>
 #include <PPPLib/MFC/CFileUtils.h>
 #include <PPPLib/File/Filesystem.h>
+#include <PPPLib/Logging.h>
 
 // This is the settings for how to do the procesing
 #include <PPPLib/Configuration/UserConfiguration.h>
@@ -13,6 +12,7 @@
 #include <PPPLib/MFC/CCriticalSection.h>
 #include <PPPLib/MFC/CSingleLock.h>
 #include <PPPLib/MFC/CFtpUtils.h>
+#include <PPPLib/MFC/CFileUtils.h>
 #include <PPPLib/ThreadUtils.h>
 #include <Poco/Net/FTPClientSession.h>
 #include <Poco/Net/NetException.h>
@@ -136,7 +136,7 @@ bool DownloadAFile(Poco::Net::FTPClientSession& ftp, const std::string& fullRemo
         std::istream& srcStream = ftp.beginDownload(fullRemoteFileName);
         std::ofstream dstStream{ localFileName, std::ios::binary | std::ios::out };
 
-        const std::streamsize downloadedSize = Poco::StreamCopier::copyStream(srcStream, dstStream, 524288);
+        Poco::StreamCopier::copyStream(srcStream, dstStream, 524288);
     }
     catch (std::exception& e)
     {
@@ -154,7 +154,7 @@ bool UploadAFile(Poco::Net::FTPClientSession& ftp, const std::string& localFileN
 
     while (!srcStream.eof())
     {
-        dstStream.put(srcStream.get());
+        dstStream.put((char)srcStream.get());
     }
 
     ftp.endDownload();
@@ -223,7 +223,7 @@ std::vector<novac::CFileInfo> ListContentsOfDir(ftpLogin login, std::string dire
     try
     {
         Poco::Net::FTPClientSession ftp;
-        ftp.open(login.server, login.port, login.userName, login.password);
+        ftp.open(login.server, (Poco::UInt16)login.port, login.userName, login.password);
 
         if (!DownloadFileList(ftp, directory, filesFound))
         {
@@ -275,7 +275,7 @@ void LoginAndDownloadDataFromDir(ftpLogin login, std::string directory, novac::G
             // Create the connection
             try {
                 connections[threadIdx].reset(new Poco::Net::FTPClientSession());
-                connections[threadIdx]->open(login.server, login.port, login.userName, login.password);
+                connections[threadIdx]->open(login.server, (Poco::UInt16)login.port, login.userName, login.password);
                 connections[threadIdx]->setTimeout(Poco::Timespan(60, 0)); // 60 seconds timeout
 
                 auto t = std::make_shared<std::thread>(DownloadData, std::ref(*connections[threadIdx]), std::ref(downloadQueue), std::ref(downloadedFiles));
@@ -472,7 +472,7 @@ int CFTPServerConnection::DownloadFileFromFTP(const novac::CString& remoteFileNa
     // connect to the server
     try
     {
-        ftp.open(login.server, login.port, login.userName, login.password);
+        ftp.open(login.server, (Poco::UInt16)login.port, login.userName, login.password);
     }
     catch (Poco::Net::FTPException& ex)
     {
@@ -514,7 +514,7 @@ int CFTPServerConnection::UploadResults(const novac::CString& server, const nova
     // connect to the server
     try
     {
-        ftp.open(login.server, login.port, login.userName, login.password);
+        ftp.open(login.server, (Poco::UInt16)login.port, login.userName, login.password);
     }
     catch (Poco::Net::FTPException& ex)
     {
@@ -547,7 +547,7 @@ int CFTPServerConnection::UploadResults(const novac::CString& server, const nova
 
         // Get the file-name to upload the file to...
         remoteFile.Format(localFile);
-        Common::GetFileName(remoteFile);
+        CFileUtils::GetFileName(remoteFile);
 
         if (!UploadAFile(ftp, localFile.std_str(), remoteFile.std_str())) {
             errorMessage.Format("Failed to upload local file %s to FTP server", (const char*)localFile);

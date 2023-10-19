@@ -6,6 +6,7 @@
 #include <SpectralEvaluation/Evaluation/RatioEvaluation.h>
 #include <SpectralEvaluation/Evaluation/PlumeSpectrumSelector.h>
 #include <PPPLib/File/Filesystem.h>
+#include <PPPLib/Meteorology/WindField.h>
 
 // This is the information we need to continue an old processing
 #include "../ContinuationOfProcessing.h"

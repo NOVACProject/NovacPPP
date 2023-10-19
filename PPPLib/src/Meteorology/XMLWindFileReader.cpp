@@ -1,12 +1,14 @@
-#include "XMLWindFileReader.h"
+#include <PPPLib/Meteorology/XMLWindFileReader.h>
 
 // This is the settings for how to do the procesing
 #include <PPPLib/Configuration/UserConfiguration.h>
 
 // we need to be able to download data from the FTP-server
-#include "../Communication/FTPServerConnection.h"
-#include "../stdafx.h"
+#include <PPPLib/Communication/FTPServerConnection.h>
 #include <PPPLib/File/Filesystem.h>
+#include <PPPLib/MFC/CFileUtils.h>
+#include <PPPLib/MFC/CList.h>
+#include <PPPLib/Logging.h>
 #include <Poco/Glob.h>
 #include <Poco/Path.h>
 #include <string.h>
@@ -39,7 +41,7 @@ int CXMLWindFileReader::ReadWindFile(const novac::CString& fileName, Meteorology
 
         novac::CString tmpFileName;
         tmpFileName.Format(fileName);
-        Common::GetFileName(tmpFileName); // this is the name of the file, without the path...
+        novac::CFileUtils::GetFileName(tmpFileName); // this is the name of the file, without the path...
         localFileName.Format("%s%c%s", (const char*)g_userSettings.m_tempDirectory, Poco::Path::separator(), (const char*)tmpFileName);
 
         // make sure that the tmp-directory exists
@@ -233,7 +235,7 @@ int CXMLWindFileReader::Parse_WindField(Meteorology::CWindDataBase& dataBase) {
     double altitude = 0.0;
     double windspeed = 0.0, windspeederror = 0.0;
     double winddirection = 0.0, winddirectionerror = 0.0;
-    MET_SOURCE windSource;
+    MET_SOURCE windSource = MET_DEFAULT;
 
     // parse the file
     while (nullptr != (szToken = NextToken())) {
@@ -328,6 +330,7 @@ int CXMLWindFileReader::Parse_WindField(Meteorology::CWindDataBase& dataBase) {
             // we have now enough information to make a wind-field and insert it into the database
             w = CWindField(windspeed, windspeederror, windSource, winddirection, winddirectionerror, windSource, validFrom, validTo, latitude, longitude, altitude);
 
+            ShowMessage("Inserting wind data into wind database");
             dataBase.InsertWindField(w);
         }
     }

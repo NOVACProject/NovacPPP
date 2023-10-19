@@ -6,10 +6,10 @@
 // include the vector-template from the C++ standard library
 #include <vector>
 
-#include "WindField.h"
 #include <SpectralEvaluation/DateTime.h>
-#include "../Common/Common.h"
-
+#include <SpectralEvaluation/Definitions.h>
+#include <PPPLib/Meteorology/MeteorologySource.h>
+#include <PPPLib/Meteorology/WindField.h>
 
 namespace Meteorology {
     enum INTERPOLATION_METHOD {
@@ -110,14 +110,14 @@ namespace Meteorology {
             int location;
 
             // The wind-speed
-            float ws;			// the wind-speed, in meters/second
-            float ws_err;		// the absolute error in wind-speed, in meters/second
-            MET_SOURCE ws_src;	// the source for the wind-speed
+            float ws;            // the wind-speed, in meters/second
+            float ws_err;        // the absolute error in wind-speed, in meters/second
+            MET_SOURCE ws_src;    // the source for the wind-speed
 
             // The wind-direction
-            float wd;			// the wind-direction, in degrees from north, positive clock-wise
-            float wd_err;		// the absolute error in wind-direction, in degrees
-            MET_SOURCE wd_src;	// the source for the wind-direction
+            float wd;            // the wind-direction, in degrees from north, positive clock-wise
+            float wd_err;        // the absolute error in wind-direction, in degrees
+            MET_SOURCE wd_src;    // the source for the wind-direction
         };
 
         /** This is used to organise all data that is valid within a certain
@@ -128,8 +128,8 @@ namespace Meteorology {
             CWindInTime(const CWindInTime &w);
             CWindInTime &operator=(const CWindInTime &w);
             ~CWindInTime();
-            novac::CDateTime	validFrom;  // this wind-data is valid from this day and time
-            novac::CDateTime	validTo;	// this wind-data is valid until this day and time
+            novac::CDateTime    validFrom;  // this wind-data is valid from this day and time
+            novac::CDateTime    validTo;    // this wind-data is valid until this day and time
             std::list <CWindData> windData; // the list of wind-datas
         };
 

@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- This file defines the wind field for a given volcano. To be used
+for the calculation of fluxes in the NOVAC Post Processing Program -->
+
+<Wind volcano="Ruapehu">
+        <windfield>
+        <source>ecmwf_forecast</source>
+        <valid_from>2023.01.19T21:00:00</ valid_from >
+        <valid_to>2023.01.20T00:00:00</valid_to>
+        <altitude>2700.0</altitude>
+        <item lat="-39.281302" lon="175.564254" ws="5.13" wse="0.00" wd="277.3" wde="0.00"/>
+</windfield>
+
+<windfield>
+        <windfield>
+        <source>ecmwf_forecast</source>
+        <valid_from>2023.01.20T00:00:00</ valid_from >
+        <valid_to>2023.01.20T03:00:00</valid_to>
+        <altitude>2700.0</altitude>
+        <item lat="-39.281302" lon="175.564254" ws="7.56" wse="0.00" wd="278.4" wde="0.00"/>
+</windfield>
+
+</Wind>

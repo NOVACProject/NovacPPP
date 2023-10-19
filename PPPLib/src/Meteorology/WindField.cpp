@@ -1,5 +1,4 @@
-#include "WindField.h"
-#include "../Common/Common.h"
+#include <PPPLib/Meteorology/WindField.h>
 
 using namespace Meteorology;
 

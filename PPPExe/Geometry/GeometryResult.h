@@ -2,7 +2,7 @@
 
 #include <SpectralEvaluation/DateTime.h>
 #include <SpectralEvaluation/Definitions.h>
-#include "../MeteorologySource.h"
+#include <PPPLib/Meteorology/MeteorologySource.h>
 #include <PPPLib/MFC/CString.h>
 
 namespace Geometry

@@ -3,7 +3,7 @@
 cmake_minimum_required (VERSION 3.6)
 
 set(NPP_COMMUNICATION_HEADERS
-    ${CMAKE_CURRENT_LIST_DIR}/FTPServerConnection.h
+    ${PppLib_INCLUDE_DIRS}/PPPLib/Communication/FTPServerConnection.h
     PARENT_SCOPE)
     
     

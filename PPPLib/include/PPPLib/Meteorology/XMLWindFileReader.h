@@ -2,7 +2,7 @@
 
 #include <PPPLib/File/XMLFileReader.h>
 #include <PPPLib/PPPLib.h>
-#include "WindDataBase.h"
+#include <PPPLib/Meteorology/WindDataBase.h>
 #include <PPPLib/MFC/CString.h>
 
 namespace FileHandler {

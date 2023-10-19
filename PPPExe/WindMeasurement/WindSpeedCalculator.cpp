@@ -1,7 +1,7 @@
 #include "../stdafx.h"
 #include "WindSpeedCalculator.h"
 #include "../Common/EvaluationLogFileHandler.h"
-#include "../Meteorology/WindField.h"
+#include <PPPLib/Meteorology/WindField.h>
 #include <PPPLib/File/Filesystem.h>
 #include <cstring>
 

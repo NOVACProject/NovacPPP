@@ -6,7 +6,7 @@
 
 #include "../Common/Common.h"
 #include <PPPLib/Configuration/NovacPPPConfiguration.h>
-#include "../Meteorology/WindDataBase.h"
+#include <PPPLib/Meteorology/WindDataBase.h>
 #include "../Geometry/PlumeHeight.h"
 
 #include <PPPLib/MFC/CString.h>
