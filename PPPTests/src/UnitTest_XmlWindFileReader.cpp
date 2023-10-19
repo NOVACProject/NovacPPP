@@ -15,7 +15,7 @@ namespace novac
 
     static std::string GetWindFieldFile()
     {
-        return GetTestDataDirectory() + std::string("wind_pdf_2017_meteoFrance_UTC_novac.wxml");
+        return GetTestDataDirectory() + std::string("wind_ruapehu.wxml");
     }
 
     TEST_CASE("ReadWindFile gives expected wind profile", "[XMLWindFileReader][File]")
@@ -32,6 +32,8 @@ namespace novac
         // Expected settings
         {
             REQUIRE(resultingDatabase.m_dataBaseName == "Ruapehu");
+
+            REQUIRE(2 == resultingDatabase.GetDataBaseSize());
 
             /*
 #ifdef _MSC_VER
