@@ -556,7 +556,6 @@ bool CWindDataBase::GetWindField_Bilinear(const CDateTime& /*time*/, const CGPSD
     return false;
 }
 
-/** Retrieves the size of the database */
-int CWindDataBase::GetDataBaseSize() {
+int CWindDataBase::GetDataBaseSize() const {
     return (int)m_dataBase.size();
 }

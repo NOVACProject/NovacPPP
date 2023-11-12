@@ -89,7 +89,7 @@ namespace Meteorology {
         int WriteToFile(const novac::CString &fileName) const;
 
         /** Retrieves the size of the database */
-        int GetDataBaseSize();
+        int GetDataBaseSize() const;
 
     private:
 
