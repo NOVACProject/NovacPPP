@@ -9,6 +9,7 @@ add_executable(PPPTests
     ${CMAKE_CURRENT_LIST_DIR}/include/StdOutLogger.h
 
     ${CMAKE_CURRENT_LIST_DIR}/src/main.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/src/UnitTest_CommandLineParser.cpp
     ${CMAKE_CURRENT_LIST_DIR}/src/UnitTest_CArray.cpp
     ${CMAKE_CURRENT_LIST_DIR}/src/UnitTest_CFileUtils.cpp
     ${CMAKE_CURRENT_LIST_DIR}/src/UnitTest_CFtpUtils.cpp

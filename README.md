@@ -26,8 +26,13 @@ source tree.
 
 1. Clone the repository from your own fork
 
-2. The SpectralEvaluation is setup as a sub-module. Before you can start building the program you need to setup the sub-module. This is done by opening a command prompt and typing the two commands 'git submodule init' and 'git submodule update'
+2. The SpectralEvaluation is setup as a git sub-module.
+Before you can start building the program you need to setup the sub-module.
+This is done by opening a command prompt and typing the two commands 'git submodule init' and 'git submodule update'
 
 3. Copy the pre-built binaries of Poco to ../poco/install/ (this is where CMake will search for them)
 
-4. Run the desired build script to create Visual Studio solution or a Unix make file. 
+4. Run the desired build script to create Visual Studio solution or a Unix make file.
+Build_UnixMake.sh builds the entire solution (and creates executables) for Linux.
+Build_VisualStudio20XX.cmd creates a Visual Studio solution which can then be opened in Visual Studio to build an executable.
+

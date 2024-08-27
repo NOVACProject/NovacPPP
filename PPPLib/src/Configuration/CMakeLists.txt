@@ -3,6 +3,7 @@
 cmake_minimum_required (VERSION 3.6)
 
 set(NPPLIB_CONFIGURATION_HEADERS
+    ${PppLib_INCLUDE_DIRS}/PPPLib/Configuration/CommandLineParser.h
     ${PppLib_INCLUDE_DIRS}/PPPLib/Configuration/DarkCorrectionConfiguration.h
     ${PppLib_INCLUDE_DIRS}/PPPLib/Configuration/EvaluationConfiguration.h
     ${PppLib_INCLUDE_DIRS}/PPPLib/Configuration/InstrumentCalibrationConfiguration.h
@@ -16,6 +17,7 @@ set(NPPLIB_CONFIGURATION_HEADERS
     PARENT_SCOPE)    
     
 set(NPPLIB_CONFIGURATION_SOURCES
+    ${CMAKE_CURRENT_LIST_DIR}/CommandLineParser.cpp 
     ${CMAKE_CURRENT_LIST_DIR}/DarkCorrectionConfiguration.cpp 
     ${CMAKE_CURRENT_LIST_DIR}/EvaluationConfiguration.cpp
     ${CMAKE_CURRENT_LIST_DIR}/InstrumentConfiguration.cpp
