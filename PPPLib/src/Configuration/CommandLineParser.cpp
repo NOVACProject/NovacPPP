@@ -12,7 +12,8 @@ namespace Configuration
         const std::vector<std::string>& arguments,
         Configuration::CUserConfiguration& userSettings,
         novac::CVolcanoInfo& volcanoes,
-        std::string& exePath)
+        std::string& exePath,
+        ILogger& log)
     {
         char seps[] = " \t";
         std::vector<char> buffer(16384, 0);
@@ -44,7 +45,7 @@ namespace Configuration
                 if (!novac::CDateTime::ParseDate(parameter, parsedDate))
                 {
                     errorMessage.Format("Could not parse date: %s", (const char*)parameter);
-                    ShowMessage(errorMessage);
+                    log.Error(errorMessage.std_str());
                 }
                 else
                 {
@@ -64,7 +65,7 @@ namespace Configuration
                 if (!novac::CDateTime::ParseDate(parameter, parsedDate))
                 {
                     errorMessage.Format("Could not parse date: %s", (const char*)parameter);
-                    ShowMessage(errorMessage);
+                    log.Error(errorMessage.std_str());
                 }
                 else
                 {
@@ -88,7 +89,7 @@ namespace Configuration
                 else
                 {
                     errorMessage.Format("Could not find volcano: %s", (const char*)parameter);
-                    ShowMessage(errorMessage);
+                    log.Error(errorMessage.std_str());
                 }
                 token = tokenizer.NextToken();
                 continue;

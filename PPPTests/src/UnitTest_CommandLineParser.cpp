@@ -1,6 +1,7 @@
 #include <PPPLib/Configuration/CommandLineParser.h>
 #include <PPPLib/Configuration/UserConfiguration.h>
 #include <PPPLib/VolcanoInfo.h>
+#include "StdOutLogger.h"
 #include "catch.hpp"
 
 namespace Configuration
@@ -12,9 +13,10 @@ namespace Configuration
         std::vector<std::string>arguments = { "--FromDate=2024.05.31" };
         Configuration::CUserConfiguration userSettings;
         novac::CVolcanoInfo volcanoes;
+        StdOutLogger logger;
 
         // Act
-        CommandLineParser::ParseCommandLineOptions(arguments, userSettings, volcanoes, setExePath);
+        CommandLineParser::ParseCommandLineOptions(arguments, userSettings, volcanoes, setExePath, logger);
 
         // Assert
         REQUIRE(userSettings.m_fromDate == novac::CDateTime(2024, 5, 31, 0, 0, 0));
@@ -27,9 +29,10 @@ namespace Configuration
         std::vector<std::string>arguments = { "--ToDate=2024.05.31" };
         Configuration::CUserConfiguration userSettings;
         novac::CVolcanoInfo volcanoes;
+        StdOutLogger logger;
 
         // Act
-        CommandLineParser::ParseCommandLineOptions(arguments, userSettings, volcanoes, setExePath);
+        CommandLineParser::ParseCommandLineOptions(arguments, userSettings, volcanoes, setExePath, logger);
 
         // Assert
         REQUIRE(userSettings.m_fromDate == novac::CDateTime(2005, 10, 1, 0, 0, 0)); // Default value
@@ -43,9 +46,10 @@ namespace Configuration
         std::vector<std::string>arguments = { "--Volcano=masaya" };
         Configuration::CUserConfiguration userSettings;
         novac::CVolcanoInfo volcanoes;
+        StdOutLogger logger;
 
         // Act
-        CommandLineParser::ParseCommandLineOptions(arguments, userSettings, volcanoes, setExePath);
+        CommandLineParser::ParseCommandLineOptions(arguments, userSettings, volcanoes, setExePath, logger);
 
         // Assert
         REQUIRE(userSettings.m_volcano == 8); // The index for Masaya
@@ -62,9 +66,10 @@ namespace Configuration
         std::vector<std::string>arguments = { "--Volcano=nevado_del_ruiz" };
         Configuration::CUserConfiguration userSettings;
         novac::CVolcanoInfo volcanoes;
+        StdOutLogger logger;
 
         // Act
-        CommandLineParser::ParseCommandLineOptions(arguments, userSettings, volcanoes, setExePath);
+        CommandLineParser::ParseCommandLineOptions(arguments, userSettings, volcanoes, setExePath, logger);
 
         // Assert
         REQUIRE(userSettings.m_volcano == 10); // The index for Nevado del Ruiz
@@ -81,9 +86,10 @@ namespace Configuration
         std::vector<std::string>arguments = { "--Volcano=0101-04=" };
         Configuration::CUserConfiguration userSettings;
         novac::CVolcanoInfo volcanoes;
+        StdOutLogger logger;
 
         // Act
-        CommandLineParser::ParseCommandLineOptions(arguments, userSettings, volcanoes, setExePath);
+        CommandLineParser::ParseCommandLineOptions(arguments, userSettings, volcanoes, setExePath, logger);
 
         // Assert
         REQUIRE(userSettings.m_volcano == 23); // The index for Stromboli
@@ -100,9 +106,10 @@ namespace Configuration
         std::vector<std::string>arguments = { "--Workdir=/home/novacuser/novacppp" };
         Configuration::CUserConfiguration userSettings;
         novac::CVolcanoInfo volcanoes;
+        StdOutLogger logger;
 
         // Act
-        CommandLineParser::ParseCommandLineOptions(arguments, userSettings, volcanoes, setExePath);
+        CommandLineParser::ParseCommandLineOptions(arguments, userSettings, volcanoes, setExePath, logger);
 
         // Assert
         REQUIRE(setExePath == "/home/novacuser/novacppp");
@@ -115,9 +122,10 @@ namespace Configuration
         std::vector<std::string>arguments = { "--outputdirectory=/home/novacuser/novacppp/output/" };
         Configuration::CUserConfiguration userSettings;
         novac::CVolcanoInfo volcanoes;
+        StdOutLogger logger;
 
         // Act
-        CommandLineParser::ParseCommandLineOptions(arguments, userSettings, volcanoes, setExePath);
+        CommandLineParser::ParseCommandLineOptions(arguments, userSettings, volcanoes, setExePath, logger);
 
         // Assert
         REQUIRE(userSettings.m_outputDirectory == "/home/novacuser/novacppp/output/");
@@ -130,9 +138,10 @@ namespace Configuration
         std::vector<std::string>arguments = { "--tempdirectory=/home/novacuser/novacppp/temp/" };
         Configuration::CUserConfiguration userSettings;
         novac::CVolcanoInfo volcanoes;
+        StdOutLogger logger;
 
         // Act
-        CommandLineParser::ParseCommandLineOptions(arguments, userSettings, volcanoes, setExePath);
+        CommandLineParser::ParseCommandLineOptions(arguments, userSettings, volcanoes, setExePath, logger);
 
         // Assert
         REQUIRE(userSettings.m_tempDirectory == "/home/novacuser/novacppp/temp/");
@@ -146,9 +155,10 @@ namespace Configuration
         Configuration::CUserConfiguration userSettings;
         REQUIRE(userSettings.m_windFieldFile == ""); // check assumption here
         novac::CVolcanoInfo volcanoes;
+        StdOutLogger logger;
 
         // Act
-        CommandLineParser::ParseCommandLineOptions(arguments, userSettings, volcanoes, setExePath);
+        CommandLineParser::ParseCommandLineOptions(arguments, userSettings, volcanoes, setExePath, logger);
 
         // Assert
         REQUIRE(userSettings.m_windFieldFile == "/home/novacuser/novacppp/wind.wxml");
@@ -161,9 +171,10 @@ namespace Configuration
         std::vector<std::string>arguments = { "--MaxThreadNum=73" };
         Configuration::CUserConfiguration userSettings;
         novac::CVolcanoInfo volcanoes;
+        StdOutLogger logger;
 
         // Act
-        CommandLineParser::ParseCommandLineOptions(arguments, userSettings, volcanoes, setExePath);
+        CommandLineParser::ParseCommandLineOptions(arguments, userSettings, volcanoes, setExePath, logger);
 
         // Assert
         REQUIRE(userSettings.m_maxThreadNum == 73);
@@ -177,9 +188,10 @@ namespace Configuration
         Configuration::CUserConfiguration userSettings;
         REQUIRE(userSettings.m_includeSubDirectories_Local == 1); // check assumption here
         novac::CVolcanoInfo volcanoes;
+        StdOutLogger logger;
 
         // Act
-        CommandLineParser::ParseCommandLineOptions(arguments, userSettings, volcanoes, setExePath);
+        CommandLineParser::ParseCommandLineOptions(arguments, userSettings, volcanoes, setExePath, logger);
 
         // Assert
         REQUIRE(userSettings.m_includeSubDirectories_Local == 0);
@@ -193,9 +205,10 @@ namespace Configuration
         Configuration::CUserConfiguration userSettings;
         REQUIRE(userSettings.m_includeSubDirectories_FTP == 1); // check assumption here
         novac::CVolcanoInfo volcanoes;
+        StdOutLogger logger;
 
         // Act
-        CommandLineParser::ParseCommandLineOptions(arguments, userSettings, volcanoes, setExePath);
+        CommandLineParser::ParseCommandLineOptions(arguments, userSettings, volcanoes, setExePath, logger);
 
         // Assert
         REQUIRE(userSettings.m_includeSubDirectories_FTP == 0);
@@ -209,9 +222,10 @@ namespace Configuration
         Configuration::CUserConfiguration userSettings;
         REQUIRE(userSettings.m_FTPDirectory == ""); // check assumption here
         novac::CVolcanoInfo volcanoes;
+        StdOutLogger logger;
 
         // Act
-        CommandLineParser::ParseCommandLineOptions(arguments, userSettings, volcanoes, setExePath);
+        CommandLineParser::ParseCommandLineOptions(arguments, userSettings, volcanoes, setExePath, logger);
 
         // Assert
         REQUIRE(userSettings.m_FTPDirectory == "/data/novacppp");
@@ -225,9 +239,10 @@ namespace Configuration
         Configuration::CUserConfiguration userSettings;
         REQUIRE(userSettings.m_FTPUsername == ""); // check assumption here
         novac::CVolcanoInfo volcanoes;
+        StdOutLogger logger;
 
         // Act
-        CommandLineParser::ParseCommandLineOptions(arguments, userSettings, volcanoes, setExePath);
+        CommandLineParser::ParseCommandLineOptions(arguments, userSettings, volcanoes, setExePath, logger);
 
         // Assert
         REQUIRE(userSettings.m_FTPUsername == "the-novac-user");
@@ -241,9 +256,10 @@ namespace Configuration
         Configuration::CUserConfiguration userSettings;
         REQUIRE(userSettings.m_FTPPassword == ""); // check assumption here
         novac::CVolcanoInfo volcanoes;
+        StdOutLogger logger;
 
         // Act
-        CommandLineParser::ParseCommandLineOptions(arguments, userSettings, volcanoes, setExePath);
+        CommandLineParser::ParseCommandLineOptions(arguments, userSettings, volcanoes, setExePath, logger);
 
         // Assert
         REQUIRE(userSettings.m_FTPPassword == "the-novac-user-password");
@@ -257,9 +273,10 @@ namespace Configuration
         Configuration::CUserConfiguration userSettings;
         REQUIRE(userSettings.m_uploadResults == 0); // check assumption here
         novac::CVolcanoInfo volcanoes;
+        StdOutLogger logger;
 
         // Act
-        CommandLineParser::ParseCommandLineOptions(arguments, userSettings, volcanoes, setExePath);
+        CommandLineParser::ParseCommandLineOptions(arguments, userSettings, volcanoes, setExePath, logger);
 
         // Assert
         REQUIRE(userSettings.m_uploadResults == 1);
@@ -273,9 +290,10 @@ namespace Configuration
         Configuration::CUserConfiguration userSettings;
         REQUIRE(userSettings.m_processingMode == PROCESSING_MODE::PROCESSING_MODE_FLUX); // check assumption here
         novac::CVolcanoInfo volcanoes;
+        StdOutLogger logger;
 
         // Act
-        CommandLineParser::ParseCommandLineOptions(arguments, userSettings, volcanoes, setExePath);
+        CommandLineParser::ParseCommandLineOptions(arguments, userSettings, volcanoes, setExePath, logger);
 
         // Assert
         REQUIRE(userSettings.m_processingMode == PROCESSING_MODE::PROCESSING_MODE_STRATOSPHERE);
@@ -289,9 +307,10 @@ namespace Configuration
         Configuration::CUserConfiguration userSettings;
         REQUIRE(userSettings.m_molecule == STANDARD_MOLECULE::MOLEC_SO2); // check assumption here
         novac::CVolcanoInfo volcanoes;
+        StdOutLogger logger;
 
         // Act
-        CommandLineParser::ParseCommandLineOptions(arguments, userSettings, volcanoes, setExePath);
+        CommandLineParser::ParseCommandLineOptions(arguments, userSettings, volcanoes, setExePath, logger);
 
         // Assert
         REQUIRE(userSettings.m_molecule == STANDARD_MOLECULE::MOLEC_O3);

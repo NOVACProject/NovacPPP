@@ -1,8 +1,7 @@
 #pragma once
 
 #include <vector>
-#include <SpectralEvaluation/DateTime.h>
-#include <SpectralEvaluation/Configuration/DarkSettings.h>
+#include <PPPLib/Logging.h>
 
 namespace novac
 {
@@ -28,6 +27,7 @@ namespace Configuration
             const std::vector<std::string>& arguments,
             Configuration::CUserConfiguration& userSettings,
             novac::CVolcanoInfo& volcanoes,
-            std::string& exePath);
+            std::string& exePath,
+            ILogger& log);
     };
 }

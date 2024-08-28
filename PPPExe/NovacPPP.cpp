@@ -95,7 +95,7 @@ protected:
 
             // Get the options from the command line
             std::cout << " Getting command line arguments" << std::endl;
-            Configuration::CommandLineParser::ParseCommandLineOptions(arguments, g_userSettings, g_volcanoes, s_exePath);
+            Configuration::CommandLineParser::ParseCommandLineOptions(arguments, g_userSettings, g_volcanoes, s_exePath, g_logger);
             ShowMessage(novac::CString::FormatString(" Executing %s in '%s'", s_exeFileName.c_str(), s_exePath.c_str()));
 
             // Read the configuration files

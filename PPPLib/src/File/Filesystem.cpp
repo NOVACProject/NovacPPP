@@ -120,5 +120,20 @@ namespace Filesystem
         }
     }
 
+    novac::CString AppendPathSeparator(novac::CString path)
+    {
+        if (path.Right(1) == "/" || path.Right(1) == "\\")
+        {
+            return path;
+        }
 
+        char separator[8];
+#ifdef _MSC_VER
+        sprintf_s(separator, "%c", Poco::Path::separator());
+#else
+        sprintf(separator, "%c", Poco::Path::separator());
+#endif
+
+        return path.Append(separator);
+    }
 }
