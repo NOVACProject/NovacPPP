@@ -40,7 +40,7 @@ namespace novac
         // Expected Wind fields
         {
             auto time = novac::CDateTime{ 2023, 1, 19, 22, 0, 0 };
-            auto location = novac::CGPSData{ -39.281302 , 175.564254 , 2700.0};
+            auto location = novac::CGPSData{ -39.281302 , 175.564254 , 2700.0 };
             auto windField = Meteorology::CWindField{};
 
             // Act
@@ -53,7 +53,7 @@ namespace novac
         }
 
         {
-            auto time = novac::CDateTime{ 2023, 1, 30, 1, 0, 0 };
+            auto time = novac::CDateTime{ 2023, 1, 20, 1, 0, 0 };
             auto location = novac::CGPSData{ -39.281302 , 175.564254 , 2700.0 };
             auto windField = Meteorology::CWindField{};
 
@@ -64,6 +64,35 @@ namespace novac
             REQUIRE(exists);
             REQUIRE(Approx(windField.GetWindSpeed()) == 7.56);
             REQUIRE(Approx(windField.GetWindDirection()) == 278.4);
+        }
+
+        // Requests of data outside of the time range retrieves 'not found'
+        {
+            auto time = novac::CDateTime{ 2023, 1, 21, 1, 0, 0 }; // Time out of range
+            auto location = novac::CGPSData{ -39.281302 , 175.564254 , 2700.0 };
+            auto windField = Meteorology::CWindField{};
+
+            // Act
+            bool exists = resultingDatabase.GetWindField(time, location, Meteorology::INTERP_EXACT, windField);
+
+            // Assert
+            REQUIRE(exists == false);
+            REQUIRE(Approx(windField.GetWindSpeed()) == 10.0); // Default wind speed
+            REQUIRE(Approx(windField.GetWindDirection()) == 0.0); // Default wind direction
+        }
+
+        {
+            auto time = novac::CDateTime{ 2023, 1, 18, 1, 0, 0 }; // Time out of range
+            auto location = novac::CGPSData{ -39.281302 , 175.564254 , 2700.0 };
+            auto windField = Meteorology::CWindField{};
+
+            // Act
+            bool exists = resultingDatabase.GetWindField(time, location, Meteorology::INTERP_EXACT, windField);
+
+            // Assert
+            REQUIRE(exists == false);
+            REQUIRE(Approx(windField.GetWindSpeed()) == 10.0); // Default wind speed
+            REQUIRE(Approx(windField.GetWindDirection()) == 0.0); // Default wind direction
         }
     }
 }

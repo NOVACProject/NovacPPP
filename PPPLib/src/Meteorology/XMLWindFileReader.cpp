@@ -13,6 +13,11 @@
 #include <Poco/Path.h>
 #include <string.h>
 #include <memory>
+#include <cmath>
+
+#ifndef MAX_PATH
+#define MAX_PATH 260
+#endif
 
 extern Configuration::CUserConfiguration g_userSettings;// <-- The settings of the user
 
@@ -42,7 +47,7 @@ int CXMLWindFileReader::ReadWindFile(const novac::CString& fileName, Meteorology
         novac::CString tmpFileName;
         tmpFileName.Format(fileName);
         novac::CFileUtils::GetFileName(tmpFileName); // this is the name of the file, without the path...
-        localFileName.Format("%s%c%s", (const char*)g_userSettings.m_tempDirectory, Poco::Path::separator(), (const char*)tmpFileName);
+        localFileName.Format("%s%s", (const char*)g_userSettings.m_tempDirectory, (const char*)tmpFileName);
 
         // make sure that the tmp-directory exists
         if (Filesystem::CreateDirectoryStructure(g_userSettings.m_tempDirectory)) {
@@ -178,18 +183,18 @@ int CXMLWindFileReader::ReadWindDirectory(const novac::CString& directory, Meteo
         // If the directory is on the local computer, then this is how to check the files
         char fileToFind[MAX_PATH];
         sprintf(fileToFind, "%s/*.wxml", (const char*)directory);
+        ShowMessage("Searching for wind files in: " + directory);
 
         // Search for the files
         std::set<std::string> filesFound;
         Poco::Glob::glob(fileToFind, filesFound);
 
-        if (filesFound.size() == 0)
-        {
+        if (filesFound.size() == 0) {
+            ShowMessage("No wind files found");
             return 1;
         }
 
         for (const std::string& fName : filesFound) {
-            // localFileName.Format("%s%c%s", (const char*)directory, Poco::Path::separator(), fName.c_str());
             localFileList.AddTail(fName);
         }
     }
@@ -202,15 +207,16 @@ int CXMLWindFileReader::ReadWindDirectory(const novac::CString& directory, Meteo
         localFileName.Format("%s", (const char*)localFileList.GetNext(p));
 
         // make sure that this file falls in the appropriate date-range
-        if (dateFrom != NULL) {
+        if (dateFrom != nullptr) {
 
         }
-        if (dateTo != NULL) {
+        if (dateTo != nullptr) {
 
         }
 
-        if (0 == ReadWindFile(localFileName, dataBase))
+        if (0 == ReadWindFile(localFileName, dataBase)) {
             ++nFilesRead;
+        }
     }
 
     // Tell the user what we've done
@@ -312,10 +318,10 @@ int CXMLWindFileReader::Parse_WindField(Meteorology::CWindDataBase& dataBase) {
             }
 
             // check that the latitude is within -90 to +90 degrees...
-            latitude = (latitude > 90.0) ? latitude - floor(latitude / 90.0) * 90.0 : latitude;
+            latitude = (latitude > 90.0) ? latitude - std::floor(latitude / 90.0) * 90.0 : latitude;
 
             // check that the longitude is within -180 to +180 degrees...
-            longitude = (longitude > 180.0) ? longitude - (1 + floor(longitude / 360.0)) * 360.0 : longitude;
+            longitude = (longitude > 180.0) ? longitude - (1 + std::floor(longitude / 360.0)) * 360.0 : longitude;
 
             // check the reasonability of the values
             if (winddirection < -360.0 || winddirection > 360.0) {
