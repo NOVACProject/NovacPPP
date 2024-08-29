@@ -38,6 +38,9 @@ namespace Filesystem
 
     /** AppendPathSeparator returns a string which does end with the path-separator character of the current system. */
     novac::CString AppendPathSeparator(novac::CString path);
+
+    /** AppendPathSeparator returns a string which does end with the path-separator character of the current system. */
+    std::string AppendPathSeparator(std::string path);
 }
 
 #endif // !NOVACPPP_FILESYSTEM_FILESYSTEM_H

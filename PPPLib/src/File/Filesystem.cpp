@@ -136,4 +136,11 @@ namespace Filesystem
 
         return path.Append(separator);
     }
+
+    std::string AppendPathSeparator(std::string path)
+    {
+        CString p{ path };
+        p = AppendPathSeparator(p);
+        return p.std_str();
+    }
 }

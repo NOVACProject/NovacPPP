@@ -102,6 +102,7 @@ namespace Configuration
                 {
                     exePath = std::string(buffer.data());
                     Trim(exePath, " \t\"");
+                    exePath = Filesystem::AppendPathSeparator(exePath);
                 }
                 token = tokenizer.NextToken();
                 continue;

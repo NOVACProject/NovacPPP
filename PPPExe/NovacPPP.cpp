@@ -35,7 +35,20 @@ std::string s_exeFileName;
 #undef min
 #undef max
 
-void LoadConfigurations();
+void LoadConfigurations(
+    const novac::CString& workDir,
+    Configuration::CNovacPPPConfiguration& configuration,
+    Configuration::CUserConfiguration& userSettings);
+
+void ReadEvaluationXmlFile(
+    const novac::CString& workDir,
+    FileHandler::CEvaluationConfigurationParser& eval_reader,
+    Configuration::CInstrumentConfiguration& instrument);
+
+void ReadProcessingXml(const novac::CString& workDir, Configuration::CUserConfiguration& userSettings);
+
+void ReadSetupXml(const novac::CString& workDir, Configuration::CNovacPPPConfiguration& configuration);
+
 void StartProcessing(int selectedVolcano = 0);
 void CalculateAllFluxes();
 
@@ -100,7 +113,8 @@ protected:
 
             // Read the configuration files
             std::cout << " Loading configuration" << std::endl;
-            LoadConfigurations();
+            Common common;
+            LoadConfigurations(common.m_exePath, g_setup, g_userSettings);
 
             splitterChannel->addChannel(new Poco::FileChannel(g_userSettings.m_outputDirectory.std_str() + "StatusLog.txt"));
             log.setChannel(splitterChannel);
@@ -127,51 +141,67 @@ protected:
 POCO_APP_MAIN(NovacPPPApplication)
 
 
-void LoadConfigurations()
+void LoadConfigurations(
+    const novac::CString& workDir,
+    Configuration::CNovacPPPConfiguration& configuration,
+    Configuration::CUserConfiguration& userSettings)
 {
-    // Declaration of variables and objects
-    Common common;
-    novac::CString setupPath;
-    FileHandler::CSetupFileReader reader{ g_logger };
+    ReadSetupXml(workDir, configuration);
 
-    // Read configuration from file setup.xml
-    setupPath.Format("%sconfiguration%csetup.xml", (const char*)common.m_exePath, Poco::Path::separator());
-    if (RETURN_CODE::SUCCESS != reader.ReadSetupFile(setupPath, g_setup))
-    {
-        throw std::logic_error("Could not read setup.xml. Setup not complete. Please fix and try again");
-    }
-    ShowMessage(novac::CString::FormatString(" Parsed %s, %d instruments found.", setupPath.c_str(), g_setup.NumberOfInstruments()));
-
-
-    // Read the users options from file processing.xml
-    novac::CString processingPath;
-    processingPath.Format("%sconfiguration%cprocessing.xml", (const char*)common.m_exePath, Poco::Path::separator());
-    FileHandler::CProcessingFileReader processing_reader{ g_logger };
-    if (RETURN_CODE::SUCCESS != processing_reader.ReadProcessingFile(processingPath, g_userSettings))
-    {
-        throw std::logic_error("Could not read processing.xml. Setup not complete. Please fix and try again");
-    }
+    ReadProcessingXml(workDir, userSettings);
 
     // Check if there is a configuration file for every spectrometer serial number
     FileHandler::CEvaluationConfigurationParser eval_reader{ g_logger };
-    for (int k = 0; k < g_setup.NumberOfInstruments(); ++k)
+    for (int k = 0; k < configuration.NumberOfInstruments(); ++k)
     {
-        novac::CString evalConfPath;
-        evalConfPath.Format("%sconfiguration%c%s.exml", (const char*)common.m_exePath, Poco::Path::separator(), (const char*)g_setup.m_instrument[k].m_serial);
-
-        if (Filesystem::IsExistingFile(evalConfPath))
-        {
-            eval_reader.ReadConfigurationFile(
-                evalConfPath,
-                g_setup.m_instrument[k].m_eval,
-                g_setup.m_instrument[k].m_darkCurrentCorrection,
-                g_setup.m_instrument[k].m_instrumentCalibration);
-        }
-        else
-        {
-            throw std::logic_error("Could not find configuration file: " + evalConfPath);
-        }
+        ReadEvaluationXmlFile(workDir, eval_reader, configuration.m_instrument[k]);
     }
+}
+
+void ReadEvaluationXmlFile(
+    const novac::CString& workDir,
+    FileHandler::CEvaluationConfigurationParser& eval_reader,
+    Configuration::CInstrumentConfiguration& instrument)
+{
+    novac::CString evalConfPath;
+    evalConfPath.Format("%sconfiguration%c%s.exml", (const char*)workDir, Poco::Path::separator(), (const char*)instrument.m_serial);
+
+    if (Filesystem::IsExistingFile(evalConfPath))
+    {
+        eval_reader.ReadConfigurationFile(
+            evalConfPath,
+            instrument.m_eval,
+            instrument.m_darkCurrentCorrection,
+            instrument.m_instrumentCalibration);
+    }
+    else
+    {
+        throw std::logic_error("Could not find configuration file: " + evalConfPath);
+    }
+}
+
+void ReadProcessingXml(const novac::CString& workDir, Configuration::CUserConfiguration& userSettings)
+{
+    novac::CString processingPath;
+    processingPath.Format("%sconfiguration%cprocessing.xml", (const char*)workDir, Poco::Path::separator());
+    FileHandler::CProcessingFileReader processing_reader{ g_logger };
+    if (RETURN_CODE::SUCCESS != processing_reader.ReadProcessingFile(processingPath, userSettings))
+    {
+        throw std::logic_error("Could not read processing.xml. Setup not complete. Please fix and try again");
+    }
+}
+
+void ReadSetupXml(const novac::CString& workDir, Configuration::CNovacPPPConfiguration& configuration)
+{
+    novac::CString setupPath;
+    setupPath.Format("%sconfiguration%csetup.xml", (const char*)workDir, Poco::Path::separator());
+
+    FileHandler::CSetupFileReader reader{ g_logger };
+    if (RETURN_CODE::SUCCESS != reader.ReadSetupFile(setupPath, configuration))
+    {
+        throw std::logic_error("Could not read setup.xml. Setup not complete. Please fix and try again");
+    }
+    ShowMessage(novac::CString::FormatString(" Parsed %s, %d instruments found.", setupPath.c_str(), configuration.NumberOfInstruments()));
 }
 
 void StartProcessing(int selectedVolcano)
