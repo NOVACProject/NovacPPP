@@ -228,61 +228,62 @@ void StartProcessing(int selectedVolcano)
 #endif  // _MFC_VER 
 }
 
+void ArchiveSettingsFiles(const Configuration::CUserConfiguration& userSettings)
+{
+    // set the directory to which we want to copy the settings
+    novac::CString confCopyDir;
+    confCopyDir.Format("%scopiedConfiguration", (const char*)userSettings.m_outputDirectory);
+    confCopyDir = Filesystem::AppendPathSeparator(confCopyDir);
+
+    // make sure that the output directory exists
+    if (Filesystem::CreateDirectoryStructure(userSettings.m_outputDirectory))
+    {
+        novac::CString userMessage;
+        userMessage.Format("Could not create output directory: %s", (const char*)userSettings.m_outputDirectory);
+        throw std::exception(userMessage.c_str());
+    }
+
+    if (Filesystem::CreateDirectoryStructure(confCopyDir))
+    {
+        novac::CString userMessage;
+        userMessage.Format("Could not create directory for copied configuration: %s", (const char*)confCopyDir);
+        throw std::exception(userMessage.c_str());
+    }
+    // we want to copy the setup and processing files to the confCopyDir
+    novac::CString processingOutputFile, setupOutputFile;
+    processingOutputFile.Format("%sprocessing.xml", (const char*)confCopyDir);
+    setupOutputFile.Format("%ssetup.xml", (const char*)confCopyDir);
+
+    Common::ArchiveFile(setupOutputFile);
+    Common::ArchiveFile(processingOutputFile);
+
+    FileHandler::CProcessingFileReader writer{ g_logger };
+    writer.WriteProcessingFile(processingOutputFile, userSettings);
+
+    Common common;
+    Common::CopyFile(common.m_exePath + "configuration/setup.xml", setupOutputFile);
+    for (int k = 0; k < g_setup.NumberOfInstruments(); ++k)
+    {
+        novac::CString serial(g_setup.m_instrument[k].m_serial);
+
+        Common::CopyFile(common.m_exePath + "configuration/" + serial + ".exml", confCopyDir + serial + ".exml");
+    }
+}
+
 // This is the starting point for all the processing modes.
 void CalculateAllFluxes()
 {
     try
     {
-        CPostProcessing post{ g_logger };
-        novac::CString processingOutputFile, setupOutputFile;
         Common common;
 
-        // Set the directory where we're working in...
+        CPostProcessing post{ g_logger };
         post.m_exePath = std::string((const char*)common.m_exePath);
 
-        // set the directory to which we want to copy the settings
-        novac::CString confCopyDir;
-        confCopyDir.Format("%scopiedConfiguration", (const char*)g_userSettings.m_outputDirectory);
-        confCopyDir = Filesystem::AppendPathSeparator(confCopyDir);
-
-        // make sure that the output directory exists
-        if (Filesystem::CreateDirectoryStructure(g_userSettings.m_outputDirectory))
-        {
-            novac::CString userMessage;
-            userMessage.Format("Could not create output directory: %s", (const char*)g_userSettings.m_outputDirectory);
-            ShowMessage(userMessage);
-            ShowMessage("-- Exit post processing --");
-            return;
-        }
-
-        if (Filesystem::CreateDirectoryStructure(confCopyDir))
-        {
-            novac::CString userMessage;
-            userMessage.Format("Could not create directory for copied configuration: %s", (const char*)confCopyDir);
-            ShowMessage(userMessage);
-            ShowMessage("-- Exit post processing --");
-            return;
-        }
-        // we want to copy the setup and processing files to the confCopyDir
-        processingOutputFile.Format("%sprocessing.xml", (const char*)confCopyDir);
-        setupOutputFile.Format("%ssetup.xml", (const char*)confCopyDir);
-
-        Common::ArchiveFile(setupOutputFile);
-        Common::ArchiveFile(processingOutputFile);
-
         // Copy the settings that we have read in from the 'configuration' directory
-        //	to the output directory to make it easier for the user to remember 
-        //	what has been done...
-        FileHandler::CProcessingFileReader writer{ g_logger };
-        writer.WriteProcessingFile(processingOutputFile, g_userSettings);
-
-        Common::CopyFile(common.m_exePath + "configuration/setup.xml", setupOutputFile);
-        for (int k = 0; k < g_setup.NumberOfInstruments(); ++k)
-        {
-            novac::CString serial(g_setup.m_instrument[k].m_serial);
-
-            Common::CopyFile(common.m_exePath + "configuration/" + serial + ".exml", confCopyDir + serial + ".exml");
-        }
+        //  to the output directory to make it easier for the user to remember 
+        //  what has been done...
+        ArchiveSettingsFiles(g_userSettings);
 
         // Do the post-processing
         if (g_userSettings.m_processingMode == PROCESSING_MODE::PROCESSING_MODE_COMPOSITION)
@@ -309,11 +310,15 @@ void CalculateAllFluxes()
     catch (Poco::FileNotFoundException& e)
     {
         std::cout << e.displayText() << std::endl;
+
+        ShowMessage("-- Exit post processing --");
         return;
     }
     catch (std::exception& e)
     {
         std::cout << e.what() << std::endl;
+
+        ShowMessage("-- Exit post processing --");
         return;
     }
 }

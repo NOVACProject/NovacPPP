@@ -17,7 +17,7 @@
 
 namespace novac
 {
-    class CReferenceFile;
+class CReferenceFile;
 }
 
 class CPostProcessing
@@ -29,7 +29,8 @@ public:
     // ---------------------- PUBLIC DATA -----------------------------------
     // ----------------------------------------------------------------------
 
-    /** This is the directory of the executable. */
+    /** This is the directory of the executable.
+        Defines the directory where the configuration is supposed to be found. */
     std::string m_exePath;
 
     // ----------------------------------------------------------------------
