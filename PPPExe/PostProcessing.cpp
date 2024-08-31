@@ -24,9 +24,6 @@
 // The flux CFluxStatistics takes care of the statistical part of the fluxes
 #include "Flux/FluxStatistics.h"
 
-// This is the configuration of the network
-#include <PPPLib/Configuration/NovacPPPConfiguration.h>
-
 // This is the settings for how to do the procesing
 #include <PPPLib/Configuration/UserConfiguration.h>
 
@@ -57,26 +54,23 @@
 #undef min
 #undef max
 
-extern Configuration::CNovacPPPConfiguration    g_setup;    // <-- The settings
-extern Configuration::CUserConfiguration        g_userSettings;// <-- The settings of the user
-extern novac::CVolcanoInfo                      g_volcanoes;   // <-- A list of all known volcanoes
-CPostProcessingStatistics                       g_processingStats; // <-- The statistics of the processing itself
+extern novac::CVolcanoInfo  g_volcanoes;   // <-- A list of all known volcanoes
+CPostProcessingStatistics   g_processingStats; // <-- The statistics of the processing itself
 
 using namespace novac;
 
 
 // this is the working-thread that takes care of evaluating a portion of the scans
-void EvaluateScansThread();
+void EvaluateScansThread(const Configuration::CUserConfiguration& userSettings);
 
 // this takes care of adding the evaluated log-files to the list in an synchronized way
 //  the parameter passed in a reference to an array of strings holding the names of the 
 //  eval-log files generated
-void AddResultToList(const novac::CString& pakFileName, const novac::CString(&evalLog)[MAX_FIT_WINDOWS], const CPlumeInScanProperty& scanProperties);
+void AddResultToList(const novac::CString& pakFileName, const novac::CString(&evalLog)[MAX_FIT_WINDOWS], const CPlumeInScanProperty& scanProperties, const Configuration::CUserConfiguration& userSettings);
 
-CPostProcessing::CPostProcessing(ILogger& logger)
-    : m_log(logger)
+CPostProcessing::CPostProcessing(ILogger& logger, Configuration::CNovacPPPConfiguration setup, Configuration::CUserConfiguration userSettings)
+    : m_log(logger), m_setup(setup), m_userSettings(userSettings)
 {
-
 }
 
 void CPostProcessing::DoPostProcessing_Flux()
@@ -89,20 +83,10 @@ void CPostProcessing::DoPostProcessing_Flux()
     // --------------- PREPARING FOR THE PROCESSING -----------
 
     // Checks that the evaluation is ok and that all settings makes sense.
-    ShowMessage("--- Validating settings --- ");
-    if (CheckProcessingSettings())
-    {
-        ShowMessage("Exiting post processing");
-        return;
-    }
+    CheckProcessingSettings();
 
     // Prepare for the flux-calculation by reading in the wind-field
-    ShowMessage("--- Reading Wind information --- ");
-    if (ReadWindField())
-    {
-        ShowMessage("Exiting post processing");
-        return;
-    }
+    ReadWindField();
 
     // Prepare for the flux-calculation by compiling a set of pausible plume heights
     if (PreparePlumeHeights())
@@ -113,7 +97,7 @@ void CPostProcessing::DoPostProcessing_Flux()
 
     // --------------- DOING THE EVALUATIONS -----------
 
-    if (g_userSettings.m_doEvaluations)
+    if (m_userSettings.m_doEvaluations)
     {
         // Prepare for the evaluation by reading in the reference files
         ShowMessage("--- Reading References --- ");
@@ -126,20 +110,20 @@ void CPostProcessing::DoPostProcessing_Flux()
         // 1. Find all .pak files in the directory.
         ShowMessage("--- Locating Pak Files --- ");
         std::vector<std::string> pakFileList;
-        if (g_userSettings.m_LocalDirectory.GetLength() > 3)
+        if (m_userSettings.m_LocalDirectory.GetLength() > 3)
         {
-            messageToUser.Format("Searching for .pak - files in directory %s", (const char*)g_userSettings.m_LocalDirectory);
+            messageToUser.Format("Searching for .pak - files in directory %s", (const char*)m_userSettings.m_LocalDirectory);
             ShowMessage(messageToUser);
 
-            const bool includeSubDirs = (g_userSettings.m_includeSubDirectories_Local > 0);
+            const bool includeSubDirs = (m_userSettings.m_includeSubDirectories_Local > 0);
             Filesystem::FileSearchCriterion limits;
-            limits.startTime = g_userSettings.m_fromDate;
-            limits.endTime = g_userSettings.m_toDate;
+            limits.startTime = m_userSettings.m_fromDate;
+            limits.endTime = m_userSettings.m_toDate;
             limits.fileExtension = ".pak";
-            Filesystem::SearchDirectoryForFiles(g_userSettings.m_LocalDirectory, includeSubDirs, pakFileList, &limits);
+            Filesystem::SearchDirectoryForFiles(m_userSettings.m_LocalDirectory, includeSubDirs, pakFileList, &limits);
         }
 
-        if (g_userSettings.m_FTPDirectory.GetLength() > 9)
+        if (m_userSettings.m_FTPDirectory.GetLength() > 9)
         {
             CheckForSpectraOnFTPServer(pakFileList);
         }
@@ -159,7 +143,7 @@ void CPostProcessing::DoPostProcessing_Flux()
     else
     {
         // Don't evaluate the scans, just read the log-files and calculate fluxes from there.
-        LocateEvaluationLogFiles(g_userSettings.m_outputDirectory, evalLogFiles);
+        LocateEvaluationLogFiles(m_userSettings.m_outputDirectory, evalLogFiles);
     }
 
     // Sort the evaluation-logs in order of increasing start-time, this to make
@@ -187,17 +171,17 @@ void CPostProcessing::DoPostProcessing_Flux()
 
     // 7. Write the statistics
     novac::CString statFileName;
-    statFileName.Format("%s%cProcessingStatistics.txt", (const char*)g_userSettings.m_outputDirectory, Poco::Path::separator());
+    statFileName.Format("%s%cProcessingStatistics.txt", (const char*)m_userSettings.m_outputDirectory, Poco::Path::separator());
     Common::ArchiveFile(statFileName);
     g_processingStats.WriteStatToFile(statFileName);
 
     // 8. Also write the wind field that we have created to file
-    windFileName.Format("%s%cGeneratedWindField.wxml", (const char*)g_userSettings.m_outputDirectory, Poco::Path::separator());
+    windFileName.Format("%s%cGeneratedWindField.wxml", (const char*)m_userSettings.m_outputDirectory, Poco::Path::separator());
     Common::ArchiveFile(windFileName);
     m_windDataBase.WriteToFile(windFileName);
 
     // 9. Upload the results to the FTP-server
-    if (g_userSettings.m_uploadResults)
+    if (m_userSettings.m_uploadResults)
     {
         UploadResultsToFTP();
     }
@@ -238,21 +222,21 @@ void CPostProcessing::DoPostProcessing_InstrumentCalibration()
     // 1. Find all .pak files in the directory.
     ShowMessage("--- Locating Pak Files --- ");
     std::vector<std::string> pakFileList;
-    if (g_userSettings.m_LocalDirectory.GetLength() > 3)
+    if (m_userSettings.m_LocalDirectory.GetLength() > 3)
     {
         CString messageToUser;
-        messageToUser.Format("Searching for .pak - files in directory %s", (const char*)g_userSettings.m_LocalDirectory);
+        messageToUser.Format("Searching for .pak - files in directory %s", (const char*)m_userSettings.m_LocalDirectory);
         ShowMessage(messageToUser);
 
-        const bool includeSubDirs = (g_userSettings.m_includeSubDirectories_Local > 0);
+        const bool includeSubDirs = (m_userSettings.m_includeSubDirectories_Local > 0);
         Filesystem::FileSearchCriterion limits;
-        limits.startTime = g_userSettings.m_fromDate;
-        limits.endTime = g_userSettings.m_toDate;
+        limits.startTime = m_userSettings.m_fromDate;
+        limits.endTime = m_userSettings.m_toDate;
         limits.fileExtension = ".pak";
-        Filesystem::SearchDirectoryForFiles(g_userSettings.m_LocalDirectory, includeSubDirs, pakFileList, &limits);
+        Filesystem::SearchDirectoryForFiles(m_userSettings.m_LocalDirectory, includeSubDirs, pakFileList, &limits);
     }
 
-    if (g_userSettings.m_FTPDirectory.GetLength() > 9)
+    if (m_userSettings.m_FTPDirectory.GetLength() > 9)
     {
         CheckForSpectraOnFTPServer(pakFileList);
     }
@@ -276,8 +260,6 @@ void CPostProcessing::DoPostProcessing_InstrumentCalibration()
         messageToUser.Format("%d instrument calibrations performed", numberOfCalibrations);
         ShowMessage(messageToUser);
     }
-
-
 }
 
 void CPostProcessing::DoPostProcessing_Strat()
@@ -289,11 +271,7 @@ void CPostProcessing::DoPostProcessing_Strat()
     // --------------- PREPARING FOR THE PROCESSING -----------
 
     // Checks that the evaluation is ok and that all settings makes sense.
-    if (CheckProcessingSettings())
-    {
-        ShowMessage("Exiting post processing");
-        return;
-    }
+    CheckProcessingSettings();
 
     // Prepare for the evaluation by reading in the reference files
     if (PrepareEvaluation())
@@ -306,19 +284,19 @@ void CPostProcessing::DoPostProcessing_Strat()
 
     // 1. Find all .pak files in the directory.
     std::vector<std::string> pakFileList;
-    if (g_userSettings.m_LocalDirectory.GetLength() > 3)
+    if (m_userSettings.m_LocalDirectory.GetLength() > 3)
     {
-        messageToUser.Format("Searching for .pak - files in directory %s", (const char*)g_userSettings.m_LocalDirectory);
+        messageToUser.Format("Searching for .pak - files in directory %s", (const char*)m_userSettings.m_LocalDirectory);
         ShowMessage(messageToUser);
 
-        const bool includeSubDirs = (g_userSettings.m_includeSubDirectories_Local > 0);
+        const bool includeSubDirs = (m_userSettings.m_includeSubDirectories_Local > 0);
         Filesystem::FileSearchCriterion limits;
-        limits.startTime = g_userSettings.m_fromDate;
-        limits.endTime = g_userSettings.m_toDate;
+        limits.startTime = m_userSettings.m_fromDate;
+        limits.endTime = m_userSettings.m_toDate;
         limits.fileExtension = ".pak";
-        Filesystem::SearchDirectoryForFiles(g_userSettings.m_LocalDirectory, includeSubDirs, pakFileList, &limits);
+        Filesystem::SearchDirectoryForFiles(m_userSettings.m_LocalDirectory, includeSubDirs, pakFileList, &limits);
     }
-    if (g_userSettings.m_FTPDirectory.GetLength() > 9)
+    if (m_userSettings.m_FTPDirectory.GetLength() > 9)
     {
         CheckForSpectraOnFTPServer(pakFileList);
     }
@@ -345,7 +323,7 @@ void CPostProcessing::DoPostProcessing_Strat()
     ShowMessage("Calculation Done");
 
     // 7. Write the statistics
-    statFileName.Format("%s%cProcessingStatistics.txt", (const char*)g_userSettings.m_outputDirectory, Poco::Path::separator());
+    statFileName.Format("%s%cProcessingStatistics.txt", (const char*)m_userSettings.m_outputDirectory, Poco::Path::separator());
     Common::ArchiveFile(statFileName);
     g_processingStats.WriteStatToFile(statFileName);
 }
@@ -354,9 +332,9 @@ void CPostProcessing::CheckForSpectraOnFTPServer(std::vector<std::string>& fileL
 {
     Communication::CFTPServerConnection serverDownload;
 
-    int ret = serverDownload.DownloadDataFromFTP(g_userSettings.m_FTPDirectory,
-        g_userSettings.m_FTPUsername,
-        g_userSettings.m_FTPPassword,
+    int ret = serverDownload.DownloadDataFromFTP(m_userSettings.m_FTPDirectory,
+        m_userSettings.m_FTPUsername,
+        m_userSettings.m_FTPPassword,
         fileList);
 
     if (ret == 0)
@@ -386,19 +364,19 @@ void CPostProcessing::EvaluateScans(const std::vector<std::string>& pakFileList,
     }
 
     // Keep the user informed about what we're doing
-    messageToUser.Format("%ld spectrum files found. Begin evaluation using %d threads.", s_nFilesToProcess, g_userSettings.m_maxThreadNum);
+    messageToUser.Format("%ld spectrum files found. Begin evaluation using %d threads.", s_nFilesToProcess, m_userSettings.m_maxThreadNum);
     ShowMessage(messageToUser);
 
     // start the threads
-    std::vector<std::thread> evalThreads(g_userSettings.m_maxThreadNum);
-    for (unsigned int threadIdx = 0; threadIdx < g_userSettings.m_maxThreadNum; ++threadIdx)
+    std::vector<std::thread> evalThreads(m_userSettings.m_maxThreadNum);
+    for (unsigned int threadIdx = 0; threadIdx < m_userSettings.m_maxThreadNum; ++threadIdx)
     {
-        std::thread t{ EvaluateScansThread };
+        std::thread t{ EvaluateScansThread, m_userSettings };
         evalThreads[threadIdx] = std::move(t);
     }
 
     // make sure that all threads have time to finish before we say that we're ready
-    for (unsigned int threadIdx = 0; threadIdx < g_userSettings.m_maxThreadNum; ++threadIdx)
+    for (unsigned int threadIdx = 0; threadIdx < m_userSettings.m_maxThreadNum; ++threadIdx)
     {
         evalThreads[threadIdx].join();
     }
@@ -410,7 +388,7 @@ void CPostProcessing::EvaluateScans(const std::vector<std::string>& pakFileList,
     ShowMessage(messageToUser);
 }
 
-void EvaluateScansThread()
+void EvaluateScansThread(const Configuration::CUserConfiguration& userSettings)
 {
     std::string fileName;
 
@@ -426,9 +404,9 @@ void EvaluateScansThread()
         // evaluate the .pak-file in all the specified fit-windows and retrieve the name of the 
         // eval-logs. If any of the fit-windows fails then the scan is not inserted.
         bool evaluationSucceeded = true;
-        for (int fitWindowIndex = 0; fitWindowIndex < g_userSettings.m_nFitWindowsToUse; ++fitWindowIndex)
+        for (int fitWindowIndex = 0; fitWindowIndex < userSettings.m_nFitWindowsToUse; ++fitWindowIndex)
         {
-            if (0 != eval.EvaluateScan(fileName, g_userSettings.m_fitWindowsToUse[fitWindowIndex], &evalLog[fitWindowIndex], &scanProperties[fitWindowIndex]))
+            if (0 != eval.EvaluateScan(fileName, userSettings.m_fitWindowsToUse[fitWindowIndex], &evalLog[fitWindowIndex], &scanProperties[fitWindowIndex]))
             {
                 evaluationSucceeded = false;
                 break;
@@ -438,7 +416,7 @@ void EvaluateScansThread()
         if (evaluationSucceeded)
         {
             // If we made it this far then the measurement is ok, insert it into the list!
-            AddResultToList(fileName, evalLog, scanProperties[g_userSettings.m_mainFitWindow]);
+            AddResultToList(fileName, evalLog, scanProperties[userSettings.m_mainFitWindow], userSettings);
 
             // Tell the user what is happening
             novac::CString messageToUser;
@@ -454,7 +432,7 @@ void EvaluateScansThread()
     }
 }
 
-void AddResultToList(const novac::CString& pakFileName, const novac::CString(&evalLog)[MAX_FIT_WINDOWS], const CPlumeInScanProperty& scanProperties)
+void AddResultToList(const novac::CString& pakFileName, const novac::CString(&evalLog)[MAX_FIT_WINDOWS], const CPlumeInScanProperty& scanProperties, const Configuration::CUserConfiguration& userSettings)
 {
     // these are not used...
     novac::CString serial;
@@ -464,10 +442,10 @@ void AddResultToList(const novac::CString& pakFileName, const novac::CString(&ev
     // Create a new Extended scan result and add it to the end of the list
     Evaluation::CExtendedScanResult newResult;
     newResult.m_pakFile.Format(pakFileName);
-    for (int fitWindowIndex = 0; fitWindowIndex < g_userSettings.m_nFitWindowsToUse; ++fitWindowIndex)
+    for (int fitWindowIndex = 0; fitWindowIndex < userSettings.m_nFitWindowsToUse; ++fitWindowIndex)
     {
         newResult.m_evalLogFile[fitWindowIndex].Format(evalLog[fitWindowIndex]);
-        newResult.m_fitWindowName[fitWindowIndex].Format(g_userSettings.m_fitWindowsToUse[fitWindowIndex]);
+        newResult.m_fitWindowName[fitWindowIndex].Format(userSettings.m_fitWindowsToUse[fitWindowIndex]);
     }
     novac::CFileUtils::GetInfoFromFileName(evalLog[0], newResult.m_startTime, serial, channel, mode);
     newResult.m_scanProperties = scanProperties;
@@ -485,16 +463,16 @@ int CPostProcessing::CheckInstrumentCalibrationSettings() const
     CDateTime now;
     int returnCode = 0;
 
-    if (!novac::IsExistingFile(g_userSettings.m_highResolutionSolarSpectrumFile))
+    if (!novac::IsExistingFile(m_userSettings.m_highResolutionSolarSpectrumFile))
     {
         std::stringstream message;
-        message << "The high resolution solar spectrum file could not be found. File given: '" << g_userSettings.m_highResolutionSolarSpectrumFile << "'" << std::endl;
+        message << "The high resolution solar spectrum file could not be found. File given: '" << m_userSettings.m_highResolutionSolarSpectrumFile << "'" << std::endl;
         ShowError(message.str());
         returnCode = 1;
     }
 
-    if (g_userSettings.m_calibrationIntervalTimeOfDayLow < 0 || g_userSettings.m_calibrationIntervalTimeOfDayLow > 86400 ||
-        g_userSettings.m_calibrationIntervalTimeOfDayHigh < 0 || g_userSettings.m_calibrationIntervalTimeOfDayHigh > 86400)
+    if (m_userSettings.m_calibrationIntervalTimeOfDayLow < 0 || m_userSettings.m_calibrationIntervalTimeOfDayLow > 86400 ||
+        m_userSettings.m_calibrationIntervalTimeOfDayHigh < 0 || m_userSettings.m_calibrationIntervalTimeOfDayHigh > 86400)
     {
         std::stringstream message;
         message << "The calibration intervals lie outside of the allowed interval [0, 86400]" << std::endl;
@@ -503,29 +481,29 @@ int CPostProcessing::CheckInstrumentCalibrationSettings() const
     }
 
     // Verify that each instrument has an initial instrument line shape file.
-    for (int instrumentIdx = 0; instrumentIdx < g_setup.NumberOfInstruments(); ++instrumentIdx)
+    for (int instrumentIdx = 0; instrumentIdx < m_setup.NumberOfInstruments(); ++instrumentIdx)
     {
-        if (g_setup.m_instrument[instrumentIdx].m_instrumentCalibration.m_initialCalibrationFile.size() == 0)
+        if (m_setup.m_instrument[instrumentIdx].m_instrumentCalibration.m_initialCalibrationFile.size() == 0)
         {
             std::stringstream message;
-            message << "No initial calibration file defined for instrument " << (const char*)g_setup.m_instrument[instrumentIdx].m_serial << std::endl;
+            message << "No initial calibration file defined for instrument " << (const char*)m_setup.m_instrument[instrumentIdx].m_serial << std::endl;
             ShowError(message.str());
             returnCode = 1;
         }
-        if (!novac::IsExistingFile(g_setup.m_instrument[instrumentIdx].m_instrumentCalibration.m_initialCalibrationFile))
+        if (!novac::IsExistingFile(m_setup.m_instrument[instrumentIdx].m_instrumentCalibration.m_initialCalibrationFile))
         {
             std::stringstream message;
-            message << "Cannot locate the initial calibration file defined for instrument " << (const char*)g_setup.m_instrument[instrumentIdx].m_serial << std::endl;
+            message << "Cannot locate the initial calibration file defined for instrument " << (const char*)m_setup.m_instrument[instrumentIdx].m_serial << std::endl;
             ShowError(message.str());
             returnCode = 1;
         }
 
         // The initial instrument line shape file is optional, but if it is defined then it must also exist.
-        if (g_setup.m_instrument[instrumentIdx].m_instrumentCalibration.m_instrumentLineshapeFile.size() > 0 &&
-             !novac::IsExistingFile(g_setup.m_instrument[instrumentIdx].m_instrumentCalibration.m_instrumentLineshapeFile))
+        if (m_setup.m_instrument[instrumentIdx].m_instrumentCalibration.m_instrumentLineshapeFile.size() > 0 &&
+            !novac::IsExistingFile(m_setup.m_instrument[instrumentIdx].m_instrumentCalibration.m_instrumentLineshapeFile))
         {
             std::stringstream message;
-            message << "Cannot locate the initial instrument line shape file defined for instrument " << (const char*)g_setup.m_instrument[instrumentIdx].m_serial << std::endl;
+            message << "Cannot locate the initial instrument line shape file defined for instrument " << (const char*)m_setup.m_instrument[instrumentIdx].m_serial << std::endl;
             ShowError(message.str());
             returnCode = 1;
         }
@@ -533,55 +511,46 @@ int CPostProcessing::CheckInstrumentCalibrationSettings() const
     return returnCode;
 }
 
-int CPostProcessing::CheckProcessingSettings() const
+void CPostProcessing::CheckProcessingSettings() const
 {
     novac::CString errorMessage;
     CDateTime now;
 
-    try {
+    ShowMessage("--- Validating settings --- ");
 
-        // Check that no instrument is duplicated in the list of instruments...
-        for (int j = 0; j < g_setup.NumberOfInstruments(); ++j)
+    // Check that no instrument is duplicated in the list of instruments...
+    for (int j = 0; j < m_setup.NumberOfInstruments(); ++j)
+    {
+        for (int k = j + 1; k < m_setup.NumberOfInstruments(); ++k)
         {
-            for (int k = j + 1; k < g_setup.NumberOfInstruments(); ++k)
+            if (Equals(m_setup.m_instrument[j].m_serial, m_setup.m_instrument[k].m_serial))
             {
-                if (Equals(g_setup.m_instrument[j].m_serial, g_setup.m_instrument[k].m_serial))
-                {
-                    errorMessage.Format("The instrument %s is defined twice in setup.xml. If the instrument has two locations then define the instrument once but with two locations. Exiting post processsing.", (const char*)g_setup.m_instrument[k].m_serial);
-                    ShowError(errorMessage);
-                    return 1;
-                }
+                errorMessage.Format("The instrument %s is defined twice in setup.xml. If the instrument has two locations then define the instrument once but with two locations. Exiting post processsing.", (const char*)m_setup.m_instrument[k].m_serial);
+                throw std::invalid_argument(errorMessage.std_str());
             }
-        }
-
-
-        // Check that, for each spectrometer, there's only one fit-window defined
-        // at each instant
-        for (int j = 0; j < g_setup.NumberOfInstruments(); ++j)
-        {
-            if (g_setup.m_instrument[j].m_eval.NumberOfFitWindows() == 1)
-            {
-                continue;
-            }
-            g_setup.m_instrument[j].m_eval.CheckSettings();
-        }
-
-        // Check that, for each spectrometer, there's only one location defined at each instant
-        for (int j = 0; j < g_setup.NumberOfInstruments(); ++j)
-        {
-            if (g_setup.m_instrument[j].m_location.GetLocationNum() == 1)
-            {
-                continue;
-            }
-            g_setup.m_instrument[j].m_location.CheckSettings();
         }
     }
-    catch (std::invalid_argument& ex) {
-        ShowError(ex.what());
-        return 1;
+
+    // Check that, for each spectrometer, there's only one fit-window defined
+    // at each instant
+    for (int j = 0; j < m_setup.NumberOfInstruments(); ++j)
+    {
+        if (m_setup.m_instrument[j].m_eval.NumberOfFitWindows() == 1)
+        {
+            continue;
+        }
+        m_setup.m_instrument[j].m_eval.CheckSettings();
     }
 
-    return 0;
+    // Check that, for each spectrometer, there's only one location defined at each instant
+    for (int j = 0; j < m_setup.NumberOfInstruments(); ++j)
+    {
+        if (m_setup.m_instrument[j].m_location.GetLocationNum() == 1)
+        {
+            continue;
+        }
+        m_setup.m_instrument[j].m_location.CheckSettings();
+    }
 }
 
 novac::CString CPostProcessing::GetAbsolutePathFromRelative(const novac::CString& path)
@@ -600,16 +569,16 @@ int CPostProcessing::PrepareEvaluation()
     bool failure = false;
 
     // Loop through each of the configured instruments
-    for (int instrumentIndex = 0; instrumentIndex < g_setup.NumberOfInstruments(); ++instrumentIndex)
+    for (int instrumentIndex = 0; instrumentIndex < m_setup.NumberOfInstruments(); ++instrumentIndex)
     {
         // For each instrument, loop through the fit-windows that are defined
-        int fitWindowNum = g_setup.m_instrument[instrumentIndex].m_eval.NumberOfFitWindows();
+        int fitWindowNum = m_setup.m_instrument[instrumentIndex].m_eval.NumberOfFitWindows();
         for (int fitWindowIndex = 0; fitWindowIndex < fitWindowNum; ++fitWindowIndex)
         {
             novac::CFitWindow window;
 
             // get the fit window
-            g_setup.m_instrument[instrumentIndex].m_eval.GetFitWindow(fitWindowIndex, window, fromTime, toTime);
+            m_setup.m_instrument[instrumentIndex].m_eval.GetFitWindow(fitWindowIndex, window, fromTime, toTime);
 
             // For each reference in the fit-window, read it in and make sure that it exists...
             for (int referenceIndex = 0; referenceIndex < window.nRef; ++referenceIndex)
@@ -620,10 +589,10 @@ int CPostProcessing::PrepareEvaluation()
                     // The reference file was not given in the configuration. Try to generate a configuration
                     //  from the cross section, slit-function and wavelength calibration. These three must then 
                     //  exist or the evaluation fails.
-                    if (!ConvolveReference(window.ref[referenceIndex], g_setup.m_instrument[instrumentIndex].m_serial))
+                    if (!ConvolveReference(window.ref[referenceIndex], m_setup.m_instrument[instrumentIndex].m_serial))
                     {
                         errorMessage.Format("Failed to create reference for fit window '%s' for spectrometer %s.",
-                            window.ref[referenceIndex].m_specieName.c_str(), (const char*)g_setup.m_instrument[instrumentIndex].m_serial);
+                            window.ref[referenceIndex].m_specieName.c_str(), (const char*)m_setup.m_instrument[instrumentIndex].m_serial);
                         ShowMessage(errorMessage);
                         failure = true;
                         continue;
@@ -723,8 +692,8 @@ int CPostProcessing::PrepareEvaluation()
             }
 
             // If we've made it this far, then we've managed to read in all the references. Now
-            // store the data in g_setup
-            g_setup.m_instrument[instrumentIndex].m_eval.SetFitWindow(fitWindowIndex, window, fromTime, toTime);
+            // store the data in m_setup
+            m_setup.m_instrument[instrumentIndex].m_eval.SetFitWindow(fitWindowIndex, window, fromTime, toTime);
         }
     }
 
@@ -738,129 +707,95 @@ int CPostProcessing::PrepareEvaluation()
     }
 }
 
-int CPostProcessing::ReadWindField()
+void CPostProcessing::ReadWindField()
 {
+    ShowMessage("--- Reading Wind information --- ");
+
     novac::CString name1, name2, name3, path1, path2, path3, messageToUser;
     Common common;
-    FileHandler::CXMLWindFileReader reader{ m_log };
+    FileHandler::CXMLWindFileReader reader{ m_log, m_userSettings };
 
-    if (g_userSettings.m_windFieldFileOption == 0)
+    if (m_userSettings.m_windFieldFileOption == 0)
     {
-
         // If the user has given a file-name, then try to use that one
-        if (g_userSettings.m_windFieldFile.GetLength() > 3)
+        if (m_userSettings.m_windFieldFile.GetLength() > 3)
         {
-            messageToUser.Format("Reading wind field from file: %s", (const char*)g_userSettings.m_windFieldFile);
+            messageToUser.Format("Reading wind field from file: %s", (const char*)m_userSettings.m_windFieldFile);
             ShowMessage(messageToUser);
 
-            if (reader.ReadWindFile(g_userSettings.m_windFieldFile, m_windDataBase))
-            {
-                messageToUser.Format("Failed to parse wind field file: %s", (const char*)g_userSettings.m_windFieldFile);
-                ShowMessage(messageToUser);
-                return 1;
-            }
-            else
-            {
-                messageToUser.Format("Parsed %s containing %d wind data items", (const char*)g_userSettings.m_windFieldFile, m_windDataBase.GetDataBaseSize());
-                ShowMessage(messageToUser);
+            reader.ReadWindFile(m_userSettings.m_windFieldFile, m_windDataBase);
 
-                name1.Format("%sParsedWindField.wxml", (const char*)common.m_exePath);
-                m_windDataBase.WriteToFile(name1);
-                return 0;
-            }
+            messageToUser.Format("Parsed %s containing %d wind data items", (const char*)m_userSettings.m_windFieldFile, m_windDataBase.GetDataBaseSize());
+            ShowMessage(messageToUser);
+
+            name1.Format("%sParsedWindField.wxml", (const char*)common.m_exePath);
+            m_windDataBase.WriteToFile(name1);
+
+            return;
         }
-        else
+
+        // Get the name of the volcano that we are about to process...
+        //  there are two options, either the full name or the simple name
+        g_volcanoes.GetVolcanoName(m_userSettings.m_volcano, name1);
+        g_volcanoes.GetSimpleVolcanoName(m_userSettings.m_volcano, name2);
+        g_volcanoes.GetVolcanoCode(m_userSettings.m_volcano, name3);
+
+        // Get the path to the executable, so that we know where to start looking
+        path1.Format("%sconfiguration%c%s.wxml", (const char*)common.m_exePath, Poco::Path::separator(), (const char*)name1);
+        path2.Format("%sconfiguration%c%s.wxml", (const char*)common.m_exePath, Poco::Path::separator(), (const char*)name2);
+        path3.Format("%sconfiguration%c%s.wxml", (const char*)common.m_exePath, Poco::Path::separator(), (const char*)name3);
+
+        // check which of the files exists
+        if (Filesystem::IsExistingFile(path1))
         {
-            // Get the name of the volcano that we are about to process...
-            //  there are two options, either the full name or the simple name
-            g_volcanoes.GetVolcanoName(g_userSettings.m_volcano, name1);
-            g_volcanoes.GetSimpleVolcanoName(g_userSettings.m_volcano, name2);
-            g_volcanoes.GetVolcanoCode(g_userSettings.m_volcano, name3);
+            messageToUser.Format("Reading wind field from file: %s", (const char*)path1);
+            ShowMessage(messageToUser);
 
-            // Get the path to the executable, so that we know where to start looking
-            path1.Format("%sconfiguration%c%s.wxml", (const char*)common.m_exePath, Poco::Path::separator(), (const char*)name1);
-            path2.Format("%sconfiguration%c%s.wxml", (const char*)common.m_exePath, Poco::Path::separator(), (const char*)name2);
-            path3.Format("%sconfiguration%c%s.wxml", (const char*)common.m_exePath, Poco::Path::separator(), (const char*)name3);
+            reader.ReadWindFile(path1, m_windDataBase);
 
-            // check which of the files exists
-            if (Filesystem::IsExistingFile(path1))
-            {
-                messageToUser.Format("Reading wind field from file: %s", (const char*)path1);
-                ShowMessage(messageToUser);
-
-                if (reader.ReadWindFile(path1, m_windDataBase))
-                {
-                    messageToUser.Format("Failed to parse wind field file: %s", (const char*)path1);
-                    ShowMessage(messageToUser);
-                    return 1;
-                }
-                else
-                {
-                    return 0;
-                }
-
-            }
-            else if (Filesystem::IsExistingFile(path2))
-            {
-                messageToUser.Format("Reading wind field from file: %s", (const char*)path2);
-                ShowMessage(messageToUser);
-
-                if (reader.ReadWindFile(path2, m_windDataBase))
-                {
-                    messageToUser.Format("Failed to parse wind field file: %s", (const char*)path2);
-                    ShowMessage(messageToUser);
-                    return 1;
-                }
-                else
-                {
-                    return 0;
-                }
-            }
-            else if (Filesystem::IsExistingFile(path3))
-            {
-                messageToUser.Format("Reading wind field from file: %s", (const char*)path3);
-                ShowMessage(messageToUser);
-
-                if (reader.ReadWindFile(path3, m_windDataBase))
-                {
-                    messageToUser.Format("Failed to parse wind field file: %s", (const char*)path3);
-                    ShowMessage(messageToUser);
-                    return 1;
-                }
-                else
-                {
-                    return 0;
-                }
-            }
-            else
-            {
-                messageToUser.Format("Cannot find wind field file. Attempted to read: %s, %s and %s", (const char*)path1, (const char*)path2, (const char*)path3);
-                ShowMessage(messageToUser);
-                return 1;
-            }
+            return;
         }
-        return 1; // fail, should never get here
+
+        if (Filesystem::IsExistingFile(path2))
+        {
+            messageToUser.Format("Reading wind field from file: %s", (const char*)path2);
+            ShowMessage(messageToUser);
+
+            reader.ReadWindFile(path2, m_windDataBase);
+
+            return;
+        }
+
+        if (Filesystem::IsExistingFile(path3))
+        {
+            messageToUser.Format("Reading wind field from file: %s", (const char*)path3);
+            ShowMessage(messageToUser);
+
+            reader.ReadWindFile(path3, m_windDataBase);
+
+            return;
+        }
+
+        messageToUser.Format("Cannot find wind field file. Attempted to read: %s, %s and %s", (const char*)path1, (const char*)path2, (const char*)path3);
+        throw std::invalid_argument(messageToUser.c_str());
     }
 
     // If the user has specified a directory of files...
-    if (g_userSettings.m_windFieldFileOption == 1)
+    if (m_userSettings.m_windFieldFileOption == 1)
     {
-        if (reader.ReadWindDirectory(g_userSettings.m_windFieldFile, m_windDataBase, &g_userSettings.m_fromDate, &g_userSettings.m_toDate))
-        {
-            return 1;
-        }
-        return 0;
+        reader.ReadWindDirectory(m_userSettings.m_windFieldFile, m_windDataBase, &m_userSettings.m_fromDate, &m_userSettings.m_toDate);
+        return;
     }
 
     // should never get to this point!
-    return 1;
+    throw std::logic_error("Invalid wind field file option, failed to read winf field.");
 }
 
 int CPostProcessing::PreparePlumeHeights()
 {
     // we need to construct a default plume height to use, if there's nothing else...
     Geometry::CPlumeHeight plumeHeight;
-    plumeHeight.m_plumeAltitude = g_volcanoes.GetPeakAltitude(g_userSettings.m_volcano);
+    plumeHeight.m_plumeAltitude = g_volcanoes.GetPeakAltitude(m_userSettings.m_volcano);
     plumeHeight.m_plumeAltitudeSource = Meteorology::MET_DEFAULT;
     plumeHeight.m_validFrom = CDateTime(0, 0, 0, 0, 0, 0);
     plumeHeight.m_validTo = CDateTime(9999, 12, 31, 23, 59, 59);
@@ -870,13 +805,13 @@ int CPostProcessing::PreparePlumeHeights()
     double maxInstrumentAltitude = -1e6;
     Configuration::CInstrumentLocation location;
     novac::CString volcanoName;
-    g_volcanoes.GetVolcanoName(g_userSettings.m_volcano, volcanoName);
-    for (int k = 0; k < g_setup.NumberOfInstruments(); ++k)
+    g_volcanoes.GetVolcanoName(m_userSettings.m_volcano, volcanoName);
+    for (int k = 0; k < m_setup.NumberOfInstruments(); ++k)
     {
-        unsigned long N = g_setup.m_instrument[k].m_location.GetLocationNum();
+        unsigned long N = m_setup.m_instrument[k].m_location.GetLocationNum();
         for (unsigned int j = 0; j < N; ++j)
         {
-            g_setup.m_instrument[k].m_location.GetLocation(j, location);
+            m_setup.m_instrument[k].m_location.GetLocation(j, location);
             if (Equals(volcanoName, location.m_volcano))
             {
                 maxInstrumentAltitude = std::max(maxInstrumentAltitude, double(location.m_altitude));
@@ -885,11 +820,11 @@ int CPostProcessing::PreparePlumeHeights()
     }
     if (maxInstrumentAltitude > 0)
     {
-        plumeHeight.m_plumeAltitudeError = fabs(g_volcanoes.GetPeakAltitude(g_userSettings.m_volcano) - maxInstrumentAltitude) / 2.0;
+        plumeHeight.m_plumeAltitudeError = fabs(g_volcanoes.GetPeakAltitude(m_userSettings.m_volcano) - maxInstrumentAltitude) / 2.0;
     }
     else
     {
-        plumeHeight.m_plumeAltitudeError = g_volcanoes.GetPeakAltitude(g_userSettings.m_volcano) / 2.0;
+        plumeHeight.m_plumeAltitudeError = g_volcanoes.GetPeakAltitude(m_userSettings.m_volcano) / 2.0;
     }
 
     m_plumeDataBase.InsertPlumeHeight(plumeHeight);
@@ -918,7 +853,7 @@ void CPostProcessing::CalculateGeometries(novac::CList <Evaluation::CExtendedSca
     auto pos1 = evalLogFiles.GetHeadPosition();
     while (pos1 != nullptr)
     {
-        const novac::CString& evalLog1 = evalLogFiles.GetAt(pos1).m_evalLogFile[g_userSettings.m_mainFitWindow];
+        const novac::CString& evalLog1 = evalLogFiles.GetAt(pos1).m_evalLogFile[m_userSettings.m_mainFitWindow];
         const CPlumeInScanProperty& plume1 = evalLogFiles.GetNext(pos1).m_scanProperties;
 
         ++nFilesChecked1; // for debugging...
@@ -931,7 +866,7 @@ void CPostProcessing::CalculateGeometries(novac::CList <Evaluation::CExtendedSca
         }
 
         // if this scan does not see a large enough portion of the plume, then ignore it...
-        if (plume1.completeness < g_userSettings.m_calcGeometry_CompletenessLimit)
+        if (plume1.completeness < m_userSettings.m_calcGeometry_CompletenessLimit)
         {
             continue;
         }
@@ -954,13 +889,13 @@ void CPostProcessing::CalculateGeometries(novac::CList <Evaluation::CExtendedSca
         bool successfullyCombined = false; // this is true if evalLog1 was combined with (at least one) other eval-log to make a geomery calculation.
         while (pos2 != nullptr)
         {
-            const novac::CString& evalLog2 = evalLogFiles.GetAt(pos2).m_evalLogFile[g_userSettings.m_mainFitWindow];
+            const novac::CString& evalLog2 = evalLogFiles.GetAt(pos2).m_evalLogFile[m_userSettings.m_mainFitWindow];
             const CPlumeInScanProperty& plume2 = evalLogFiles.GetNext(pos2).m_scanProperties;
 
             ++nFilesChecked2; // for debugging...
 
             // if this scan does not see a large enough portion of the plume, then ignore it...
-            if (plume2.completeness < g_userSettings.m_calcGeometry_CompletenessLimit)
+            if (plume2.completeness < m_userSettings.m_calcGeometry_CompletenessLimit)
             {
                 continue;
             }
@@ -971,7 +906,7 @@ void CPostProcessing::CalculateGeometries(novac::CList <Evaluation::CExtendedSca
             // The time elapsed between the two measurements must not be more than 
             // the user defined time-limit (in seconds)
             double timeDifference = fabs(CDateTime::Difference(startTime1, startTime2));
-            if (timeDifference > g_userSettings.m_calcGeometry_MaxTimeDifference)
+            if (timeDifference > m_userSettings.m_calcGeometry_MaxTimeDifference)
             {
                 pos2 = nullptr;
                 continue;
@@ -991,14 +926,14 @@ void CPostProcessing::CalculateGeometries(novac::CList <Evaluation::CExtendedSca
             }
 
             // Get the locations of the two instruments
-            if (g_setup.GetInstrumentLocation(serial1, startTime1, location[0]))
+            if (m_setup.GetInstrumentLocation(serial1, startTime1, location[0]))
                 continue;
-            if (g_setup.GetInstrumentLocation(serial2, startTime2, location[1]))
+            if (m_setup.GetInstrumentLocation(serial2, startTime2, location[1]))
                 continue;
 
             // make sure that the distance between the instruments is not too long....
             double instrumentDistance = Common::GPSDistance(location[0].m_latitude, location[0].m_longitude, location[1].m_latitude, location[1].m_longitude);
-            if (instrumentDistance < g_userSettings.m_calcGeometry_MinDistance || instrumentDistance > g_userSettings.m_calcGeometry_MaxDistance)
+            if (instrumentDistance < m_userSettings.m_calcGeometry_MinDistance || instrumentDistance > m_userSettings.m_calcGeometry_MaxDistance)
             {
                 ++nTooLongdistance;
                 continue;
@@ -1012,17 +947,17 @@ void CPostProcessing::CalculateGeometries(novac::CList <Evaluation::CExtendedSca
             if (Geometry::CGeometryCalculator::CalculateGeometry(plume1, startTime1, plume2, startTime2, location, *result))
             {
                 // Check the quality of the measurement before we insert it...
-                if (result->m_plumeAltitudeError > g_userSettings.m_calcGeometry_MaxPlumeAltError)
+                if (result->m_plumeAltitudeError > m_userSettings.m_calcGeometry_MaxPlumeAltError)
                 {
                     ++nTooLargeAbsoluteError;
                     delete result; // too bad, continue.
                 }
-                else if ((result->m_plumeAltitudeError > 0.5 * result->m_plumeAltitude) || (result->m_windDirectionError > g_userSettings.m_calcGeometry_MaxWindDirectionError))
+                else if ((result->m_plumeAltitudeError > 0.5 * result->m_plumeAltitude) || (result->m_windDirectionError > m_userSettings.m_calcGeometry_MaxWindDirectionError))
                 {
                     ++nTooLargeRelativeError;
                     delete result; // too bad, continue.
                 }
-                else if (result->m_windDirectionError > g_userSettings.m_calcGeometry_MaxWindDirectionError)
+                else if (result->m_windDirectionError > m_userSettings.m_calcGeometry_MaxWindDirectionError)
                 {
                     delete result; // too bad, continue.
                 }
@@ -1057,7 +992,7 @@ void CPostProcessing::CalculateGeometries(novac::CList <Evaluation::CExtendedSca
             Geometry::CPlumeHeight plumeHeight;
 
             // Get the location of the instrument
-            if (g_setup.GetInstrumentLocation(serial1, startTime1, location[0]))
+            if (m_setup.GetInstrumentLocation(serial1, startTime1, location[0]))
                 continue;
 
             Geometry::CGeometryResult* result = new Geometry::CGeometryResult();
@@ -1070,7 +1005,7 @@ void CPostProcessing::CalculateGeometries(novac::CList <Evaluation::CExtendedSca
             while (gp != nullptr)
             {
                 const Geometry::CGeometryResult* oldResult = geometryResults.GetPrev(gp);
-                if (fabs(CDateTime::Difference(oldResult->m_averageStartTime, startTime1)) < g_userSettings.m_calcGeometryValidTime)
+                if (fabs(CDateTime::Difference(oldResult->m_averageStartTime, startTime1)) < m_userSettings.m_calcGeometryValidTime)
                 {
                     if ((oldResult->m_plumeAltitudeError < plumeHeight.m_plumeAltitudeError) && (oldResult->m_plumeAltitude > NOT_A_NUMBER))
                     {
@@ -1137,13 +1072,13 @@ void CPostProcessing::CalculateFluxes(novac::CList <Evaluation::CExtendedScanRes
     while (pos != nullptr)
     {
         // Get the name of this eval-log
-        const novac::CString& evalLog = evalLogFiles.GetAt(pos).m_evalLogFile[g_userSettings.m_mainFitWindow];
+        const novac::CString& evalLog = evalLogFiles.GetAt(pos).m_evalLogFile[m_userSettings.m_mainFitWindow];
         const CPlumeInScanProperty& plume = evalLogFiles.GetNext(pos).m_scanProperties;
 
         // if the completeness is too low then ignore this scan.
-        if (plume.completeness < (g_userSettings.m_completenessLimitFlux + 0.01))
+        if (plume.completeness < (m_userSettings.m_completenessLimitFlux + 0.01))
         {
-            messageToUser.Format(" - Scan %s has completeness = %.2lf which is less than limit of %.2lf. Rejected!", (const char*)evalLog, plume.completeness, g_userSettings.m_completenessLimitFlux);
+            messageToUser.Format(" - Scan %s has completeness = %.2lf which is less than limit of %.2lf. Rejected!", (const char*)evalLog, plume.completeness, m_userSettings.m_completenessLimitFlux);
             ShowMessage(messageToUser);
             continue;
         }
@@ -1181,7 +1116,7 @@ void CPostProcessing::CalculateFluxes(novac::CList <Evaluation::CExtendedScanRes
     stat.AttachFluxList(calculatedFluxes);
 
     novac::CString fluxStatFileName;
-    fluxStatFileName.Format("%s%c%s", g_userSettings.m_outputDirectory.c_str(), Poco::Path::separator(), "FluxStatistics.txt");
+    fluxStatFileName.Format("%s%c%s", m_userSettings.m_outputDirectory.c_str(), Poco::Path::separator(), "FluxStatistics.txt");
     stat.WriteFluxStat(fluxStatFileName);
 }
 
@@ -1194,7 +1129,7 @@ void CPostProcessing::WriteFluxResult_XML(novac::CList <Flux::CFluxResult, Flux:
     now.SetToNow();
 
     // the name and path of the final flux-log file
-    fluxLogFile.Format("%s%cFluxLog.xml", (const char*)g_userSettings.m_outputDirectory, Poco::Path::separator());
+    fluxLogFile.Format("%s%cFluxLog.xml", (const char*)m_userSettings.m_outputDirectory, Poco::Path::separator());
 
     // Check if there's already a file like this, then archive it...
     Common::ArchiveFile(fluxLogFile);
@@ -1302,7 +1237,7 @@ void CPostProcessing::WriteFluxResult_XML(novac::CList <Flux::CFluxResult, Flux:
     fclose(f);
 
     // ------------- we also need an xslt - file to display the output -----------------
-    styleFile.Format("%s%cfluxresult.xsl", (const char*)g_userSettings.m_outputDirectory, Poco::Path::separator());
+    styleFile.Format("%s%cfluxresult.xsl", (const char*)m_userSettings.m_outputDirectory, Poco::Path::separator());
 
     // Try to open the file
     f = fopen(styleFile, "w");
@@ -1346,7 +1281,7 @@ void CPostProcessing::WriteFluxResult_Txt(novac::CList <Flux::CFluxResult, Flux:
     now.SetToNow();
 
     // the name and path of the final flux-log file
-    fluxLogFile.Format("%s%cFluxLog.txt", (const char*)g_userSettings.m_outputDirectory, Poco::Path::separator());
+    fluxLogFile.Format("%s%cFluxLog.txt", (const char*)m_userSettings.m_outputDirectory, Poco::Path::separator());
 
     // Try to open the file
     if (Filesystem::IsExistingFile(fluxLogFile))
@@ -1460,7 +1395,7 @@ void CPostProcessing::WriteCalculatedGeometriesToFile(novac::CList <Geometry::CG
 
     FILE* f = nullptr;
     novac::CString geomLogFile;
-    geomLogFile.Format("%s%cGeometryLog.txt", (const char*)g_userSettings.m_outputDirectory, Poco::Path::separator());
+    geomLogFile.Format("%s%cGeometryLog.txt", (const char*)m_userSettings.m_outputDirectory, Poco::Path::separator());
 
     if (Filesystem::IsExistingFile(geomLogFile))
     {
@@ -1535,13 +1470,13 @@ void CPostProcessing::InsertCalculatedGeometriesIntoDataBase(novac::CList <Geome
         if (result->m_windDirection > NOT_A_NUMBER)
         {
             // get the location of the instrument at the time of the measurement
-            g_setup.GetInstrumentLocation(result->m_instr1, result->m_averageStartTime, location);
+            m_setup.GetInstrumentLocation(result->m_instr1, result->m_averageStartTime, location);
 
             // get the time-interval that the measurement is valid for
             validFrom = CDateTime(result->m_averageStartTime);
-            validFrom.Decrement(g_userSettings.m_calcGeometryValidTime);
+            validFrom.Decrement(m_userSettings.m_calcGeometryValidTime);
             validTo = CDateTime(result->m_averageStartTime);
-            validTo.Increment(g_userSettings.m_calcGeometryValidTime);
+            validTo.Increment(m_userSettings.m_calcGeometryValidTime);
 
             // insert the wind-direction into the wind database
             m_windDataBase.InsertWindDirection(validFrom, validTo, result->m_windDirection, result->m_windDirectionError, result->m_calculationType, nullptr);
@@ -1571,7 +1506,7 @@ void CPostProcessing::CalculateDualBeamWindSpeeds(novac::CList <Evaluation::CExt
     auto logPosition = evalLogs.GetHeadPosition();
     while (logPosition != nullptr)
     {
-        const novac::CString& fileNameAndPath = evalLogs.GetNext(logPosition).m_evalLogFile[g_userSettings.m_mainFitWindow];
+        const novac::CString& fileNameAndPath = evalLogs.GetNext(logPosition).m_evalLogFile[m_userSettings.m_mainFitWindow];
 
         // to know the start-time of the measurement, we need to 
         // extract just the file-name, i.e. remove the path
@@ -1584,7 +1519,7 @@ void CPostProcessing::CalculateDualBeamWindSpeeds(novac::CList <Evaluation::CExt
         {
             ++nWindMeasFound;
             // first check if this is a heidelberg instrument
-            if (g_setup.GetInstrumentLocation(serial, startTime, location))
+            if (m_setup.GetInstrumentLocation(serial, startTime, location))
                 continue;
 
             if (location.m_instrumentType == INSTRUMENT_TYPE::INSTR_HEIDELBERG)
@@ -1616,7 +1551,7 @@ void CPostProcessing::CalculateDualBeamWindSpeeds(novac::CList <Evaluation::CExt
     ShowMessage(userMessage);
 
     // Create the dual-beam log-file
-    windLogFile.Format("%s%cDualBeamLog.txt", (const char*)g_userSettings.m_outputDirectory, Poco::Path::separator());
+    windLogFile.Format("%s%cDualBeamLog.txt", (const char*)m_userSettings.m_outputDirectory, Poco::Path::separator());
     calculator.WriteWindSpeedLogHeader(windLogFile);
 
 
@@ -1638,7 +1573,7 @@ void CPostProcessing::CalculateDualBeamWindSpeeds(novac::CList <Evaluation::CExt
         m_plumeDataBase.GetPlumeHeight(startTime, plumeHeight);
 
         // Get the location of the instrument at the time of the measurement
-        g_setup.GetInstrumentLocation(serial, startTime, location);
+        m_setup.GetInstrumentLocation(serial, startTime, location);
 
         // calculate the speed of the wind at the time of the measurement
         if (0 == calculator.CalculateWindSpeed(fileNameAndPath, nonsenseString, location, plumeHeight, windField))
@@ -1647,7 +1582,7 @@ void CPostProcessing::CalculateDualBeamWindSpeeds(novac::CList <Evaluation::CExt
             calculator.AppendResultToFile(windLogFile, startTime, location, plumeHeight, windField);
 
             // insert the newly calculated wind-speed into the database
-            if (windField.GetWindSpeedError() > g_userSettings.m_dualBeam_MaxWindSpeedError)
+            if (windField.GetWindSpeedError() > m_userSettings.m_dualBeam_MaxWindSpeedError)
             {
                 userMessage.Format("-Calculated a wind-speed of %.1lf +- %.1lf m/s on %04d.%02d.%02d at %02d:%02d. Error too large, measurement discarded.", windField.GetWindSpeed(), windField.GetWindSpeedError(),
                     startTime.year, startTime.month, startTime.day, startTime.hour, startTime.minute);
@@ -1707,7 +1642,7 @@ void CPostProcessing::CalculateDualBeamWindSpeeds(novac::CList <Evaluation::CExt
                 m_plumeDataBase.GetPlumeHeight(startTime, plumeHeight);
 
                 // Get the location of the instrument at the time of the measurement
-                g_setup.GetInstrumentLocation(serial, startTime, location);
+                m_setup.GetInstrumentLocation(serial, startTime, location);
 
                 // calculate the speed of the wind at the time of the measurement
                 if (0 == calculator.CalculateWindSpeed(fileNameAndPath, fileNameAndPath2, location, plumeHeight, windField))
@@ -1716,7 +1651,7 @@ void CPostProcessing::CalculateDualBeamWindSpeeds(novac::CList <Evaluation::CExt
                     calculator.AppendResultToFile(windLogFile, startTime, location, plumeHeight, windField);
 
                     // insert the newly calculated wind-speed into the database
-                    if (windField.GetWindSpeedError() > g_userSettings.m_dualBeam_MaxWindSpeedError)
+                    if (windField.GetWindSpeedError() > m_userSettings.m_dualBeam_MaxWindSpeedError)
                     {
                         userMessage.Format("-Calculated a wind-speed of %.1lf +- %.1lf m/s on %04d.%02d.%02d at %02d:%02d. Error too large, measurement discarded.", windField.GetWindSpeed(), windField.GetWindSpeedError(),
                             startTime.year, startTime.month, startTime.day, startTime.hour, startTime.minute);
@@ -1813,19 +1748,19 @@ void CPostProcessing::UploadResultsToFTP()
     novac::CList <novac::CString, novac::CString&> fileList;
 
     // 1. the geometry log file
-    fileName.Format("%s%cGeometryLog.txt", (const char*)g_userSettings.m_outputDirectory, Poco::Path::separator());
+    fileName.Format("%s%cGeometryLog.txt", (const char*)m_userSettings.m_outputDirectory, Poco::Path::separator());
     fileList.AddTail(fileName);
 
     // 2. the generated wind field
-    fileName.Format("%s%cGeneratedWindField.wxml", (const char*)g_userSettings.m_outputDirectory, Poco::Path::separator());
+    fileName.Format("%s%cGeneratedWindField.wxml", (const char*)m_userSettings.m_outputDirectory, Poco::Path::separator());
     fileList.AddTail(fileName);
 
     // 3. the generated flux log
-    fileName.Format("%s%cFluxLog.txt", (const char*)g_userSettings.m_outputDirectory, Poco::Path::separator());
+    fileName.Format("%s%cFluxLog.txt", (const char*)m_userSettings.m_outputDirectory, Poco::Path::separator());
     fileList.AddTail(fileName);
 
     // upload the files
-    connection.UploadResults(g_userSettings.m_FTPDirectory, g_userSettings.m_FTPUsername, g_userSettings.m_FTPPassword, fileList);
+    connection.UploadResults(m_userSettings.m_FTPDirectory, m_userSettings.m_FTPUsername, m_userSettings.m_FTPPassword, fileList);
 
     return;
 }
@@ -1891,7 +1826,7 @@ bool CPostProcessing::ConvolveReference(novac::CReferenceFile& ref, const novac:
 
     // Save the resulting reference, for reference...
     novac::CString tempFile;
-    tempFile.Format("%s%s_%s.xs", (const char*)g_userSettings.m_tempDirectory, (const char*)instrumentSerial, ref.m_specieName.c_str());
+    tempFile.Format("%s%s_%s.xs", (const char*)m_userSettings.m_tempDirectory, (const char*)instrumentSerial, ref.m_specieName.c_str());
     SaveCrossSectionFile(tempFile.ToStdString(), *ref.m_data);
 
     return true;
@@ -1902,13 +1837,13 @@ void CPostProcessing::LocateEvaluationLogFiles(const novac::CString& directory, 
     std::vector<std::string> evalLogFiles;
 
     novac::CString messageToUser;
-    messageToUser.Format("Searching for evaluation log - files in directory %s", (const char*)g_userSettings.m_outputDirectory);
+    messageToUser.Format("Searching for evaluation log - files in directory %s", (const char*)m_userSettings.m_outputDirectory);
     ShowMessage(messageToUser);
 
-    const bool includeSubDirs = (g_userSettings.m_includeSubDirectories_Local > 0);
+    const bool includeSubDirs = (m_userSettings.m_includeSubDirectories_Local > 0);
     Filesystem::FileSearchCriterion limits;
-    limits.startTime = g_userSettings.m_fromDate;
-    limits.endTime = g_userSettings.m_toDate;
+    limits.startTime = m_userSettings.m_fromDate;
+    limits.endTime = m_userSettings.m_toDate;
     limits.fileExtension = "_flux.txt";
     Filesystem::SearchDirectoryForFiles(directory, includeSubDirs, evalLogFiles, &limits);
 

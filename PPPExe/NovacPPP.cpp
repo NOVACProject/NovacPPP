@@ -277,7 +277,7 @@ void CalculateAllFluxes()
     {
         Common common;
 
-        CPostProcessing post{ g_logger };
+        CPostProcessing post{ g_logger, g_setup, g_userSettings };
         post.m_exePath = std::string((const char*)common.m_exePath);
 
         // Copy the settings that we have read in from the 'configuration' directory

@@ -3,6 +3,8 @@
 #include <SpectralEvaluation/DateTime.h>
 #include "Geometry/GeometryCalculator.h"
 #include <PPPLib/Meteorology/WindDataBase.h>
+#include <PPPLib/Configuration/NovacPPPConfiguration.h>
+#include <PPPLib/Configuration/UserConfiguration.h>
 #include "Geometry/PlumeDataBase.h"
 #include "Flux/FluxResult.h"
 #include "Evaluation/ExtendedScanResult.h"
@@ -23,7 +25,7 @@ class CReferenceFile;
 class CPostProcessing
 {
 public:
-    CPostProcessing(ILogger& logger);
+    CPostProcessing(ILogger& logger, Configuration::CNovacPPPConfiguration setup, Configuration::CUserConfiguration userSettings);
 
     // ----------------------------------------------------------------------
     // ---------------------- PUBLIC DATA -----------------------------------
@@ -64,17 +66,19 @@ protected:
 
     ILogger& m_log;
 
+    Configuration::CNovacPPPConfiguration m_setup;
+
+    Configuration::CUserConfiguration m_userSettings;
+
     // ----------------------------------------------------------------------
     // --------------------- PRIVATE METHODS --------------------------------
     // ----------------------------------------------------------------------
 
-
     /** Prepares for the post-processing by first making sure that
         all settings found in the configuration are ok and that
         they make sense.
-        @return 0 if all settings are ok and we should continue,
-            otherwise non-zero*/
-    int CheckProcessingSettings() const;
+        @throw std::invalid_argument if the settings are not ok and the processing cannot continue */
+    void CheckProcessingSettings() const;
 
     /** Prepares for post-processing by making sure that all settings
         relevant to instrument calibration are ok and make sense.
@@ -89,8 +93,8 @@ protected:
 
     /** Prepares for the flux calculations by reading in the relevant
         wind-field file.
-        @return 0 on success, otherwise non-zero */
-    int ReadWindField();
+        @throw std::invalid_argumetn if the wind field could not be read properly and the processing cannot continue */
+    void ReadWindField();
 
     /** Prepares for the flux calculation by setting up a reasonable
         set of plume heights. This could also read in a set from file...?
