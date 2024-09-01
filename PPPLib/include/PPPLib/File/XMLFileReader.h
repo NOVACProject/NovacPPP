@@ -66,6 +66,9 @@ protected:
     /** Closes m_File */
     void Close();
 
+    /** Returns true if the provided token equals the closing xml tag */
+    static bool IsClosingTag(const novac::CString& endTag, const char* token);
+
 private:
     /** Pointer to the next token. Should only be modified by 'NextToken()' */
     char* m_tokenPt = nullptr;
@@ -81,6 +84,5 @@ private:
 
     /** The number of lines that has been read from the file */
     long nLinesRead = 0;
-
 };
 }

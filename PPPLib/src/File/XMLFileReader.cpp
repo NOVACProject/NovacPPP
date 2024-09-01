@@ -18,6 +18,21 @@ CXMLFileReader::~CXMLFileReader()
     Close();
 }
 
+bool CXMLFileReader::IsClosingTag(const novac::CString& endTag, const char* token)
+{
+    novac::CString trimmedToken(token);
+    trimmedToken.Remove(' ');
+    trimmedToken.Trim(); // remove blanks in the beginning and in the end
+
+    if (Equals(trimmedToken, endTag))
+    {
+        return true;
+    }
+
+    return false;
+}
+
+
 bool CXMLFileReader::Open(const novac::CString& fileName)
 {
     novac::CFileException exceFile;
@@ -123,12 +138,13 @@ const char* CXMLFileReader::GetAttributeValue(const novac::CString& label)
     return attributeValue;
 }
 
-int CXMLFileReader::Parse_StringItem(const novac::CString& label, novac::CString& string) {
+int CXMLFileReader::Parse_StringItem(const novac::CString& label, novac::CString& string)
+{
     string.Format("");
 
     while (nullptr != (szToken = NextToken())) {
 
-        if (Equals(szToken, label))
+        if (IsClosingTag(label, szToken))
         {
             return 1;
         }
@@ -145,7 +161,7 @@ int CXMLFileReader::Parse_StringItem(const novac::CString& label, std::string& s
 
     while (nullptr != (szToken = NextToken())) {
 
-        if (Equals(szToken, label))
+        if (IsClosingTag(label, szToken))
         {
             return 1;
         }
@@ -203,11 +219,14 @@ int CXMLFileReader::Parse_PathItem(const novac::CString& label, std::string& pat
     }
 }
 
-int CXMLFileReader::Parse_LongItem(const novac::CString& label, long& number) {
+int CXMLFileReader::Parse_LongItem(const novac::CString& label, long& number)
+{
 
-    while (nullptr != (szToken = NextToken())) {
+    while (nullptr != (szToken = NextToken()))
+    {
 
-        if (Equals(szToken, label)) {
+        if (IsClosingTag(label, szToken))
+        {
             return 1;
         }
 
@@ -216,11 +235,14 @@ int CXMLFileReader::Parse_LongItem(const novac::CString& label, long& number) {
 
     return 0;
 }
-/** General parsing of a single, simple float item */
-int CXMLFileReader::Parse_FloatItem(const novac::CString& label, double& number) {
-    while (nullptr != (szToken = NextToken())) {
 
-        if (Equals(szToken, label)) {
+int CXMLFileReader::Parse_FloatItem(const novac::CString& label, double& number)
+{
+    while (nullptr != (szToken = NextToken()))
+    {
+
+        if (IsClosingTag(label, szToken))
+        {
             return 1;
         }
 
@@ -230,14 +252,14 @@ int CXMLFileReader::Parse_FloatItem(const novac::CString& label, double& number)
     return 0;
 }
 
-/** General parsing of a single, simple integer item */
-int CXMLFileReader::Parse_IntItem(const novac::CString& label, int& number) {
-    while (nullptr != (szToken = NextToken())) {
-
-        if (Equals(szToken, label)) {
+int CXMLFileReader::Parse_IntItem(const novac::CString& label, int& number)
+{
+    while (nullptr != (szToken = NextToken()))
+    {
+        if (IsClosingTag(label, szToken))
+        {
             return 1;
         }
-
 
         number = std::atoi(szToken);
     }
@@ -247,10 +269,12 @@ int CXMLFileReader::Parse_IntItem(const novac::CString& label, int& number) {
 
 int CXMLFileReader::Parse_IPNumber(const novac::CString& label, std::uint8_t& ip0, std::uint8_t& ip1, std::uint8_t& ip2, std::uint8_t& ip3)
 {
-    while (nullptr != (szToken = NextToken())) {
+    while (nullptr != (szToken = NextToken()))
+    {
         int i0, i1, i2, i3;
 
-        if (Equals(szToken, label)) {
+        if (IsClosingTag(label, szToken))
+        {
             return 1;
         }
 
@@ -263,11 +287,13 @@ int CXMLFileReader::Parse_IPNumber(const novac::CString& label, std::uint8_t& ip
 
     return 0;
 }
-/** General parsing of a date */
-int CXMLFileReader::Parse_Date(const novac::CString& label, CDateTime& datum) {
+
+int CXMLFileReader::Parse_Date(const novac::CString& label, CDateTime& datum)
+{
     int nFields = 0;
 
-    while (nullptr != (szToken = NextToken())) {
+    while (nullptr != (szToken = NextToken()))
+    {
         int i0 = 0;
         int i1 = 0;
         int i2 = 0;
@@ -275,19 +301,22 @@ int CXMLFileReader::Parse_Date(const novac::CString& label, CDateTime& datum) {
         int i4 = 0;
         int i5 = 0;
 
-        if (Equals(szToken, label)) {
+        if (IsClosingTag(label, szToken))
+        {
             return 1;
         }
 
         char* pt = strstr(szToken, "T");
 
-        if (pt == nullptr) {
+        if (pt == nullptr)
+        {
             nFields = sscanf(szToken, "%d.%d.%d", &i0, &i1, &i2);
             datum.year = (unsigned short)i0;
             datum.month = (unsigned char)i1;
             datum.day = (unsigned char)i2;
         }
-        else {
+        else
+        {
             nFields = sscanf(szToken, "%d.%d.%dT%d:%d:%d", &i0, &i1, &i2, &i3, &i4, &i5);
             datum.year = (unsigned short)i0;
             datum.month = (unsigned char)i1;
@@ -297,7 +326,8 @@ int CXMLFileReader::Parse_Date(const novac::CString& label, CDateTime& datum) {
             datum.second = (unsigned char)i5;
         }
 
-        if (nFields == 0) {
+        if (nFields == 0)
+        {
             // if the normal parsing didn't work, then try also to parse functional expressions...
             CDateTime::ParseDate(szToken, datum);
         }
