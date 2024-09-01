@@ -121,6 +121,14 @@ int CreateDirectoryStructure(const novac::CString& path)
     }
 }
 
+std::string GetAbsolutePathFromRelative(const std::string& path, const std::string& baseDirectory)
+{
+    Poco::Path p{ path };
+    Poco::Path exePath{ baseDirectory };
+    Poco::Path absolutePath = p.absolute(exePath);
+    return absolutePath.toString();
+}
+
 novac::CString AppendPathSeparator(novac::CString path)
 {
     if (path.Right(1) == "/" || path.Right(1) == "\\")

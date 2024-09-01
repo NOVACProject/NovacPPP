@@ -36,6 +36,10 @@ bool IsExistingFile(const novac::CString& fileName);
         @return 0 on success. */
 int CreateDirectoryStructure(const novac::CString& path);
 
+/** Transforms the given path from an relative to an absolute path using the given baseDirectory.
+    If the path is already an absolute path then it is returned as is. */
+std::string GetAbsolutePathFromRelative(const std::string& path, const std::string& baseDirectory);
+
 /** AppendPathSeparator returns a string which does end with the path-separator character of the current system. */
 novac::CString AppendPathSeparator(novac::CString path);
 

@@ -100,12 +100,7 @@ void CPostProcessing::DoPostProcessing_Flux()
     if (m_userSettings.m_doEvaluations)
     {
         // Prepare for the evaluation by reading in the reference files
-        ShowMessage("--- Reading References --- ");
-        if (PrepareEvaluation())
-        {
-            ShowMessage("Exiting post processing");
-            return;
-        }
+        PrepareEvaluation();
 
         // 1. Find all .pak files in the directory.
         ShowMessage("--- Locating Pak Files --- ");
@@ -274,11 +269,7 @@ void CPostProcessing::DoPostProcessing_Strat()
     CheckProcessingSettings();
 
     // Prepare for the evaluation by reading in the reference files
-    if (PrepareEvaluation())
-    {
-        ShowMessage("Exiting post processing");
-        return;
-    }
+    PrepareEvaluation();
 
     // --------------- DOING THE PROCESSING -----------
 
@@ -332,7 +323,8 @@ void CPostProcessing::CheckForSpectraOnFTPServer(std::vector<std::string>& fileL
 {
     Communication::CFTPServerConnection serverDownload;
 
-    int ret = serverDownload.DownloadDataFromFTP(m_userSettings.m_FTPDirectory,
+    int ret = serverDownload.DownloadDataFromFTP(
+        m_userSettings.m_FTPDirectory,
         m_userSettings.m_FTPUsername,
         m_userSettings.m_FTPPassword,
         fileList);
@@ -553,15 +545,10 @@ void CPostProcessing::CheckProcessingSettings() const
     }
 }
 
-novac::CString CPostProcessing::GetAbsolutePathFromRelative(const novac::CString& path)
+void CPostProcessing::PrepareEvaluation()
 {
-    novac::CString absolutePath;
-    absolutePath.Format("%sconfiguration%c%s", m_exePath.c_str(), Poco::Path::separator(), path.c_str());
-    return absolutePath;
-}
+    ShowMessage("--- Reading References --- ");
 
-int CPostProcessing::PrepareEvaluation()
-{
     CDateTime fromTime, toTime; //  these are not used but must be passed onto GetFitWindow...
     novac::CString errorMessage;
 
@@ -603,15 +590,15 @@ int CPostProcessing::PrepareEvaluation()
                     if (!IsExistingFile(window.ref[referenceIndex].m_path))
                     {
                         // the file does not exist, try to change it to include the path of the configuration-directory...
-                        novac::CString fileName = GetAbsolutePathFromRelative(window.ref[referenceIndex].m_path);
+                        std::string fileName = Filesystem::GetAbsolutePathFromRelative(window.ref[referenceIndex].m_path, this->m_exePath);
 
                         if (Filesystem::IsExistingFile(fileName))
                         {
-                            window.ref[referenceIndex].m_path = fileName.ToStdString();
+                            window.ref[referenceIndex].m_path = fileName;
                         }
                         else
                         {
-                            errorMessage.Format("Cannot read reference file %s", window.ref[referenceIndex].m_path.c_str());
+                            errorMessage.Format("Cannot find reference file %s", window.ref[referenceIndex].m_path.c_str());
                             ShowMessage(errorMessage);
                             failure = true;
                             continue;
@@ -659,15 +646,15 @@ int CPostProcessing::PrepareEvaluation()
                 {
 
                     // the file does not exist, try to change it to include the path of the configuration-directory...
-                    novac::CString fileName = GetAbsolutePathFromRelative(window.fraunhoferRef.m_path);
+                    std::string fileName = Filesystem::GetAbsolutePathFromRelative(window.fraunhoferRef.m_path, this->m_exePath);
 
                     if (Filesystem::IsExistingFile(fileName))
                     {
-                        window.fraunhoferRef.m_path = fileName.ToStdString();
+                        window.fraunhoferRef.m_path = fileName;
                     }
                     else
                     {
-                        errorMessage.Format("Cannot read reference file %s", window.fraunhoferRef.m_path.c_str());
+                        errorMessage.Format("Cannot find reference file %s", window.fraunhoferRef.m_path.c_str());
                         ShowMessage(errorMessage);
                         failure = true;
                         continue;
@@ -699,11 +686,7 @@ int CPostProcessing::PrepareEvaluation()
 
     if (failure)
     {
-        return 1;
-    }
-    else
-    {
-        return 0;
+        throw std::invalid_argument("failed to setup evaluation");
     }
 }
 
@@ -1770,10 +1753,10 @@ bool CPostProcessing::ConvolveReference(novac::CReferenceFile& ref, const novac:
     // Make sure the high-res section do exist.
     if (!IsExistingFile(ref.m_crossSectionFile))
     {
-        novac::CString fullPath = GetAbsolutePathFromRelative(ref.m_crossSectionFile);
+        std::string fullPath = Filesystem::GetAbsolutePathFromRelative(ref.m_crossSectionFile, this->m_exePath);
         if (Filesystem::IsExistingFile(fullPath))
         {
-            ref.m_crossSectionFile = fullPath.ToStdString();
+            ref.m_crossSectionFile = fullPath;
         }
         else
         {
@@ -1787,10 +1770,10 @@ bool CPostProcessing::ConvolveReference(novac::CReferenceFile& ref, const novac:
     // Make sure the slit-function do exist.
     if (!IsExistingFile(ref.m_slitFunctionFile))
     {
-        novac::CString fullPath = GetAbsolutePathFromRelative(ref.m_slitFunctionFile);
+        std::string fullPath = Filesystem::GetAbsolutePathFromRelative(ref.m_slitFunctionFile, this->m_exePath);
         if (Filesystem::IsExistingFile(fullPath))
         {
-            ref.m_slitFunctionFile = fullPath.ToStdString();
+            ref.m_slitFunctionFile = fullPath;
         }
         else
         {
@@ -1804,10 +1787,10 @@ bool CPostProcessing::ConvolveReference(novac::CReferenceFile& ref, const novac:
     // Make sure the wavelength calibration do exist.
     if (!IsExistingFile(ref.m_wavelengthCalibrationFile))
     {
-        novac::CString fullPath = GetAbsolutePathFromRelative(ref.m_wavelengthCalibrationFile);
+        std::string fullPath = Filesystem::GetAbsolutePathFromRelative(ref.m_wavelengthCalibrationFile, this->m_exePath);
         if (Filesystem::IsExistingFile(fullPath))
         {
-            ref.m_wavelengthCalibrationFile = fullPath.ToStdString();
+            ref.m_wavelengthCalibrationFile = fullPath;
         }
         else
         {

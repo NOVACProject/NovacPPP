@@ -88,12 +88,12 @@ protected:
     /** Prepares for the evaluation of the spectra
         by reading in all the reference files that are
         needed.
-        @return 0 on success otherwise non-zero */
-    int PrepareEvaluation();
+        @throws std::invalid_argument if the references files could not be found or not be read. */
+    void PrepareEvaluation();
 
     /** Prepares for the flux calculations by reading in the relevant
         wind-field file.
-        @throw std::invalid_argumetn if the wind field could not be read properly and the processing cannot continue */
+        @throw std::invalid_argument if the wind field could not be read properly and the processing cannot continue */
     void ReadWindField();
 
     /** Prepares for the flux calculation by setting up a reasonable
@@ -185,8 +185,6 @@ protected:
 
     /** Locates evaluation log files in the output directory */
     void LocateEvaluationLogFiles(const novac::CString& directory, novac::CList <Evaluation::CExtendedScanResult, Evaluation::CExtendedScanResult&>& evaluationLogFiles);
-
-    novac::CString GetAbsolutePathFromRelative(const novac::CString& path);
 
     /** Creates a reference file by convolving a high-res cross section with a slit-function and resamples it
         to a given wavelength calibration. The instrument serial is provided since the result is
