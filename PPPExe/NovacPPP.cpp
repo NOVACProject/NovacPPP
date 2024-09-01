@@ -49,7 +49,7 @@ void ReadProcessingXml(const novac::CString& workDir, Configuration::CUserConfig
 
 void ReadSetupXml(const novac::CString& workDir, Configuration::CNovacPPPConfiguration& configuration);
 
-void StartProcessing(int selectedVolcano = 0);
+void StartProcessing();
 void CalculateAllFluxes();
 
 using namespace novac;
@@ -204,7 +204,7 @@ void ReadSetupXml(const novac::CString& workDir, Configuration::CNovacPPPConfigu
     ShowMessage(novac::CString::FormatString(" Parsed %s, %d instruments found.", setupPath.c_str(), configuration.NumberOfInstruments()));
 }
 
-void StartProcessing(int selectedVolcano)
+void StartProcessing()
 {
     // Make sure that the ftp-path ends with a '/'
     if (g_userSettings.m_FTPDirectory.GetLength() > 1)
@@ -215,10 +215,7 @@ void StartProcessing(int selectedVolcano)
         }
     }
 
-    // 4. Set the parameters for the post-processing..
-    g_userSettings.m_volcano = selectedVolcano;
-
-    // 5. Run
+    // Run
 #ifdef _MFC_VER 
     CWinThread* postProcessingthread = AfxBeginThread(CalculateAllFluxes, NULL, THREAD_PRIORITY_NORMAL, 0, 0, NULL);
     Common::SetThreadName(postProcessingthread->m_nThreadID, "PostProcessing");
