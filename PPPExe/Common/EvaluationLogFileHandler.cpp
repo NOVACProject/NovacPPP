@@ -36,7 +36,8 @@ CEvaluationLogFileHandler::CEvaluationLogFileHandler(void)
     m_col.fitSaturation = -1;  // peak and fit saturation does not exist in the original version
     m_col.offset = -1;    // offset does not exist in the original version
     m_col.nSpecies = 0;
-    for (int i = 0; i < MAX_N_REFERENCES; ++i) {
+    for (int i = 0; i < MAX_N_REFERENCES; ++i)
+    {
         m_col.column[i] = 7;
         m_col.columnError[i] = 8;
         m_col.shift[i] = 9;
@@ -48,7 +49,8 @@ CEvaluationLogFileHandler::CEvaluationLogFileHandler(void)
     m_instrumentType = INSTRUMENT_TYPE::INSTR_GOTHENBURG;
 }
 
-void CEvaluationLogFileHandler::ParseScanHeader(const char szLine[8192]) {
+void CEvaluationLogFileHandler::ParseScanHeader(const char szLine[8192])
+{
     // reset some old information
     ResetColumns();
 
@@ -84,88 +86,101 @@ void CEvaluationLogFileHandler::ParseScanHeader(const char szLine[8192]) {
     char stoptime[] = "stoptime";
     char nameStr[] = "name";
 
-    while (nullptr != (szToken = strtok(szToken, "\t"))) {
+    while (nullptr != (szToken = strtok(szToken, "\t")))
+    {
         ++curCol;
 
         // The scan-angle (previously known as elevation)
-        if (Equals(szToken, elevation, strlen(elevation))) {
+        if (Equals(szToken, elevation, strlen(elevation)))
+        {
             m_col.position = curCol;
             szToken = NULL;
             continue;
         }
 
         // The scan-angle (previously known as elevation)
-        if (Equals(szToken, scanAngle, strlen(scanAngle))) {
+        if (Equals(szToken, scanAngle, strlen(scanAngle)))
+        {
             m_col.position = curCol;
             szToken = NULL;
             continue;
         }
 
         // The observation-angle (the scan-angle for the heidelberg instrument)
-        if (Equals(szToken, obsAngle, strlen(obsAngle))) {
+        if (Equals(szToken, obsAngle, strlen(obsAngle)))
+        {
             m_col.position = curCol;
             szToken = NULL;
             continue;
         }
 
         // The azimuth-angle (defined for the heidelberg instrument)
-        if (Equals(szToken, azimuth, strlen(azimuth))) {
+        if (Equals(szToken, azimuth, strlen(azimuth)))
+        {
             m_col.position2 = curCol;
             szToken = NULL;
             continue;
         }
 
         // The exposure time
-        if (Equals(szToken, exposureTime, strlen(exposureTime))) {
+        if (Equals(szToken, exposureTime, strlen(exposureTime)))
+        {
             m_col.expTime = curCol;
             szToken = NULL;
             continue;
         }
 
         // The start time
-        if (Equals(szToken, starttime, strlen(starttime))) {
+        if (Equals(szToken, starttime, strlen(starttime)))
+        {
             m_col.starttime = curCol;
             szToken = NULL;
             continue;
         }
 
         // The stop time
-        if (Equals(szToken, stoptime, strlen(stoptime))) {
+        if (Equals(szToken, stoptime, strlen(stoptime)))
+        {
             m_col.stoptime = curCol;
             szToken = NULL;
             continue;
         }
 
         // The name of the spectrum
-        if (Equals(szToken, nameStr, strlen(nameStr))) {
+        if (Equals(szToken, nameStr, strlen(nameStr)))
+        {
             m_col.name = curCol;
             szToken = NULL;
             continue;
         }
 
         // The number of co-added spectra
-        if (Equals(szToken, numSpec, strlen(numSpec))) {
+        if (Equals(szToken, numSpec, strlen(numSpec)))
+        {
             m_col.nSpec = curCol;
             szToken = NULL;
             continue;
         }
 
         // The offset
-        if (Equals(szToken, offset, strlen(offset))) {
+        if (Equals(szToken, offset, strlen(offset)))
+        {
             m_col.offset = curCol;
             szToken = NULL;
             continue;
         }
 
         // The column error (must be looked for before 'column')
-        if (Equals(szToken, columnError, strlen(columnError))) {
+        if (Equals(szToken, columnError, strlen(columnError)))
+        {
             m_col.columnError[m_evResult.m_referenceResult.size() - 1] = curCol;
             szToken = NULL;
             continue;
         }
 
         // The column
-        if (Equals(szToken, column, strlen(column))) {
+        if (Equals(szToken, column, strlen(column)))
+        {
             m_col.column[m_evResult.m_referenceResult.size()] = curCol;
             char* pt = szToken + strlen(column) + 1;
             szToken[strlen(szToken) - 1] = 0;
@@ -177,35 +192,40 @@ void CEvaluationLogFileHandler::ParseScanHeader(const char szLine[8192]) {
         }
 
         // The shift error (must be checked before 'shift')
-        if (Equals(szToken, shiftError, strlen(shiftError))) {
+        if (Equals(szToken, shiftError, strlen(shiftError)))
+        {
             m_col.shiftError[m_evResult.m_referenceResult.size() - 1] = curCol;
             szToken = NULL;
             continue;
         }
 
         // The shift
-        if (Equals(szToken, shift, strlen(shift))) {
+        if (Equals(szToken, shift, strlen(shift)))
+        {
             m_col.shift[m_evResult.m_referenceResult.size() - 1] = curCol;
             szToken = NULL;
             continue;
         }
 
         // The squeeze error (must be checked before 'squeeze')
-        if (Equals(szToken, squeezeError, strlen(squeezeError))) {
+        if (Equals(szToken, squeezeError, strlen(squeezeError)))
+        {
             m_col.squeezeError[m_evResult.m_referenceResult.size() - 1] = curCol;
             szToken = NULL;
             continue;
         }
 
         // The squeeze
-        if (Equals(szToken, squeeze, strlen(squeeze))) {
+        if (Equals(szToken, squeeze, strlen(squeeze)))
+        {
             m_col.squeeze[m_evResult.m_referenceResult.size() - 1] = curCol;
             szToken = NULL;
             continue;
         }
 
         // The spectrum peak-intensity
-        if (Equals(szToken, intensity, strlen(intensity))) {
+        if (Equals(szToken, intensity, strlen(intensity)))
+        {
             m_col.intensity = curCol;
             szToken = NULL;
             continue;
@@ -213,7 +233,8 @@ void CEvaluationLogFileHandler::ParseScanHeader(const char szLine[8192]) {
 
         // The spectrum fit-intensity
         if (Equals(szToken, fitIntensity, strlen(fitIntensity)) ||
-            Equals(szToken, fitIntensity2, strlen(fitIntensity2))) {
+            Equals(szToken, fitIntensity2, strlen(fitIntensity2)))
+        {
 
             m_col.fitIntensity = curCol;
             szToken = NULL;
@@ -221,28 +242,32 @@ void CEvaluationLogFileHandler::ParseScanHeader(const char szLine[8192]) {
         }
 
         // The spectrum maximum saturation ratio of the whole spectrum
-        if (Equals(szToken, peakSat, strlen(peakSat))) {
+        if (Equals(szToken, peakSat, strlen(peakSat)))
+        {
             m_col.peakSaturation = curCol;
             szToken = NULL;
             continue;
         }
 
         // The spectrum maximum saturation ratio in the fit region
-        if (Equals(szToken, fitSat, strlen(fitSat))) {
+        if (Equals(szToken, fitSat, strlen(fitSat)))
+        {
             m_col.fitSaturation = curCol;
             szToken = NULL;
             continue;
         }
 
         // The delta of the fit
-        if (Equals(szToken, delta, strlen(delta))) {
+        if (Equals(szToken, delta, strlen(delta)))
+        {
             m_col.delta = curCol;
             szToken = NULL;
             continue;
         }
 
         // The chi-square of the fit
-        if (Equals(szToken, chiSquare, strlen(chiSquare))) {
+        if (Equals(szToken, chiSquare, strlen(chiSquare)))
+        {
             m_col.chiSquare = curCol;
             szToken = NULL;
             continue;
@@ -258,7 +283,8 @@ void CEvaluationLogFileHandler::ParseScanHeader(const char szLine[8192]) {
     return;
 }
 
-RETURN_CODE CEvaluationLogFileHandler::ReadEvaluationLog() {
+RETURN_CODE CEvaluationLogFileHandler::ReadEvaluationLog()
+{
     char  expTimeStr[] = "exposuretime";         // this string only exists in the header line.
     char  scanInformation[] = "<scaninformation>";    // this string only exists in the scan-information section before the scan-data
     char  fluxInformation[] = "<fluxinfo>";           // this string only exists in the flux-information section before the scan-data
@@ -278,7 +304,8 @@ RETURN_CODE CEvaluationLogFileHandler::ReadEvaluationLog() {
     // First count the number of scans in the file.
     //	This to speed up the initialization of the arrays
     const long nScans = CountScansInFile();
-    if (nScans > 0) {
+    if (nScans > 0)
+    {
         m_scan.reserve(nScans);
         m_windField.reserve(nScans + 1);
     }
@@ -288,9 +315,11 @@ RETURN_CODE CEvaluationLogFileHandler::ReadEvaluationLog() {
     // Open the evaluation log
     novac::CSingleLock singleLock(&g_evalLogCritSect);
     singleLock.Lock();
-    if (singleLock.IsLocked()) {
+    if (singleLock.IsLocked())
+    {
         FILE* f = fopen(m_evaluationLog, "r");
-        if (NULL == f) {
+        if (NULL == f)
+        {
             singleLock.Unlock();
             return RETURN_CODE::FAIL;
         }
@@ -300,11 +329,14 @@ RETURN_CODE CEvaluationLogFileHandler::ReadEvaluationLog() {
         ResetScanInformation();
 
         // Read the file, one line at a time
-        while (fgets(szLine, 8192, f)) {
+        while (fgets(szLine, 8192, f))
+        {
 
             // ignore empty lines
-            if (strlen(szLine) < 2) {
-                if (fReadingScan) {
+            if (strlen(szLine) < 2)
+            {
+                if (fReadingScan)
+                {
                     fReadingScan = false;
                     // Reset the column- and spectrum-information
                     ResetColumns();
@@ -314,12 +346,14 @@ RETURN_CODE CEvaluationLogFileHandler::ReadEvaluationLog() {
             }
 
             // convert the string to all lower-case letters
-            for (unsigned int it = 0; it < strlen(szLine); ++it) {
+            for (unsigned int it = 0; it < strlen(szLine); ++it)
+            {
                 szLine[it] = (char)tolower(szLine[it]);
             }
 
             // find the next scan-information section
-            if (NULL != strstr(szLine, scanInformation)) {
+            if (NULL != strstr(szLine, scanInformation))
+            {
                 ResetScanInformation();
                 ParseScanInformation(m_specInfo, flux, f);
                 continue;
@@ -334,17 +368,20 @@ RETURN_CODE CEvaluationLogFileHandler::ReadEvaluationLog() {
                 continue;
             }
 
-            if (NULL != strstr(szLine, spectralData)) {
+            if (NULL != strstr(szLine, spectralData))
+            {
                 fReadingScan = true;
                 continue;
             }
-            else if (NULL != strstr(szLine, endofSpectralData)) {
+            else if (NULL != strstr(szLine, endofSpectralData))
+            {
                 fReadingScan = false;
                 continue;
             }
 
             // find the next start of a scan 
-            if (NULL != strstr(szLine, expTimeStr)) {
+            if (NULL != strstr(szLine, expTimeStr))
+            {
 
                 // check so that there was some information in the last scan read
                 //	if not the re-use the memory space
@@ -357,13 +394,15 @@ RETURN_CODE CEvaluationLogFileHandler::ReadEvaluationLog() {
                     // the old one
 
                     // 1. If the sky and dark were specified, remove them from the measurement
-                    if (m_scan.size() >= 0 && fabs(m_scan.back().GetScanAngle(1) - 180.0) < 1) {
+                    if (m_scan.size() >= 0 && fabs(m_scan.back().GetScanAngle(1) - 180.0) < 1)
+                    {
                         m_scan.back().RemoveResult(0); // remove sky
                         m_scan.back().RemoveResult(0); // remove dark
                     }
 
                     // 2. Calculate the offset
-                    if (m_scan.size() >= 0) {
+                    if (m_scan.size() >= 0)
+                    {
                         m_scan.back().CalculateOffset(CMolecule(g_userSettings.m_molecule));
                     }
 
@@ -393,16 +432,20 @@ RETURN_CODE CEvaluationLogFileHandler::ReadEvaluationLog() {
             // Split the scan information up into tokens and parse them. 
             char* szToken = (char*)szLine;
             int curCol = -1;
-            while (nullptr != (szToken = strtok(szToken, " \t"))) {
+            while (nullptr != (szToken = strtok(szToken, " \t")))
+            {
                 ++curCol;
 
                 // First check the starttime
-                if (curCol == m_col.starttime) {
+                if (curCol == m_col.starttime)
+                {
                     int fValue1, fValue2, fValue3;
-                    if (strstr(szToken, ":")) {
+                    if (strstr(szToken, ":"))
+                    {
                         sscanf(szToken, "%d:%d:%d", &fValue1, &fValue2, &fValue3);
                     }
-                    else {
+                    else
+                    {
                         sscanf(szToken, "%d.%d.%d", &fValue1, &fValue2, &fValue3);
                     }
                     m_specInfo.m_startTime.hour = (unsigned char)fValue1;
@@ -413,12 +456,15 @@ RETURN_CODE CEvaluationLogFileHandler::ReadEvaluationLog() {
                 }
 
                 // Then check the stoptime
-                if (curCol == m_col.stoptime) {
+                if (curCol == m_col.stoptime)
+                {
                     int fValue1, fValue2, fValue3;
-                    if (strstr(szToken, ":")) {
+                    if (strstr(szToken, ":"))
+                    {
                         sscanf(szToken, "%d:%d:%d", &fValue1, &fValue2, &fValue3);
                     }
-                    else {
+                    else
+                    {
                         sscanf(szToken, "%d.%d.%d", &fValue1, &fValue2, &fValue3);
                     }
                     m_specInfo.m_stopTime.hour = (unsigned char)fValue1;
@@ -429,106 +475,126 @@ RETURN_CODE CEvaluationLogFileHandler::ReadEvaluationLog() {
                 }
 
                 // Also check the name...
-                if (curCol == m_col.name) {
+                if (curCol == m_col.name)
+                {
                     m_specInfo.m_name = std::string(szToken);
                     szToken = NULL;
                     continue;
                 }
 
                 // ignore columns whose value cannot be parsed into a float
-                if (1 != sscanf(szToken, "%lf", &fValue)) {
+                if (1 != sscanf(szToken, "%lf", &fValue))
+                {
                     szToken = NULL;
                     continue;
                 }
 
-                if (curCol == m_col.position) {
+                if (curCol == m_col.position)
+                {
                     m_specInfo.m_scanAngle = (float)fValue;
                     szToken = NULL;
                     continue;
                 }
 
-                if (curCol == m_col.position2) {
+                if (curCol == m_col.position2)
+                {
                     m_specInfo.m_scanAngle2 = (float)fValue;
                     szToken = NULL;
                     continue;
                 }
 
-                if (curCol == m_col.intensity) {
+                if (curCol == m_col.intensity)
+                {
                     m_specInfo.m_peakIntensity = (float)fValue;
                     szToken = NULL;
                     continue;
                 }
 
-                if (curCol == m_col.fitIntensity) {
+                if (curCol == m_col.fitIntensity)
+                {
                     m_specInfo.m_fitIntensity = (float)fValue;
                     szToken = NULL;
                     continue;
                 }
 
-                if (curCol == m_col.fitSaturation) {
+                if (curCol == m_col.fitSaturation)
+                {
                     m_specInfo.m_fitIntensity = (float)fValue;
                     szToken = NULL;
                     continue;
                 }
 
-                if (curCol == m_col.peakSaturation) {
+                if (curCol == m_col.peakSaturation)
+                {
                     m_specInfo.m_peakIntensity = (float)fValue;
                     szToken = NULL;
                     continue;
                 }
 
-                if (curCol == m_col.offset) {
+                if (curCol == m_col.offset)
+                {
                     m_specInfo.m_offset = (float)fValue;
                     szToken = NULL;
                     continue;
                 }
 
-                if (curCol == m_col.delta) {
+                if (curCol == m_col.delta)
+                {
                     m_evResult.m_delta = (float)fValue;
                     szToken = NULL;
                     continue;
                 }
 
-                if (curCol == m_col.chiSquare) {
+                if (curCol == m_col.chiSquare)
+                {
                     m_evResult.m_chiSquare = (float)fValue;
                     szToken = NULL;
                     continue;
                 }
 
-                if (curCol == m_col.nSpec) {
+                if (curCol == m_col.nSpec)
+                {
                     m_specInfo.m_numSpec = (long)fValue;
                     szToken = NULL;
                     continue;
                 }
 
-                if (curCol == m_col.expTime) {
+                if (curCol == m_col.expTime)
+                {
                     m_specInfo.m_exposureTime = (long)fValue;
                     szToken = NULL;
                     continue;
                 }
 
-                for (int k = 0; k < m_col.nSpecies; ++k) {
-                    if (curCol == m_col.column[k]) {
+                for (int k = 0; k < m_col.nSpecies; ++k)
+                {
+                    if (curCol == m_col.column[k])
+                    {
                         m_evResult.m_referenceResult[k].m_column = (float)fValue;
                         break;
                     }
-                    if (curCol == m_col.columnError[k]) {
+                    if (curCol == m_col.columnError[k])
+                    {
                         m_evResult.m_referenceResult[k].m_columnError = (float)fValue;
                         break;
                     }
-                    if (curCol == m_col.shift[k]) {
+                    if (curCol == m_col.shift[k])
+                    {
                         m_evResult.m_referenceResult[k].m_shift = (float)fValue;
                         break;
                     }
-                    if (curCol == m_col.shiftError[k]) {
+                    if (curCol == m_col.shiftError[k])
+                    {
                         m_evResult.m_referenceResult[k].m_shiftError = (float)fValue;
                         break;
                     }
-                    if (curCol == m_col.squeeze[k]) {
+                    if (curCol == m_col.squeeze[k])
+                    {
                         m_evResult.m_referenceResult[k].m_squeeze = (float)fValue;
                         break;
                     }
-                    if (curCol == m_col.squeezeError[k]) {
+                    if (curCol == m_col.squeezeError[k])
+                    {
                         m_evResult.m_referenceResult[k].m_squeezeError = (float)fValue;
                         break;
                     }
@@ -541,26 +607,32 @@ RETURN_CODE CEvaluationLogFileHandler::ReadEvaluationLog() {
             //  CScanResult structure
 
             m_specInfo.m_scanIndex = (short)measNr;
-            if (Equals(m_specInfo.m_name, "sky")) {
+            if (Equals(m_specInfo.m_name, "sky"))
+            {
                 newResult.SetSkySpecInfo(m_specInfo);
             }
-            else if (Equals(m_specInfo.m_name, "dark")) {
+            else if (Equals(m_specInfo.m_name, "dark"))
+            {
                 newResult.SetDarkSpecInfo(m_specInfo);
             }
-            else if (Equals(m_specInfo.m_name, "offset")) {
+            else if (Equals(m_specInfo.m_name, "offset"))
+            {
                 newResult.SetOffsetSpecInfo(m_specInfo);
             }
-            else if (Equals(m_specInfo.m_name, "dark_cur")) {
+            else if (Equals(m_specInfo.m_name, "dark_cur"))
+            {
                 newResult.SetDarkCurrentSpecInfo(m_specInfo);
             }
-            else {
+            else
+            {
                 newResult.AppendResult(m_evResult, m_specInfo);
                 newResult.SetFlux(flux);
                 newResult.SetInstrumentType(m_instrumentType);
             }
 
-            if (m_col.peakSaturation != -1) { // If the intensity is specified as a saturation ratio...
-                // double dynamicRange = CSpectrometerModel::GetMaxIntensity(m_specInfo.m_specModel);
+            if (m_col.peakSaturation != -1)
+            { // If the intensity is specified as a saturation ratio...
+// double dynamicRange = CSpectrometerModel::GetMaxIntensity(m_specInfo.m_specModel);
             }
             newResult.CheckGoodnessOfFit(m_specInfo);
             ++measNr;
@@ -572,7 +644,8 @@ RETURN_CODE CEvaluationLogFileHandler::ReadEvaluationLog() {
     singleLock.Unlock();
 
     // If the sky and dark were specified, remove them from the measurement
-    if (fabs(newResult.GetScanAngle(1) - 180.0) < 1) {
+    if (fabs(newResult.GetScanAngle(1) - 180.0) < 1)
+    {
         newResult.RemoveResult(0); // remove sky
         newResult.RemoveResult(0); // remove dark
     }
@@ -593,7 +666,8 @@ RETURN_CODE CEvaluationLogFileHandler::ReadEvaluationLog() {
 
 /** Makes a quick scan through the evaluation-log
     to count the number of scans in it */
-long CEvaluationLogFileHandler::CountScansInFile() {
+long CEvaluationLogFileHandler::CountScansInFile()
+{
     char  expTimeStr[] = "exposuretime"; // this string only exists in the header line.
     char szLine[8192];
     long  nScans = 0;
@@ -604,24 +678,29 @@ long CEvaluationLogFileHandler::CountScansInFile() {
 
     novac::CSingleLock singleLock(&g_evalLogCritSect);
     singleLock.Lock();
-    if (singleLock.IsLocked()) {
+    if (singleLock.IsLocked())
+    {
 
         // Open the evaluation log
         FILE* f = fopen(m_evaluationLog, "r");
-        if (NULL == f) {
+        if (NULL == f)
+        {
             singleLock.Unlock();
             return 0;
         }
 
         // Read the file, one line at a time
-        while (fgets(szLine, 8192, f)) {
+        while (fgets(szLine, 8192, f))
+        {
             // convert the string to all lower-case letters
-            for (unsigned int it = 0; it < strlen(szLine); ++it) {
+            for (unsigned int it = 0; it < strlen(szLine); ++it)
+            {
                 szLine[it] = (char)tolower(szLine[it]);
             }
 
             // find the next start of a scan 
-            if (NULL != strstr(szLine, expTimeStr)) {
+            if (NULL != strstr(szLine, expTimeStr))
+            {
                 ++nScans;
             }
         }
@@ -636,7 +715,8 @@ long CEvaluationLogFileHandler::CountScansInFile() {
 }
 
 /** Reads and parses the 'scanInfo' header before the scan */
-void CEvaluationLogFileHandler::ParseScanInformation(CSpectrumInfo& scanInfo, double& flux, FILE* f) {
+void CEvaluationLogFileHandler::ParseScanInformation(CSpectrumInfo& scanInfo, double& flux, FILE* f)
+{
     char szLine[8192];
     char* pt = NULL;
     int tmpInt[3];
@@ -647,32 +727,38 @@ void CEvaluationLogFileHandler::ParseScanInformation(CSpectrumInfo& scanInfo, do
     ResetColumns();
 
     // read the additional scan-information, line by line
-    while (fgets(szLine, 8192, f)) {
+    while (fgets(szLine, 8192, f))
+    {
 
         // convert to lower-case
-        for (unsigned int it = 0; it < strlen(szLine); ++it) {
+        for (unsigned int it = 0; it < strlen(szLine); ++it)
+        {
             szLine[it] = (char)tolower(szLine[it]);
         }
 
         pt = strstr(szLine, "</scaninformation>");
-        if (nullptr != pt) {
+        if (nullptr != pt)
+        {
             break;
         }
 
         pt = strstr(szLine, "compiledate=");
-        if (nullptr != pt) {
+        if (nullptr != pt)
+        {
             continue;
         }
 
         pt = strstr(szLine, "site=");
-        if (nullptr != pt) {
+        if (nullptr != pt)
+        {
             scanInfo.m_site = std::string(pt + 5);
             Remove(scanInfo.m_site, '\n'); // Remove newline characters
             continue;
         }
 
         pt = strstr(szLine, "date=");
-        if (nullptr != pt) {
+        if (nullptr != pt)
+        {
             sscanf(pt + 5, "%d.%d.%d", &tmpInt[0], &tmpInt[1], &tmpInt[2]);
             scanInfo.m_startTime.year = (unsigned short)tmpInt[2];
             scanInfo.m_startTime.month = (unsigned char)tmpInt[1];
@@ -684,8 +770,10 @@ void CEvaluationLogFileHandler::ParseScanInformation(CSpectrumInfo& scanInfo, do
         }
 
         pt = strstr(szLine, "starttime=");
-        if (nullptr != pt) {
-            if (3 == sscanf(pt + 10, "%d.%d.%d", &tmpInt[0], &tmpInt[1], &tmpInt[2])) {
+        if (nullptr != pt)
+        {
+            if (3 == sscanf(pt + 10, "%d.%d.%d", &tmpInt[0], &tmpInt[1], &tmpInt[2]))
+            {
                 scanInfo.m_startTime.hour = (unsigned char)tmpInt[0];
                 scanInfo.m_startTime.minute = (unsigned char)tmpInt[1];
                 scanInfo.m_startTime.second = (unsigned char)tmpInt[2];
@@ -694,8 +782,10 @@ void CEvaluationLogFileHandler::ParseScanInformation(CSpectrumInfo& scanInfo, do
         }
 
         pt = strstr(szLine, "stoptime=");
-        if (nullptr != pt) {
-            if (3 == sscanf(pt + 9, "%d.%d.%d", &tmpInt[0], &tmpInt[1], &tmpInt[2])) {
+        if (nullptr != pt)
+        {
+            if (3 == sscanf(pt + 9, "%d.%d.%d", &tmpInt[0], &tmpInt[1], &tmpInt[2]))
+            {
                 scanInfo.m_stopTime.hour = (unsigned char)tmpInt[0];
                 scanInfo.m_stopTime.minute = (unsigned char)tmpInt[1];
                 scanInfo.m_stopTime.second = (unsigned char)tmpInt[2];
@@ -704,41 +794,47 @@ void CEvaluationLogFileHandler::ParseScanInformation(CSpectrumInfo& scanInfo, do
         }
 
         pt = strstr(szLine, "compass=");
-        if (nullptr != pt) {
+        if (nullptr != pt)
+        {
             sscanf(pt + 8, "%lf", &tmpDouble);
             scanInfo.m_compass = (float)fmod(tmpDouble, 360.0);
             continue;
         }
 
         pt = strstr(szLine, "tilt=");
-        if (nullptr != pt) {
+        if (nullptr != pt)
+        {
             sscanf(pt + 5, "%lf", &tmpDouble);
             scanInfo.m_pitch = (float)tmpDouble;
         }
 
         pt = strstr(szLine, "lat=");
-        if (nullptr != pt) {
+        if (nullptr != pt)
+        {
             sscanf(pt + 4, "%lf", &tmpDouble);
             scanInfo.m_gps.m_latitude = tmpDouble;
             continue;
         }
 
         pt = strstr(szLine, "long=");
-        if (nullptr != pt) {
+        if (nullptr != pt)
+        {
             sscanf(pt + 5, "%lf", &tmpDouble);
             scanInfo.m_gps.m_longitude = tmpDouble;
             continue;
         }
 
         pt = strstr(szLine, "alt=");
-        if (nullptr != pt) {
+        if (nullptr != pt)
+        {
             sscanf(pt + 4, "%lf", &tmpDouble);
             scanInfo.m_gps.m_altitude = (long)tmpDouble;
             continue;
         }
 
         pt = strstr(szLine, "serial=");
-        if (nullptr != pt) {
+        if (nullptr != pt)
+        {
             scanInfo.m_device = std::string(pt + 7);
             Remove(scanInfo.m_device, '\n'); // remove remaining strange things in the serial-number
             MakeUpper(scanInfo.m_device);	// Convert the serial-number to all upper case letters
@@ -757,61 +853,72 @@ void CEvaluationLogFileHandler::ParseScanInformation(CSpectrumInfo& scanInfo, do
         }
 
         pt = strstr(szLine, "volcano=");
-        if (nullptr != pt) {
+        if (nullptr != pt)
+        {
             scanInfo.m_volcano = std::string(pt + 8);
             Remove(scanInfo.m_volcano, '\n'); // Remove newline characters
             continue;
         }
 
         pt = strstr(szLine, "observatory=");
-        if (nullptr != pt) {
+        if (nullptr != pt)
+        {
             scanInfo.m_observatory = std::string(pt + 12);
             Remove(scanInfo.m_observatory, '\n'); // Remove newline characters
             continue;
         }
 
         pt = strstr(szLine, "channel=");
-        if (nullptr != pt) {
+        if (nullptr != pt)
+        {
             sscanf(pt + 8, "%lf", &tmpDouble);
             scanInfo.m_channel = (unsigned char)tmpDouble;
         }
 
         pt = strstr(szLine, "coneangle=");
-        if (nullptr != pt) {
+        if (nullptr != pt)
+        {
             sscanf(pt + 10, "%lf", &tmpDouble);
             scanInfo.m_coneAngle = (float)tmpDouble;
         }
 
         pt = strstr(szLine, "flux=");
-        if (nullptr != pt) {
+        if (nullptr != pt)
+        {
             sscanf(pt + 5, "%lf", &tmpDouble);
             flux = tmpDouble;
         }
 
         pt = strstr(szLine, "battery=");
-        if (nullptr != pt) {
+        if (nullptr != pt)
+        {
             sscanf(pt + 8, "%f", &scanInfo.m_batteryVoltage);
         }
 
         pt = strstr(szLine, "temperature");
-        if (nullptr != pt) {
+        if (nullptr != pt)
+        {
             sscanf(pt + 12, "%f", &scanInfo.m_temperature);
         }
 
         pt = strstr(szLine, "instrumenttype=");
-        if (nullptr != pt) {
+        if (nullptr != pt)
+        {
             sscanf(pt + 15, "%s", instrumentType);
-            if (Equals(instrumentType, "heidelberg")) {
+            if (Equals(instrumentType, "heidelberg"))
+            {
                 m_instrumentType = INSTRUMENT_TYPE::INSTR_HEIDELBERG;
             }
-            else {
+            else
+            {
                 m_instrumentType = INSTRUMENT_TYPE::INSTR_GOTHENBURG;
             }
         }
     }
 }
 
-void CEvaluationLogFileHandler::ParseFluxInformation(Meteorology::CWindField& windField, double& flux, FILE* f) {
+void CEvaluationLogFileHandler::ParseFluxInformation(Meteorology::CWindField& windField, double& flux, FILE* f)
+{
     char szLine[8192];
     char* pt = NULL;
     double windSpeed = 10, windDirection = 0, plumeHeight = 1000;
@@ -821,9 +928,11 @@ void CEvaluationLogFileHandler::ParseFluxInformation(Meteorology::CWindField& wi
     char source[512];
 
     // read the additional scan-information, line by line
-    while (fgets(szLine, 8192, f)) {
+    while (fgets(szLine, 8192, f))
+    {
         pt = strstr(szLine, "</fluxinfo>");
-        if (nullptr != pt) {
+        if (nullptr != pt)
+        {
             // save all the values
 //			windField.SetPlumeHeight(plumeHeight, plumeHeightSource);
             windField.SetWindDirection(windDirection, windDirectionSource);
@@ -832,45 +941,52 @@ void CEvaluationLogFileHandler::ParseFluxInformation(Meteorology::CWindField& wi
         }
 
         pt = strstr(szLine, "flux=");
-        if (nullptr != pt) {
+        if (nullptr != pt)
+        {
             sscanf(pt + 5, "%lf", &flux);
             continue;
         }
 
         pt = strstr(szLine, "windspeed=");
-        if (nullptr != pt) {
+        if (nullptr != pt)
+        {
             sscanf(pt + 10, "%lf", &windSpeed);
             continue;
         }
 
         pt = strstr(szLine, "winddirection=");
-        if (nullptr != pt) {
+        if (nullptr != pt)
+        {
             sscanf(pt + 14, "%lf", &windDirection);
             continue;
         }
 
         pt = strstr(szLine, "plumeheight=");
-        if (nullptr != pt) {
+        if (nullptr != pt)
+        {
             sscanf(pt + 12, "%lf", &plumeHeight);
             continue;
         }
 
         pt = strstr(szLine, "windspeedsource=");
-        if (nullptr != pt) {
+        if (nullptr != pt)
+        {
             sscanf(pt + 16, "%s", source);
             windSpeedSource = Meteorology::StringToMetSource(source);
             continue;
         }
 
         pt = strstr(szLine, "winddirectionsource=");
-        if (nullptr != pt) {
+        if (nullptr != pt)
+        {
             sscanf(pt + 20, "%s", source);
             windDirectionSource = Meteorology::StringToMetSource(source);
             continue;
         }
 
         pt = strstr(szLine, "plumeheightsource=");
-        if (nullptr != pt) {
+        if (nullptr != pt)
+        {
             sscanf(pt + 18, "%s", source);
             plumeHeightSource = Meteorology::StringToMetSource(source);
             continue;
@@ -878,8 +994,10 @@ void CEvaluationLogFileHandler::ParseFluxInformation(Meteorology::CWindField& wi
     }
 }
 
-void CEvaluationLogFileHandler::ResetColumns() {
-    for (int k = 0; k < MAX_N_REFERENCES; ++k) {
+void CEvaluationLogFileHandler::ResetColumns()
+{
+    for (int k = 0; k < MAX_N_REFERENCES; ++k)
+    {
         m_col.column[k] = -1;
         m_col.columnError[k] = -1;
         m_col.shift[k] = -1;
@@ -895,7 +1013,8 @@ void CEvaluationLogFileHandler::ResetColumns() {
     m_specieNum = m_curSpecie = 0;
 }
 
-void CEvaluationLogFileHandler::ResetScanInformation() {
+void CEvaluationLogFileHandler::ResetScanInformation()
+{
     m_specInfo.m_channel = 0;
     m_specInfo.m_compass = m_specInfo.m_scanAngle = 0.0;
 
@@ -904,7 +1023,8 @@ void CEvaluationLogFileHandler::ResetScanInformation() {
 
 /** Returns true if the most recently read evaluation log file is a
             wind speed measurement. */
-bool CEvaluationLogFileHandler::IsWindSpeedMeasurement(int scanNo) {
+bool CEvaluationLogFileHandler::IsWindSpeedMeasurement(int scanNo)
+{
     // check so that there are some scans read, and that the scan index is ok
     if (m_scan.size() < 1 || scanNo > m_scan.size() || scanNo < 0)
         return false;
@@ -914,7 +1034,8 @@ bool CEvaluationLogFileHandler::IsWindSpeedMeasurement(int scanNo) {
 
 /** Returns true if the scan number 'scanNo' in the most recently read
         evaluation log file is a wind speed measurement of heidelberg type. */
-bool	CEvaluationLogFileHandler::IsWindSpeedMeasurement_Heidelberg(int scanNo) {
+bool	CEvaluationLogFileHandler::IsWindSpeedMeasurement_Heidelberg(int scanNo)
+{
     // check so that there are some scans read, and that the scan index is ok
     if (m_scan.size() < 1 || scanNo > m_scan.size() || scanNo < 0)
         return false;
@@ -926,7 +1047,8 @@ void CEvaluationLogFileHandler::SortScans()
 {
     // If the scans are already in order then we don't need to sort them
     //	or if there is only one scan then we don't need to fix it.
-    if (IsSorted() || m_scan.size() <= 1) {
+    if (IsSorted() || m_scan.size() <= 1)
+    {
         return;
     }
 
@@ -943,20 +1065,24 @@ void CEvaluationLogFileHandler::SortScans()
 }
 
 /** Returns true if the scans are already ordered */
-bool	CEvaluationLogFileHandler::IsSorted() {
+bool	CEvaluationLogFileHandler::IsSorted()
+{
     CDateTime time1, time2;
 
-    for (int k = 0; k < m_scan.size() - 1; ++k) {
+    for (int k = 0; k < m_scan.size() - 1; ++k)
+    {
         // Get the start-times
         m_scan[k].GetStartTime(0, time1);
         m_scan[k + 1].GetStartTime(0, time2);
 
         // If the second scan has started before the first, 
         //	then change the order, otherwise don't do anything
-        if (time2 < time1) {
+        if (time2 < time1)
+        {
             return false;
         }
-        else {
+        else
+        {
             continue;
         }
     }
@@ -966,7 +1092,8 @@ bool	CEvaluationLogFileHandler::IsSorted() {
 
 
 /** Writes the contents of the array 'm_scan' to a new evaluation-log file */
-RETURN_CODE CEvaluationLogFileHandler::WriteEvaluationLog(const novac::CString fileName) {
+RETURN_CODE CEvaluationLogFileHandler::WriteEvaluationLog(const novac::CString fileName)
+{
     novac::CString string, specieName;
     novac::CString wsSrc, wdSrc, phSrc;
     CDateTime startTime;
@@ -978,7 +1105,8 @@ RETURN_CODE CEvaluationLogFileHandler::WriteEvaluationLog(const novac::CString f
     // 2. Write the file
     FILE* f = fopen(fileName, "w");
 
-    for (int scanIndex = 0; scanIndex < this->m_scan.size(); ++scanIndex) {
+    for (int scanIndex = 0; scanIndex < this->m_scan.size(); ++scanIndex)
+    {
         Evaluation::CScanResult& scan = this->m_scan[scanIndex];
         Meteorology::CWindField& wind = this->m_windField[scanIndex];
 
@@ -1030,10 +1158,12 @@ RETURN_CODE CEvaluationLogFileHandler::WriteEvaluationLog(const novac::CString f
             string.Append("\tmode=plume\n");
 
         // The type of instrument used...
-        if (scan.GetInstrumentType() == INSTRUMENT_TYPE::INSTR_GOTHENBURG) {
+        if (scan.GetInstrumentType() == INSTRUMENT_TYPE::INSTR_GOTHENBURG)
+        {
             string.Append("\tinstrumenttype=gothenburg\n");
         }
-        else if (scan.GetInstrumentType() == INSTRUMENT_TYPE::INSTR_HEIDELBERG) {
+        else if (scan.GetInstrumentType() == INSTRUMENT_TYPE::INSTR_HEIDELBERG)
+        {
             string.Append("\tinstrumenttype=heidelberg\n");
         }
 
@@ -1065,15 +1195,18 @@ RETURN_CODE CEvaluationLogFileHandler::WriteEvaluationLog(const novac::CString f
         fprintf(f, "%s", string.c_str());
 
         // ----------------------- write the header --------------------------------
-        if (m_instrumentType == INSTRUMENT_TYPE::INSTR_GOTHENBURG) {
+        if (m_instrumentType == INSTRUMENT_TYPE::INSTR_GOTHENBURG)
+        {
             string.Format("#scanangle\t");
         }
-        else if (m_instrumentType == INSTRUMENT_TYPE::INSTR_HEIDELBERG) {
+        else if (m_instrumentType == INSTRUMENT_TYPE::INSTR_HEIDELBERG)
+        {
             string.Format("#observationangle\tazimuth\t");
         }
         string.Append("starttime\tstoptime\tname\tspecsaturation\tfitsaturation\tdelta\tchisquare\texposuretime\tnumspec\t");
 
-        for (int itSpecie = 0; itSpecie < scan.GetSpecieNum(0); ++itSpecie) {
+        for (int itSpecie = 0; itSpecie < scan.GetSpecieNum(0); ++itSpecie)
+        {
             specieName.Format("%s", (const char*)scan.GetSpecieName(0, itSpecie));
             string.AppendFormat("column(%s)\tcolumnerror(%s)\t", (const char*)specieName, (const char*)specieName);
             string.AppendFormat("shift(%s)\tshifterror(%s)\t", (const char*)specieName, (const char*)specieName);
@@ -1086,7 +1219,8 @@ RETURN_CODE CEvaluationLogFileHandler::WriteEvaluationLog(const novac::CString f
 
 
         // ------------------- Then write the parameters for each spectrum ---------------------------
-        for (int itSpectrum = 0; itSpectrum < scan.GetEvaluatedNum(); ++itSpectrum) {
+        for (int itSpectrum = 0; itSpectrum < scan.GetEvaluatedNum(); ++itSpectrum)
+        {
             // 3a. Pretty print the result and the spectral info into a string
             FormatEvaluationResult(&scan.GetSpectrumInfo(itSpectrum), scan.GetResult(itSpectrum), m_instrumentType, 0.0, scan.GetSpecieNum(itSpectrum), string);
 
@@ -1106,7 +1240,8 @@ RETURN_CODE CEvaluationLogFileHandler::WriteEvaluationLog(const novac::CString f
     return RETURN_CODE::SUCCESS;
 }
 
-RETURN_CODE CEvaluationLogFileHandler::FormatEvaluationResult(const CSpectrumInfo* info, const novac::CEvaluationResult* result, INSTRUMENT_TYPE iType, double maxIntensity, int nSpecies, novac::CString& string) {
+RETURN_CODE CEvaluationLogFileHandler::FormatEvaluationResult(const CSpectrumInfo* info, const novac::CEvaluationResult* result, INSTRUMENT_TYPE iType, double maxIntensity, int nSpecies, novac::CString& string)
+{
     int itSpecie;
     Common common;
 
@@ -1134,11 +1269,13 @@ RETURN_CODE CEvaluationLogFileHandler::FormatEvaluationResult(const CSpectrumInf
     // 6. The (maximum) saturation ratio of the whole spectrum,
     //			the (maximum) saturation ratio in the fit-region
     //			and the normalized maximum intensity of the whole spectrum
-    if (maxIntensity > 0.0) {
+    if (maxIntensity > 0.0)
+    {
         string.AppendFormat("%.2lf\t", info->m_peakIntensity / maxIntensity);
         string.AppendFormat("%.2lf\t", info->m_fitIntensity / maxIntensity);
     }
-    else {
+    else
+    {
         string.AppendFormat("%.2lf\t", info->m_peakIntensity);
         string.AppendFormat("%.2lf\t", info->m_fitIntensity);
     }
@@ -1160,13 +1297,16 @@ RETURN_CODE CEvaluationLogFileHandler::FormatEvaluationResult(const CSpectrumInf
     string.AppendFormat("%ld\t%ld\t", info->m_exposureTime, info->m_numSpec);
 
     // 10. The column/column error for each specie
-    for (itSpecie = 0; itSpecie < nSpecies; ++itSpecie) {
-        if (result != NULL) {
+    for (itSpecie = 0; itSpecie < nSpecies; ++itSpecie)
+    {
+        if (result != NULL)
+        {
             string.AppendFormat("%.2e\t%.2e\t", result->m_referenceResult[itSpecie].m_column, result->m_referenceResult[itSpecie].m_columnError);
             string.AppendFormat("%.2lf\t%.2lf\t", result->m_referenceResult[itSpecie].m_shift, result->m_referenceResult[itSpecie].m_shiftError);
             string.AppendFormat("%.2lf\t%.2lf\t", result->m_referenceResult[itSpecie].m_squeeze, result->m_referenceResult[itSpecie].m_squeezeError);
         }
-        else {
+        else
+        {
             string.Append("0.0\t0.0\t0.0\t0.0\t0.0\t0.0\t");
         }
     }
@@ -1188,32 +1328,38 @@ RETURN_CODE CEvaluationLogFileHandler::FormatEvaluationResult(const CSpectrumInf
 
 /** Sorts the CDateTime-objects in the given array.
         Algorithm based on MergeSort (~O(NlogN)) */
-void FileHandler::CEvaluationLogFileHandler::SortScans(novac::CArray<Evaluation::CScanResult, Evaluation::CScanResult&>& array, bool ascending) {
+void FileHandler::CEvaluationLogFileHandler::SortScans(novac::CArray<Evaluation::CScanResult, Evaluation::CScanResult&>& array, bool ascending)
+{
     unsigned long nElements = (unsigned long)array.GetSize(); // number of elements
     unsigned long it = 0; // <-- iterator
     unsigned long halfSize = nElements / 2;
 
-    if (nElements <= 1) {
+    if (nElements <= 1)
+    {
         return; // <-- We're actually already done
     }
-    else if (nElements <= 7) {
+    else if (nElements <= 7)
+    {
         // For small lists, its much faster to do a bubble sorting of the 
         //	list since this does not require so much copying back and forth
         BubbleSortScans(array, ascending);
         return;
     }
-    else {
+    else
+    {
         novac::CArray <Evaluation::CScanResult, Evaluation::CScanResult&> left;
         novac::CArray <Evaluation::CScanResult, Evaluation::CScanResult&> right;
         left.SetSize(halfSize);
         right.SetSize(halfSize);
 
         // Make two copies of the array, one of the first half and one of the second half
-        while (it < halfSize) {
+        while (it < halfSize)
+        {
             left.SetAtGrow(it, array.GetAt(it));
             ++it;
         }
-        while (it < nElements) {
+        while (it < nElements)
+        {
             right.SetAtGrow(it - halfSize, array.GetAt(it));
             ++it;
         }
@@ -1229,7 +1375,8 @@ void FileHandler::CEvaluationLogFileHandler::SortScans(novac::CArray<Evaluation:
 
 /** Merges the two arrays in a sorted way and stores the
         result in the output-array 'result' */
-void FileHandler::CEvaluationLogFileHandler::MergeArrays(novac::CArray<Evaluation::CScanResult, Evaluation::CScanResult&>& array1, novac::CArray<Evaluation::CScanResult, Evaluation::CScanResult&>& array2, novac::CArray<Evaluation::CScanResult, Evaluation::CScanResult&>& result, bool ascending) {
+void FileHandler::CEvaluationLogFileHandler::MergeArrays(novac::CArray<Evaluation::CScanResult, Evaluation::CScanResult&>& array1, novac::CArray<Evaluation::CScanResult, Evaluation::CScanResult&>& array2, novac::CArray<Evaluation::CScanResult, Evaluation::CScanResult&>& result, bool ascending)
+{
     CDateTime	time1, time2;
     unsigned long it1 = 0; // iterator for array1
     unsigned long it2 = 0; // iterator for array2
@@ -1242,35 +1389,43 @@ void FileHandler::CEvaluationLogFileHandler::MergeArrays(novac::CArray<Evaluatio
     result.SetSize(nE1 + nE2); // we can just as well set the size of the array from the start
 
     // 1. As long as there are elements in both arrays, do this
-    while (it1 < nE1 && it2 < nE2) {
+    while (it1 < nE1 && it2 < nE2)
+    {
         // Get the times of the first and the second
         array1.GetAt(it1).GetStartTime(0, time1);
         array2.GetAt(it2).GetStartTime(0, time2);
 
         // Compare the two start-times
-        if (time1 == time2) {
+        if (time1 == time2)
+        {
             // if equal
             result.SetAt(itr++, array1.GetAt(it1++));
             continue;
         }
-        else if (time1 < time2) {
+        else if (time1 < time2)
+        {
             // time1 < time2
-            if (ascending) {
+            if (ascending)
+            {
                 result.SetAt(itr++, array1.GetAt(it1++));
                 continue;
             }
-            else {
+            else
+            {
                 result.SetAt(itr++, array2.GetAt(it2++));
                 continue;
             }
         }
-        else {
+        else
+        {
             // time1 > time2
-            if (ascending) {
+            if (ascending)
+            {
                 result.SetAt(itr++, array2.GetAt(it2++));
                 continue;
             }
-            else {
+            else
+            {
                 result.SetAt(itr++, array1.GetAt(it1++));
                 continue;
             }
@@ -1278,12 +1433,14 @@ void FileHandler::CEvaluationLogFileHandler::MergeArrays(novac::CArray<Evaluatio
     }
 
     // 2. If we're out of elements in array2 but not in array1, do this
-    while (it1 < nE1) {
+    while (it1 < nE1)
+    {
         result.SetAt(itr++, array1.GetAt(it1++));
     }
 
     // 3. If we're out of elements in array1 but not in array2, do this
-    while (it2 < nE2) {
+    while (it2 < nE2)
+    {
         result.SetAt(itr++, array2.GetAt(it2++));
     }
 }
@@ -1292,28 +1449,33 @@ void FileHandler::CEvaluationLogFileHandler::MergeArrays(novac::CArray<Evaluatio
         Algorithm based on BubbleSort (~O(N2))
         Quite efficient for small arrays since the elements does not have to be copied
             and thus uses very little memory */
-void FileHandler::CEvaluationLogFileHandler::BubbleSortScans(novac::CArray<Evaluation::CScanResult, Evaluation::CScanResult&>& array, bool /*ascending*/) {
+void FileHandler::CEvaluationLogFileHandler::BubbleSortScans(novac::CArray<Evaluation::CScanResult, Evaluation::CScanResult&>& array, bool /*ascending*/)
+{
     CDateTime time1, time2;
     bool change;
     unsigned long nElements = (unsigned long)array.GetSize(); // number of elements
 
-    do {
+    do
+    {
         change = false;
-        for (unsigned int k = 0; k < nElements - 1; ++k) {
+        for (unsigned int k = 0; k < nElements - 1; ++k)
+        {
             // Get the start-times
             array[k].GetStartTime(0, time1);
             array[k + 1].GetStartTime(0, time2);
 
             // If the second scan has started before the first, 
             //	then change the order, otherwise don't do anything
-            if (time2 < time1) {
+            if (time2 < time1)
+            {
                 Evaluation::CScanResult tmp;
                 tmp = array[k];
                 array[k] = array[k + 1];
                 array[k + 1] = tmp;
                 change = true;
             }
-            else {
+            else
+            {
                 continue;
             }
         }

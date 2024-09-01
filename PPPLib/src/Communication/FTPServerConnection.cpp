@@ -54,14 +54,6 @@ void DownloadFile(Poco::Net::FTPClientSession& ftp, const novac::CFileInfo& file
     The files which have been downloaded are appended to the list 'downloadedFiles' */
 void DownloadDataFromDir(Poco::Net::FTPClientSession& ftp, std::string directory, novac::GuardedList<std::string>& downloadedFiles);
 
-CFTPServerConnection::CFTPServerConnection(void)
-{
-}
-
-CFTPServerConnection::~CFTPServerConnection(void)
-{
-}
-
 volatile double nMbytesDownloaded = 0.0;
 double nSecondsPassed = 0.0;
 

@@ -2,7 +2,8 @@
 
 /** The options for how to do the post-processing.
     This also defines what types of operations will be performed */
-enum class PROCESSING_MODE {
+enum class PROCESSING_MODE
+{
     // Default mode, fliuxes are calculated from each successfully evaluated scan.
     PROCESSING_MODE_FLUX,
 

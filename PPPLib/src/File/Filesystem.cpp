@@ -17,7 +17,8 @@ void SearchDirectoryForFiles(const novac::CString& path, bool includeSubdirector
         Poco::DirectoryIterator dir{ path.std_str() };
         Poco::DirectoryIterator end;
 
-        while (dir != end) {
+        while (dir != end)
+        {
             novac::CString fileName, fullFileName;
             fileName.Format("%s", dir.name().c_str());
             fullFileName.Format("%s/%s", (const char*)path, dir.name().c_str());
@@ -25,7 +26,8 @@ void SearchDirectoryForFiles(const novac::CString& path, bool includeSubdirector
 
             ++dir; // go to next file in the directory
 
-            if (novac::Equals(dir.name(), ".") || novac::Equals(dir.name(), "..")) {
+            if (novac::Equals(dir.name(), ".") || novac::Equals(dir.name(), ".."))
+            {
                 continue;
             }
 
@@ -105,10 +107,12 @@ int CreateDirectoryStructure(const novac::CString& path)
         Poco::File directory(path.c_str());
         directory.createDirectories();
 
-        if (directory.exists()) {
+        if (directory.exists())
+        {
             return 0;
         }
-        else {
+        else
+        {
             return 1; // error
         }
     }

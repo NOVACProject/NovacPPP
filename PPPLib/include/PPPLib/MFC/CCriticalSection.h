@@ -5,22 +5,22 @@
 
 namespace novac
 {
-    // Emulating a MFC CriticalSection
-    class CCriticalSection
+// Emulating a MFC CriticalSection
+class CCriticalSection
+{
+public:
+
+    CCriticalSection()
     {
-    public:
 
-        CCriticalSection()
-        {
+    }
 
-        }
+    ~CCriticalSection()
+    {
+    }
 
-        ~CCriticalSection()
-        {
-        }
-
-        std::mutex m_mutex;
-    };
+    std::mutex m_mutex;
+};
 }
 
 #endif // !NOVAC_PPPLIB_CRITICALSECTION_H

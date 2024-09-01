@@ -15,7 +15,8 @@ CSetupFileReader::~CSetupFileReader(void)
 {
 }
 
-RETURN_CODE CSetupFileReader::ReadSetupFile(const novac::CString& filename, Configuration::CNovacPPPConfiguration& setup) {
+RETURN_CODE CSetupFileReader::ReadSetupFile(const novac::CString& filename, Configuration::CNovacPPPConfiguration& setup)
+{
 
     // 1. Open the file
     if (!Open(filename))
@@ -35,7 +36,8 @@ RETURN_CODE CSetupFileReader::ReadSetupFile(const novac::CString& filename, Conf
             continue;
 
         //* Look for the xml tag 'instrument' and use Parse_Instrument and Parse_Location to read serial number and location to object 'setup' */
-        if (novac::Equals(szToken, "instrument", 9)) {
+        if (novac::Equals(szToken, "instrument", 9))
+        {
             Configuration::CInstrumentConfiguration instrument;
             Parse_Instrument(instrument);
             setup.m_instrument.push_back(instrument);
@@ -50,7 +52,8 @@ RETURN_CODE CSetupFileReader::ReadSetupFile(const novac::CString& filename, Conf
     return RETURN_CODE::SUCCESS;
 }
 
-void CSetupFileReader::Parse_Instrument(Configuration::CInstrumentConfiguration& instr) {
+void CSetupFileReader::Parse_Instrument(Configuration::CInstrumentConfiguration& instr)
+{
 
     // parse the file, one line at a time.
     szToken = "start";
@@ -62,22 +65,26 @@ void CSetupFileReader::Parse_Instrument(Configuration::CInstrumentConfiguration&
         if (szToken == nullptr || strlen(szToken) < 3)
             continue;
 
-        if (novac::Equals(szToken, "/instrument", 11)) {
+        if (novac::Equals(szToken, "/instrument", 11))
+        {
             return;
         }
 
-        if (novac::Equals(szToken, "serial", 6)) {
+        if (novac::Equals(szToken, "serial", 6))
+        {
             Parse_StringItem("/serial", instr.m_serial);
             continue;
         }
-        if (novac::Equals(szToken, "location", 8)) {
+        if (novac::Equals(szToken, "location", 8))
+        {
             Parse_Location(instr.m_location);
         }
     }
 }
 
 // Parse for location area and store in the LocationConfiguration object
-void CSetupFileReader::Parse_Location(Configuration::CLocationConfiguration& loc) {
+void CSetupFileReader::Parse_Location(Configuration::CLocationConfiguration& loc)
+{
 
     Configuration::CInstrumentLocation location;
 
@@ -91,41 +98,50 @@ void CSetupFileReader::Parse_Location(Configuration::CLocationConfiguration& loc
         if (szToken == nullptr || strlen(szToken) < 3)
             continue;
 
-        if (novac::Equals(szToken, "/location", 9)) {
+        if (novac::Equals(szToken, "/location", 9))
+        {
             // insert the information that we have into the array and return.
             loc.InsertLocation(location);
             return;
         }
 
-        if (novac::Equals(szToken, "name", 4)) {
+        if (novac::Equals(szToken, "name", 4))
+        {
             Parse_StringItem("/name", location.m_locationName);
             continue;
         }
-        if (novac::Equals(szToken, "latitude", 8)) {
+        if (novac::Equals(szToken, "latitude", 8))
+        {
             Parse_FloatItem("/latitude", location.m_latitude);
             continue;
         }
-        if (Equals(szToken, "longitude", 9)) {
+        if (Equals(szToken, "longitude", 9))
+        {
             Parse_FloatItem("/longitude", location.m_longitude);
             continue;
         }
-        if (Equals(szToken, "altitude", 8)) {
+        if (Equals(szToken, "altitude", 8))
+        {
             Parse_IntItem("/altitude", location.m_altitude);
             continue;
         }
-        if (Equals(szToken, "compass", 7)) {
+        if (Equals(szToken, "compass", 7))
+        {
             Parse_FloatItem("/compass", location.m_compass);
             continue;
         }
-        if (Equals(szToken, "coneangle", 9)) {
+        if (Equals(szToken, "coneangle", 9))
+        {
             Parse_FloatItem("/coneangle", location.m_coneangle);
             continue;
         }
-        if (Equals(szToken, "tilt", 4)) {
+        if (Equals(szToken, "tilt", 4))
+        {
             Parse_FloatItem("/tilt", location.m_tilt);
             continue;
         }
-        if (Equals(szToken, "type", 4)) {
+        if (Equals(szToken, "type", 4))
+        {
             Parse_IntItem("/type", (int&)location.m_instrumentType);
             continue;
         }
@@ -139,19 +155,23 @@ void CSetupFileReader::Parse_Location(Configuration::CLocationConfiguration& loc
             }
             continue;
         }
-        if (Equals(szToken, "spec", 4)) {
+        if (Equals(szToken, "spec", 4))
+        {
             Parse_StringItem("/spec", location.m_spectrometerModel);
             continue;
         }
-        if (Equals(szToken, "volcano", 7)) {
+        if (Equals(szToken, "volcano", 7))
+        {
             Parse_StringItem("/volcano", location.m_volcano);
             continue;
         }
-        if (Equals(szToken, "time_from", 9)) {
+        if (Equals(szToken, "time_from", 9))
+        {
             Parse_Date("/time_from", location.m_validFrom);
             continue;
         }
-        if (Equals(szToken, "time_to", 7)) {
+        if (Equals(szToken, "time_to", 7))
+        {
             Parse_Date("/time_to", location.m_validTo);
             continue;
         }
@@ -160,7 +180,8 @@ void CSetupFileReader::Parse_Location(Configuration::CLocationConfiguration& loc
 
 /** This takes care of writing the contents of a setup data-structure to file
     Only the part regarding the instrument's location will be written to the file */
-RETURN_CODE CSetupFileReader::WriteSetupFile(const novac::CString& fileName, const Configuration::CNovacPPPConfiguration& setup) {
+RETURN_CODE CSetupFileReader::WriteSetupFile(const novac::CString& fileName, const Configuration::CNovacPPPConfiguration& setup)
+{
     Configuration::CInstrumentLocation instrLocation;
 
     // Open the file
@@ -176,7 +197,8 @@ RETURN_CODE CSetupFileReader::WriteSetupFile(const novac::CString& fileName, con
     fprintf(f, "<NovacPPPConfiguration>\n");
 
     // loop through each instrument
-    for (int k = 0; k < setup.NumberOfInstruments(); ++k) {
+    for (int k = 0; k < setup.NumberOfInstruments(); ++k)
+    {
         const Configuration::CInstrumentConfiguration& instr = setup.m_instrument[k];
 
         fprintf(f, "\t<instrument>\n");

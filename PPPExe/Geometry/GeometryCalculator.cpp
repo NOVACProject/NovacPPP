@@ -31,21 +31,27 @@ CGeometryCalculator::~CGeometryCalculator(void)
 
 
 
-CGeometryCalculator::CGeometryCalculationInfo::CGeometryCalculationInfo() {
+CGeometryCalculator::CGeometryCalculationInfo::CGeometryCalculationInfo()
+{
     Clear();
 }
-CGeometryCalculator::CGeometryCalculationInfo::~CGeometryCalculationInfo() {
+CGeometryCalculator::CGeometryCalculationInfo::~CGeometryCalculationInfo()
+{
 }
-void CGeometryCalculator::CGeometryCalculationInfo::Clear() {
-    for (int k = 0; k < 2; ++k) {
+void CGeometryCalculator::CGeometryCalculationInfo::Clear()
+{
+    for (int k = 0; k < 2; ++k)
+    {
         scanner[k].m_altitude = 0;
         scanner[k].m_latitude = 0.0;
         scanner[k].m_longitude = 0.0;
         plumeCentre[k] = 0.0;
     }
 }
-Geometry::CGeometryCalculator::CGeometryCalculationInfo& CGeometryCalculator::CGeometryCalculationInfo::operator =(const Geometry::CGeometryCalculator::CGeometryCalculationInfo& info2) {
-    for (int k = 0; k < 2; ++k) {
+Geometry::CGeometryCalculator::CGeometryCalculationInfo& CGeometryCalculator::CGeometryCalculationInfo::operator =(const Geometry::CGeometryCalculator::CGeometryCalculationInfo& info2)
+{
+    for (int k = 0; k < 2; ++k)
+    {
         scanner[k] = info2.scanner[k];
         plumeCentre[k] = info2.plumeCentre[k];
     }
@@ -56,24 +62,28 @@ Geometry::CGeometryCalculator::CGeometryCalculationInfo& CGeometryCalculator::CG
         @param vec - the coordiates of the vector
         @param angle - the angle to rotate, in degrees
         @param axis - the axis to rotate around (1,2 or 3) */
-void CGeometryCalculator::Rotate(double vec[3], double angle, int axis) {
+void CGeometryCalculator::Rotate(double vec[3], double angle, int axis)
+{
     double COS = cos(angle * DEGREETORAD);
     double SIN = sin(angle * DEGREETORAD);
     double a = vec[0], b = vec[1], c = vec[2];
 
-    if (axis == 1) {
+    if (axis == 1)
+    {
         /** Rotation around X - axis*/
         a = vec[0];
         b = COS * vec[1] + SIN * vec[2];
         c = -SIN * vec[1] + COS * vec[2];
     }
-    else if (axis == 2) {
+    else if (axis == 2)
+    {
         /** Rotation around Y - axis*/
         a = COS * vec[0] - SIN * vec[2];
         b = vec[1];
         c = SIN * vec[0] + COS * vec[2];
     }
-    else if (axis == 3) {
+    else if (axis == 3)
+    {
         /** Rotation around Z - axis*/
         a = COS * vec[0] + SIN * vec[1];
         b = -SIN * vec[0] + COS * vec[1];
@@ -97,7 +107,8 @@ void CGeometryCalculator::Rotate(double vec[3], double angle, int axis) {
         @t2 - will on return be the parameter t2, as defined above
         @return true if the rays do intersect
         @return false if the rays don't intersect */
-bool	CGeometryCalculator::Intersection(const double o1[3], const double d1[3], const double o2[3], const double d2[3], double& t1, double& t2) {
+bool	CGeometryCalculator::Intersection(const double o1[3], const double d1[3], const double o2[3], const double d2[3], double& t1, double& t2)
+{
     double eps = 1e-19;
     double d1_cross_d2[3], point1[3], point2[3];
     double o2_minus_o1[3];
@@ -108,7 +119,8 @@ bool	CGeometryCalculator::Intersection(const double o1[3], const double d1[3], c
     // calculate the squared norm: ||d1 x d2||^2
     double N2 = Norm2(d1_cross_d2);
 
-    if (fabs(N2) < eps) {
+    if (fabs(N2) < eps)
+    {
         /** The lines are parallel */
         t1 = 0;		t2 = 0;
         return false;
@@ -140,12 +152,14 @@ bool	CGeometryCalculator::Intersection(const double o1[3], const double d1[3], c
 }
 
 /** Calculates the coordinates of the point (origin + t*direction) */
-void CGeometryCalculator::PointOnRay(const double origin[3], const double direction[3], double t, double point[3]) {
+void CGeometryCalculator::PointOnRay(const double origin[3], const double direction[3], double t, double point[3])
+{
     for (int k = 0; k < 3; ++k)
         point[k] = origin[k] + t * direction[k];
 }
 
-bool CGeometryCalculator::GetPlumeHeight_Exact(const Configuration::CInstrumentLocation locations[2], const double plumeCentre[2], double& plumeHeight) {
+bool CGeometryCalculator::GetPlumeHeight_Exact(const Configuration::CInstrumentLocation locations[2], const double plumeCentre[2], double& plumeHeight)
+{
     CGPSData gps[2] = { CGPSData(locations[0].m_latitude, locations[0].m_longitude, locations[0].m_altitude),
                         CGPSData(locations[1].m_latitude, locations[1].m_longitude, locations[1].m_altitude) };
     double compass[2] = { locations[0].m_compass,		locations[1].m_compass };
@@ -165,7 +179,8 @@ bool CGeometryCalculator::GetPlumeHeight_Exact(const Configuration::CInstrumentL
         @param plumeHeight - will on return be filled with the calculated
                 height of the plume above the lower of the two scanners
         @return true if a plume height could be calculated. */
-bool CGeometryCalculator::GetPlumeHeight_Exact(const CGPSData gps[2], const double compass[2], const double plumeCentre[2], const double coneAngle[2], const double tilt[2], double& plumeHeight) {
+bool CGeometryCalculator::GetPlumeHeight_Exact(const CGPSData gps[2], const double compass[2], const double plumeCentre[2], const double coneAngle[2], const double tilt[2], double& plumeHeight)
+{
     double distance, bearing;
     double posLower[3] = { 0, 0, 0 }; // <-- the position of the lower scanner in our changed coordinate system
     double posUpper[3];						// <-- the position of the higher scanner in our changed coordinate system
@@ -212,12 +227,14 @@ bool CGeometryCalculator::GetPlumeHeight_Exact(const CGPSData gps[2], const doub
 
     // 9. The plume-height (above the lower scanner) is the z-component of 
     //		the intersection-point
-    if (hit) {
+    if (hit)
+    {
         double intersectionPoint[3];
         PointOnRay(posLower, dirLower, t1, intersectionPoint); // <-- calculate the intersection point
         plumeHeight = intersectionPoint[2];
     }
-    else {
+    else
+    {
         // if the rays don't actually hit each other, calculate the distance between
         //	them. If this is small enough let's consider them as a hit.
         double point1[3], point2[3];
@@ -234,7 +251,8 @@ bool CGeometryCalculator::GetPlumeHeight_Exact(const CGPSData gps[2], const doub
     return true;
 }
 
-bool CGeometryCalculator::GetPlumeHeight_Fuzzy(const CGPSData source, const Configuration::CInstrumentLocation locations[2], const double plumeCentre[2], double& plumeHeight, double& windDirection) {
+bool CGeometryCalculator::GetPlumeHeight_Fuzzy(const CGPSData source, const Configuration::CInstrumentLocation locations[2], const double plumeCentre[2], double& plumeHeight, double& windDirection)
+{
     CGPSData gps[2] = { CGPSData(locations[0].m_latitude, locations[0].m_longitude, locations[0].m_altitude),
                         CGPSData(locations[1].m_latitude, locations[1].m_longitude, locations[1].m_altitude) };
     double compass[2] = { locations[0].m_compass,		locations[1].m_compass };
@@ -254,7 +272,8 @@ bool CGeometryCalculator::GetPlumeHeight_Fuzzy(const CGPSData source, const Conf
         @param plumeHeight - will on return be filled with the calculated
                 height of the plume above the lower of the two scanners
         @return true if a plume height could be calculated. */
-bool CGeometryCalculator::GetPlumeHeight_Fuzzy(const CGPSData source, const CGPSData gps[2], const double compass[2], const double plumeCentre[2], const double coneAngle[2], const double tilt[2], double& plumeHeight, double& windDirection) {
+bool CGeometryCalculator::GetPlumeHeight_Fuzzy(const CGPSData source, const CGPSData gps[2], const double compass[2], const double plumeCentre[2], const double coneAngle[2], const double tilt[2], double& plumeHeight, double& windDirection)
+{
     Common common;
 
     // 1. To make the calculations easier, we put a changed coordinate system
@@ -270,7 +289,8 @@ bool CGeometryCalculator::GetPlumeHeight_Fuzzy(const CGPSData source, const CGPS
     double maxDiff = 1.0;	// the maximum allowed difference in wind-direction, the convergence criterion
 
     // 2a. Make an initial guess of the plume height...
-    if (gps[lowerScanner].m_altitude > 0 && source.m_altitude > 0) {
+    if (gps[lowerScanner].m_altitude > 0 && source.m_altitude > 0)
+    {
         guess = std::min(5000.0, std::max(0.0, source.m_altitude - gps[lowerScanner].m_altitude));
     }
 
@@ -278,7 +298,8 @@ bool CGeometryCalculator::GetPlumeHeight_Fuzzy(const CGPSData source, const CGPS
     double f = 1e9, f_plus = 1e9;
     double f1, f2;
     int nIterations = 0;
-    while (1) {
+    while (1)
+    {
         // Calculate the wind-direction for the current guess of the plume height
         f1 = GetWindDirection(source, guess, gps[lowerScanner], compass[lowerScanner], plumeCentre[lowerScanner], coneAngle[lowerScanner], tilt[lowerScanner]);
         f2 = GetWindDirection(source, guess - heightDifference, gps[upperScanner], compass[upperScanner], plumeCentre[upperScanner], coneAngle[upperScanner], tilt[upperScanner]);
@@ -294,7 +315,8 @@ bool CGeometryCalculator::GetPlumeHeight_Fuzzy(const CGPSData source, const CGPS
             f_plus = 360.0 - f_plus;
 
         // Check if we have a good enough result already
-        if (f < maxDiff) {
+        if (f < maxDiff)
+        {
             plumeHeight = guess;
             windDirection = (f1 + f2) / 2.0; // take the average wind-direction
             if (plumeHeight < 0 || plumeHeight > 10000)
@@ -302,7 +324,8 @@ bool CGeometryCalculator::GetPlumeHeight_Fuzzy(const CGPSData source, const CGPS
             else
                 return true;
         }
-        else if (f_plus < maxDiff) {
+        else if (f_plus < maxDiff)
+        {
             plumeHeight = guess + h;
             windDirection = (f1 + f2) / 2.0; // take the average wind-direction
             if (plumeHeight < 0 || plumeHeight > 10000)
@@ -322,26 +345,31 @@ bool CGeometryCalculator::GetPlumeHeight_Fuzzy(const CGPSData source, const CGPS
         f1 = GetWindDirection(source, newGuess, gps[lowerScanner], compass[lowerScanner], plumeCentre[lowerScanner], coneAngle[lowerScanner], tilt[lowerScanner]);
         f2 = GetWindDirection(source, newGuess - heightDifference, gps[upperScanner], compass[upperScanner], plumeCentre[upperScanner], coneAngle[upperScanner], tilt[upperScanner]);
         double f_new = fabs(f1 - f2);
-        if (f_new > 180.0) {
+        if (f_new > 180.0)
+        {
             f_new = 360.0 - f_new;
         }
 
         int nIterations2 = 0;
-        while (f_new > f) {
+        while (f_new > f)
+        {
             alpha = alpha / 2;
             newGuess = guess - alpha * f / dfdx;
             f1 = GetWindDirection(source, newGuess, gps[lowerScanner], compass[lowerScanner], plumeCentre[lowerScanner], coneAngle[lowerScanner], tilt[lowerScanner]);
             f2 = GetWindDirection(source, newGuess - heightDifference, gps[upperScanner], compass[upperScanner], plumeCentre[upperScanner], coneAngle[upperScanner], tilt[upperScanner]);
             f_new = fabs(f1 - f2);
-            if (f_new > 180.0) {
+            if (f_new > 180.0)
+            {
                 f_new = 360.0 - f_new;
             }
 
-            if (nIterations2++ > 1000) {
+            if (nIterations2++ > 1000)
+            {
                 return false;
             }
         }
-        if (f_new < maxDiff) {
+        if (f_new < maxDiff)
+        {
             plumeHeight = newGuess;
             windDirection = (f1 + f2) / 2.0; // take the average wind-direction
             return true;
@@ -350,7 +378,8 @@ bool CGeometryCalculator::GetPlumeHeight_Fuzzy(const CGPSData source, const CGPS
 
 
         // Increase and check the number of iterations
-        if (nIterations++ > 100) {
+        if (nIterations++ > 100)
+        {
             return false;
         }
     }
@@ -363,7 +392,8 @@ bool CGeometryCalculator::GetPlumeHeight_Fuzzy(const CGPSData source, const CGPS
         Direction defined as direction from scanner, in a coordinate system with
             the x-axis in the direction of the scanner, the z-axis in the vertical direction
             and the y-axis defined as to get a right-handed coordinate system */
-void CGeometryCalculator::GetDirection(double direction[3], double scanAngle, double coneAngle, double tilt) {
+void CGeometryCalculator::GetDirection(double direction[3], double scanAngle, double coneAngle, double tilt)
+{
     double tan_coneAngle = tan(coneAngle * DEGREETORAD);
     double cos_tilt = cos(tilt * DEGREETORAD);
     double sin_tilt = sin(tilt * DEGREETORAD);
@@ -376,7 +406,8 @@ void CGeometryCalculator::GetDirection(double direction[3], double scanAngle, do
     direction[2] = 1;
 }
 
-bool CGeometryCalculator::CalculateGeometry(const novac::CString& evalLog1, const novac::CString& evalLog2, const Configuration::CInstrumentLocation locations[2], Geometry::CGeometryResult& result) {
+bool CGeometryCalculator::CalculateGeometry(const novac::CString& evalLog1, const novac::CString& evalLog2, const Configuration::CInstrumentLocation locations[2], Geometry::CGeometryResult& result)
+{
     return CGeometryCalculator::CalculateGeometry(evalLog1, 0, evalLog2, 0, locations, result);
 }
 
@@ -384,7 +415,8 @@ bool CGeometryCalculator::CalculateGeometry(const novac::CString& evalLog1, cons
         given evaluation-files.
         @param result - will on successful return be filled with information on the result
         @return true on success */
-bool CGeometryCalculator::CalculateGeometry(const novac::CString& evalLog1, int scanIndex1, const novac::CString& evalLog2, int scanIndex2, const Configuration::CInstrumentLocation locations[2], Geometry::CGeometryResult& result) {
+bool CGeometryCalculator::CalculateGeometry(const novac::CString& evalLog1, int scanIndex1, const novac::CString& evalLog2, int scanIndex2, const Configuration::CInstrumentLocation locations[2], Geometry::CGeometryResult& result)
+{
     FileHandler::CEvaluationLogFileHandler reader[2];
     CGPSData source;
     CPlumeInScanProperty plume[2];
@@ -402,13 +434,16 @@ bool CGeometryCalculator::CalculateGeometry(const novac::CString& evalLog1, int 
 
     // 2. Get the 'CPlumeInScanProperty' for the two scans and the start-times
     int index[2] = { scanIndex1, scanIndex2 };
-    for (k = 0; k < 2; ++k) {
+    for (k = 0; k < 2; ++k)
+    {
         reader[k].m_scan[index[k]].GetStartTime(0, startTime[k]);
 
-        if (false == reader[k].m_scan[index[k]].CalculatePlumeCentre(CMolecule(g_userSettings.m_molecule), plume[k])) {
+        if (false == reader[k].m_scan[index[k]].CalculatePlumeCentre(CMolecule(g_userSettings.m_molecule), plume[k]))
+        {
             return false; // <-- cannot see the plume
         }
-        if (plume[k].completeness < g_userSettings.m_calcGeometry_CompletenessLimit + 0.01) {
+        if (plume[k].completeness < g_userSettings.m_calcGeometry_CompletenessLimit + 0.01)
+        {
             return false; // <-- cannot see enough of the plume
         }
     }
@@ -417,7 +452,8 @@ bool CGeometryCalculator::CalculateGeometry(const novac::CString& evalLog1, int 
     return CalculateGeometry(plume[0], startTime[0], plume[1], startTime[1], locations, result);
 }
 
-bool CGeometryCalculator::CalculateGeometry(const CPlumeInScanProperty& plume1, const CDateTime& startTime1, const CPlumeInScanProperty& plume2, const CDateTime& startTime2, const Configuration::CInstrumentLocation locations[2], Geometry::CGeometryResult& result) {
+bool CGeometryCalculator::CalculateGeometry(const CPlumeInScanProperty& plume1, const CDateTime& startTime1, const CPlumeInScanProperty& plume2, const CDateTime& startTime2, const Configuration::CInstrumentLocation locations[2], Geometry::CGeometryResult& result)
+{
     CGPSData source;
     Common common;
     CDateTime startTime[2];
@@ -438,10 +474,12 @@ bool CGeometryCalculator::CalculateGeometry(const CPlumeInScanProperty& plume1, 
     double plumeCentre[2] = { plume1.plumeCenter, plume2.plumeCenter2 };
 
     // 5. Calculate the plume-height
-    if (false == CGeometryCalculator::GetPlumeHeight_Fuzzy(source, locations, plumeCentre, result.m_plumeAltitude, result.m_windDirection)) {
+    if (false == CGeometryCalculator::GetPlumeHeight_Fuzzy(source, locations, plumeCentre, result.m_plumeAltitude, result.m_windDirection))
+    {
         return false; // <-- could not calculate plume-height
     }
-    if (result.m_plumeAltitude < 0) {
+    if (result.m_plumeAltitude < 0)
+    {
         return false; // we failed to calculate anything reasonable
     }
 
@@ -449,19 +487,22 @@ bool CGeometryCalculator::CalculateGeometry(const CPlumeInScanProperty& plume1, 
 
     // 7a. The error in plume height and wind-direction due to uncertainty in finding the centre of the plume
     double ph_perp[4], wd_perp[4];
-    for (k = 0; k < 4; ++k) {
+    for (k = 0; k < 4; ++k)
+    {
         // make a small perturbation to the plume centre angles
         plumeCentre_perturbated[0] = plumeCentre[0] + plume1.plumeCenterError * ((k % 2 == 0) ? -1.0 : +1.0);
         plumeCentre_perturbated[1] = plumeCentre[1] + plume2.plumeCenterError * ((k < 2) ? -1.0 : +1.0);
 
         // make sure that the perturbation is not too large...
-        if ((fabs(plumeCentre_perturbated[0]) > 89.0) || (fabs(plumeCentre_perturbated[1]) > 89.0)) {
+        if ((fabs(plumeCentre_perturbated[0]) > 89.0) || (fabs(plumeCentre_perturbated[1]) > 89.0))
+        {
             ph_perp[k] = 1e99;
             continue;
         }
 
         // try to calculate the  plume height with the perturbed plume centre angles
-        if (false == CGeometryCalculator::GetPlumeHeight_Fuzzy(source, locations, plumeCentre_perturbated, ph_perp[k], wd_perp[k])) {
+        if (false == CGeometryCalculator::GetPlumeHeight_Fuzzy(source, locations, plumeCentre_perturbated, ph_perp[k], wd_perp[k]))
+        {
             ph_perp[k] = 1e99; // <-- could not calculate plume-height
         }
     }
@@ -484,11 +525,13 @@ bool CGeometryCalculator::CalculateGeometry(const CPlumeInScanProperty& plume1, 
 
     // 8. Also store the date the measurements were made and the average-time
     double timeDifference = CDateTime::Difference(startTime1, startTime2);
-    if (timeDifference < 0) {
+    if (timeDifference < 0)
+    {
         result.m_averageStartTime = startTime1;
         result.m_averageStartTime.Increment((int)fabs(timeDifference) / 2);
     }
-    else {
+    else
+    {
         result.m_averageStartTime = startTime2;
         result.m_averageStartTime.Increment((int)(timeDifference / 2));
     }
@@ -504,20 +547,23 @@ bool CGeometryCalculator::CalculateGeometry(const CPlumeInScanProperty& plume1, 
 }
 
 /** Calculates the cross product of the supplied vectors */
-void CGeometryCalculator::Cross(const double u[3], const double v[3], double result[3]) {
+void CGeometryCalculator::Cross(const double u[3], const double v[3], double result[3])
+{
     result[0] = u[1] * v[2] - u[2] * v[1];
     result[1] = u[2] * v[0] - u[0] * v[2];
     result[2] = u[0] * v[1] - u[1] * v[0];
 }
 
 /** Calculates the squared norm of the supplied vector */
-double CGeometryCalculator::Norm2(const double v[3]) {
+double CGeometryCalculator::Norm2(const double v[3])
+{
     return (v[0] * v[0] + v[1] * v[1] + v[2] * v[2]);
 }
 
 /** Calculates the determinant of a matrix whose columns are defined
         by the three supplied vectors */
-double CGeometryCalculator::Det(const double c1[3], const double c2[3], const double c3[3]) {
+double CGeometryCalculator::Det(const double c1[3], const double c2[3], const double c3[3])
+{
     double ret = c1[0] * c2[1] * c3[2] + c2[0] * c3[1] * c1[2] + c3[0] * c1[1] * c2[2];
     ret = ret - c1[0] * c3[1] * c2[2] - c2[0] * c1[1] * c3[2] - c3[0] * c2[1] * c1[2];
 
@@ -525,14 +571,16 @@ double CGeometryCalculator::Det(const double c1[3], const double c2[3], const do
 }
 
 /** Normalizes the supplied vector */
-void CGeometryCalculator::Normalize(double v[3]) {
+void CGeometryCalculator::Normalize(double v[3])
+{
     double norm_inv = 1 / sqrt(Norm2(v));
     v[0] *= norm_inv;
     v[1] *= norm_inv;
     v[2] *= norm_inv;
 }
 
-double CGeometryCalculator::GetWindDirection(const CGPSData source, double plumeHeight, const Configuration::CInstrumentLocation scannerLocation, double plumeCentre) {
+double CGeometryCalculator::GetWindDirection(const CGPSData source, double plumeHeight, const Configuration::CInstrumentLocation scannerLocation, double plumeCentre)
+{
     CGPSData gps = CGPSData(scannerLocation.m_latitude, scannerLocation.m_longitude, scannerLocation.m_altitude);
 
     return GetWindDirection(source, plumeHeight, gps, scannerLocation.m_compass, plumeCentre, scannerLocation.m_coneangle, scannerLocation.m_tilt);
@@ -546,13 +594,15 @@ double CGeometryCalculator::GetWindDirection(const CGPSData source, double plume
             and the 'coneAngle' (degrees)
             @return the wind-direction if the calculations are successful
             @return NOT_A_NUMBER if something is wrong.				*/
-double CGeometryCalculator::GetWindDirection(const CGPSData source, double plumeHeight, const CGPSData scannerPos, double compass, double plumeCentre, double coneAngle, double tilt) {
+double CGeometryCalculator::GetWindDirection(const CGPSData source, double plumeHeight, const CGPSData scannerPos, double compass, double plumeCentre, double coneAngle, double tilt)
+{
     if (plumeCentre == NOT_A_NUMBER)
         return NOT_A_NUMBER;
 
     // 1. Calculate the intersection-point
     double intersectionDistance, angle;
-    if (fabs(coneAngle - 90.0) > 1) {
+    if (fabs(coneAngle - 90.0) > 1)
+    {
         // ------------ CONE SCANNERS -----------
         // 1a. the distance from the system to the intersection-point
         double x, y;
@@ -572,7 +622,8 @@ double CGeometryCalculator::GetWindDirection(const CGPSData source, double plume
         // 1b. the direction from the system to the intersection-point
         angle = atan2(y, x) / DEGREETORAD + compass;
     }
-    else {
+    else
+    {
         // ------------- FLAT SCANNERS ---------------
         // 1a. the distance from the system to the intersection-point
         intersectionDistance = plumeHeight * tan(DEGREETORAD * plumeCentre);
@@ -603,7 +654,8 @@ double CGeometryCalculator::GetWindDirection(const CGPSData source, double plume
         @param result - will on successful return be filled with information on the result
             the resulting plume height is the altitude of the plume in meters above sea level...
         @return true on success */
-bool CGeometryCalculator::CalculatePlumeHeight(const novac::CString& evalLog, int scanIndex, Meteorology::CWindField& windField, Configuration::CInstrumentLocation location, Geometry::CGeometryResult& result) {
+bool CGeometryCalculator::CalculatePlumeHeight(const novac::CString& evalLog, int scanIndex, Meteorology::CWindField& windField, Configuration::CInstrumentLocation location, Geometry::CGeometryResult& result)
+{
     FileHandler::CEvaluationLogFileHandler reader;
     CPlumeInScanProperty plume;
     CGPSData source, scannerPos;
@@ -625,10 +677,12 @@ bool CGeometryCalculator::CalculatePlumeHeight(const novac::CString& evalLog, in
         return false;
 
     // 4. Get the scan-angles around which the plumes are centred
-    if (false == reader.m_scan[scanIndex].CalculatePlumeCentre(CMolecule(g_userSettings.m_molecule), plume)) {
+    if (false == reader.m_scan[scanIndex].CalculatePlumeCentre(CMolecule(g_userSettings.m_molecule), plume))
+    {
         return false; // <-- cannot see the plume
     }
-    if (plume.completeness < g_userSettings.m_calcGeometry_CompletenessLimit + 0.01) {
+    if (plume.completeness < g_userSettings.m_calcGeometry_CompletenessLimit + 0.01)
+    {
         return false; // <-- cannot see enough of the plume
     }
 
@@ -658,7 +712,8 @@ bool CGeometryCalculator::CalculatePlumeHeight(const novac::CString& evalLog, in
     novac::CString fileName;
     fileName.Format("%s%cdebugGeometrySingleInstr.txt", (const char*)g_userSettings.m_outputDirectory, Poco::Path::separator());
     FILE* f = fopen(fileName, "a");
-    if (f > 0) {
+    if (f > 0)
+    {
         fprintf(f, "%.1lf\t%.2lf\t%.2lf\n", plume.plumeCenter, plumeHeight, plumeHeightErr);
         fclose(f);
     }
@@ -685,7 +740,8 @@ bool CGeometryCalculator::CalculatePlumeHeight(const novac::CString& evalLog, in
         @param result - will on successful return be filled with information on the result
             only the wind-direction (and its error) will be filled in
         @return true on success */
-bool CGeometryCalculator::CalculateWindDirection(const novac::CString& evalLog, int scanIndex, Geometry::CPlumeHeight& absolutePlumeHeight, Configuration::CInstrumentLocation location, Geometry::CGeometryResult& result) {
+bool CGeometryCalculator::CalculateWindDirection(const novac::CString& evalLog, int scanIndex, Geometry::CPlumeHeight& absolutePlumeHeight, Configuration::CInstrumentLocation location, Geometry::CGeometryResult& result)
+{
     FileHandler::CEvaluationLogFileHandler reader;
     CPlumeInScanProperty plume;
     CGPSData source, scannerPos;
@@ -707,10 +763,12 @@ bool CGeometryCalculator::CalculateWindDirection(const novac::CString& evalLog, 
         return false;
 
     // 4. Get the scan-angles around which the plumes are centred
-    if (false == reader.m_scan[scanIndex].CalculatePlumeCentre(CMolecule(g_userSettings.m_molecule), plume)) {
+    if (false == reader.m_scan[scanIndex].CalculatePlumeCentre(CMolecule(g_userSettings.m_molecule), plume))
+    {
         return false; // <-- cannot see the plume
     }
-    if (plume.completeness < g_userSettings.m_calcGeometry_CompletenessLimit + 0.01) {
+    if (plume.completeness < g_userSettings.m_calcGeometry_CompletenessLimit + 0.01)
+    {
         return false; // <-- cannot see enough of the plume
     }
 
@@ -742,7 +800,8 @@ bool CGeometryCalculator::CalculateWindDirection(const novac::CString& evalLog, 
     novac::CString fileName;
     fileName.Format("%s%cdebugGeometrySingleInstr.txt", (const char*)g_userSettings.m_outputDirectory, Poco::Path::separator());
     FILE* f = fopen(fileName, "a");
-    if (f > 0) {
+    if (f > 0)
+    {
         fprintf(f, "wd\t%.1lf\t%.2lf\t%.2lf\n", plume.plumeCenter, windDirection, windDirectionErr);
         fclose(f);
     }
@@ -772,7 +831,8 @@ bool CGeometryCalculator::CalculateWindDirection(const novac::CString& evalLog, 
             and the 'coneAngle' (degrees)
             @return the plume height if the calculations are successful
             @return NOT_A_NUMBER if something is wrong.				*/
-double CGeometryCalculator::GetPlumeHeight(const CGPSData source, double windDirection, const CGPSData scannerPos, double compass, double plumeCentre, double coneAngle, double tilt) {
+double CGeometryCalculator::GetPlumeHeight(const CGPSData source, double windDirection, const CGPSData scannerPos, double compass, double plumeCentre, double coneAngle, double tilt)
+{
     if (plumeCentre == NOT_A_NUMBER)
         return NOT_A_NUMBER;
 
@@ -789,7 +849,8 @@ double CGeometryCalculator::GetPlumeHeight(const CGPSData source, double windDir
 
     // 1. Formulate the line emerging from the scanner
     double dx, dy;
-    if (fabs(coneAngle - 90.0) > 1) {
+    if (fabs(coneAngle - 90.0) > 1)
+    {
         // ------------ CONE SCANNERS -----------
         double cos_tilt = cos(DEGREETORAD * tilt);
         double sin_tilt = sin(DEGREETORAD * tilt);
@@ -801,7 +862,8 @@ double CGeometryCalculator::GetPlumeHeight(const CGPSData source, double windDir
         dx = (cos_tilt / tan_coneAngle - cos_alpha * sin_tilt) / commonDenominator;
         dy = (sin_alpha) / commonDenominator;
     }
-    else {
+    else
+    {
         // ------------- FLAT SCANNERS ---------------
         dx = 0;
         dy = tan(DEGREETORAD * plumeCentre);
@@ -811,7 +873,8 @@ double CGeometryCalculator::GetPlumeHeight(const CGPSData source, double windDir
     //		and the plane which contains the source and the wind-direction vector
     double denominator = dx * sin_wd - dy * cos_wd;
 
-    if (fabs(denominator) < 0.001) {
+    if (fabs(denominator) < 0.001)
+    {
         // the line does not intersect the plane
         return NOT_A_NUMBER;
     }
@@ -828,7 +891,8 @@ double CGeometryCalculator::GetPlumeHeight(const CGPSData source, double windDir
             This function is intended for use with V-II Heidelberg instruments
             @return the wind-direction if the calculations are successful
             @return NOT_A_NUMBER if something is wrong. 					*/
-double CGeometryCalculator::GetWindDirection(const CGPSData source, const CGPSData scannerPos, double plumeHeight, double alpha_center_of_mass, double phi_center_of_mass) {
+double CGeometryCalculator::GetWindDirection(const CGPSData source, const CGPSData scannerPos, double plumeHeight, double alpha_center_of_mass, double phi_center_of_mass)
+{
     Common common;
 
     //longitudinal distance between instrument and source:
@@ -858,7 +922,8 @@ double CGeometryCalculator::GetWindDirection(const CGPSData source, const CGPSDa
 
 /** Retrieve the plume height from a measurement using one scanning-instrument
         with an given assumption of the wind-direction 	*/
-double CGeometryCalculator::GetPlumeHeight_OneInstrument(const CGPSData source, const CGPSData gps, double WindDirection, double alpha_center_of_mass, double phi_center_of_mass) {
+double CGeometryCalculator::GetPlumeHeight_OneInstrument(const CGPSData source, const CGPSData gps, double WindDirection, double alpha_center_of_mass, double phi_center_of_mass)
+{
     Common common;
 
     //horizontal distance between instrument and source:

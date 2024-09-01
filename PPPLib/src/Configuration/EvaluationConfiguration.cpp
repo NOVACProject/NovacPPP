@@ -13,7 +13,8 @@ CEvaluationConfiguration::~CEvaluationConfiguration(void)
     Clear();
 }
 
-void CEvaluationConfiguration::Clear() {
+void CEvaluationConfiguration::Clear()
+{
     m_windows.clear();
 }
 
@@ -27,7 +28,8 @@ void CEvaluationConfiguration::InsertFitWindow(const novac::CFitWindow& window, 
     m_windows.push_back(timedWindow);
 }
 
-int CEvaluationConfiguration::SetFitWindow(int index, const novac::CFitWindow& window, novac::CDateTime& validFrom, novac::CDateTime& validTo) {
+int CEvaluationConfiguration::SetFitWindow(int index, const novac::CFitWindow& window, novac::CDateTime& validFrom, novac::CDateTime& validTo)
+{
     if (index < 0)
     {
         return 1;
@@ -47,7 +49,8 @@ int CEvaluationConfiguration::SetFitWindow(int index, const novac::CFitWindow& w
     return 0;
 }
 
-int CEvaluationConfiguration::GetFitWindow(int index, novac::CFitWindow& window, novac::CDateTime& validFrom, novac::CDateTime& validTo) const {
+int CEvaluationConfiguration::GetFitWindow(int index, novac::CFitWindow& window, novac::CDateTime& validFrom, novac::CDateTime& validTo) const
+{
     if (index < 0 || index >= m_windows.size())
         return 1;
 
@@ -64,7 +67,8 @@ std::ostream& operator << (std::ostream& out, const FitWindowWithTime& eval)
     return out;
 }
 
-void  CEvaluationConfiguration::CheckSettings() const {
+void  CEvaluationConfiguration::CheckSettings() const
+{
 
     // make sure that at least one fit-window is defined
     int nWindows = static_cast<int>(m_windows.size());
@@ -84,28 +88,29 @@ void  CEvaluationConfiguration::CheckSettings() const {
         }
 
         // check if this time range overlaps some other 
-        for (int j = k + 1; j < nWindows; ++j) {
+        for (int j = k + 1; j < nWindows; ++j)
+        {
 
-            if (m_windows[j].window.channel != m_windows[k].window.channel) 
+            if (m_windows[j].window.channel != m_windows[k].window.channel)
             {
                 continue; // no use to compare master and slave...
             }
-            else if (!EqualsIgnoringCase(m_windows[j].window.name, m_windows[k].window.name)) 
+            else if (!EqualsIgnoringCase(m_windows[j].window.name, m_windows[k].window.name))
             {
                 continue; // if the windows have different names, then don't compare...
             }
             else
-             {
-                if ((m_windows[k].validFrom < m_windows[j].validFrom) && (m_windows[k].validTo > m_windows[j].validFrom)) 
+            {
+                if ((m_windows[k].validFrom < m_windows[j].validFrom) && (m_windows[k].validTo > m_windows[j].validFrom))
                 {
                     std::stringstream msg;
-                    msg <<  "Evaluation configuration for " << this->m_serial << " has overlapping time ranges: (" << m_windows[k] << ") and (" << m_windows[j] << ")";
+                    msg << "Evaluation configuration for " << this->m_serial << " has overlapping time ranges: (" << m_windows[k] << ") and (" << m_windows[j] << ")";
                     throw std::invalid_argument(msg.str());
                 }
-                else if ((m_windows[j].validFrom < m_windows[k].validFrom) && (m_windows[j].validTo > m_windows[k].validFrom)) 
+                else if ((m_windows[j].validFrom < m_windows[k].validFrom) && (m_windows[j].validTo > m_windows[k].validFrom))
                 {
                     std::stringstream msg;
-                    msg <<  "Evaluation configuration for " << this->m_serial << " has overlapping time ranges: (" << m_windows[k] << ") and (" << m_windows[j] << ")";
+                    msg << "Evaluation configuration for " << this->m_serial << " has overlapping time ranges: (" << m_windows[k] << ") and (" << m_windows[j] << ")";
                     throw std::invalid_argument(msg.str());
                 }
             }

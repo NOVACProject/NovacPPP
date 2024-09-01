@@ -8,92 +8,94 @@
 // include the list-template from the C++ standard library
 #include <list>
 
-namespace Geometry {
-    /** An instance of the class <b>CPlumeDataBase</b> can be used to
-        keep track of the height of the gas plume over time.
+namespace Geometry
+{
+/** An instance of the class <b>CPlumeDataBase</b> can be used to
+    keep track of the height of the gas plume over time.
 
-        Potentially, this class can also be used to keep track of other
-            properties of the plume, such as dispersion, rise, etc...
-    */
-    class CPlumeDataBase
+    Potentially, this class can also be used to keep track of other
+        properties of the plume, such as dispersion, rise, etc...
+*/
+class CPlumeDataBase
+{
+public:
+    /** Default constructor*/
+    CPlumeDataBase(void);
+
+    /** Default destructor */
+    ~CPlumeDataBase(void);
+
+    // ----------------------------------------------------------------------
+    // ---------------------- PUBLIC DATA -----------------------------------
+    // ----------------------------------------------------------------------
+
+    /** The name of the volcano for which the database is valid. */
+    novac::CString m_volcano;
+
+    // ----------------------------------------------------------------------
+    // --------------------- PUBLIC METHODS ---------------------------------
+    // ----------------------------------------------------------------------
+
+    /** Retrieves the plume height at a given time.
+        @param time - the time for which the wind field should be retrieved
+        @param plumeHeight - will on successful return be filled with the information
+            about the plume height at the requested time.
+        @return true if the wind field could be retrieved, otherwise false.
+     */
+    bool GetPlumeHeight(const novac::CDateTime& time, CPlumeHeight& plumeHeight) const;
+
+    /** Inserts a plume height into the database */
+    void InsertPlumeHeight(const CPlumeHeight& plumeHeight);
+
+    /** Inserts a calculated plume height into the database */
+    void InsertPlumeHeight(const CGeometryResult& geomResult);
+
+    /** Writes the contents of this database to file.
+        @return 0 on success. */
+    int WriteToFile(const novac::CString& fileName) const;
+
+private:
+
+    // the structure CPlumeData is used to hold the information about the plume for a
+    //  single point in time
+    class CPlumeData
     {
     public:
-        /** Default constructor*/
-        CPlumeDataBase(void);
+        CPlumeData();
+        CPlumeData(const CPlumeData& p);
+        ~CPlumeData();
+        CPlumeData& operator=(const CPlumeData& p);
 
-        /** Default destructor */
-        ~CPlumeDataBase(void);
+        /** The data needs to be labelled with the time
+            when it is valid */
+        novac::CDateTime	validFrom;
+        novac::CDateTime	validTo;
 
-        // ----------------------------------------------------------------------
-        // ---------------------- PUBLIC DATA -----------------------------------
-        // ----------------------------------------------------------------------
-
-        /** The name of the volcano for which the database is valid. */
-        novac::CString m_volcano;
-
-        // ----------------------------------------------------------------------
-        // --------------------- PUBLIC METHODS ---------------------------------
-        // ----------------------------------------------------------------------
-
-        /** Retrieves the plume height at a given time.
-            @param time - the time for which the wind field should be retrieved
-            @param plumeHeight - will on successful return be filled with the information
-                about the plume height at the requested time.
-            @return true if the wind field could be retrieved, otherwise false.
-         */
-        bool GetPlumeHeight(const novac::CDateTime& time, CPlumeHeight& plumeHeight) const;
-
-        /** Inserts a plume height into the database */
-        void InsertPlumeHeight(const CPlumeHeight& plumeHeight);
-
-        /** Inserts a calculated plume height into the database */
-        void InsertPlumeHeight(const CGeometryResult& geomResult);
-
-        /** Writes the contents of this database to file.
-            @return 0 on success. */
-        int WriteToFile(const novac::CString& fileName) const;
-
-    private:
-
-        // the structure CPlumeData is used to hold the information about the plume for a
-        //  single point in time
-        class CPlumeData {
-        public:
-            CPlumeData();
-            CPlumeData(const CPlumeData& p);
-            ~CPlumeData();
-            CPlumeData& operator=(const CPlumeData& p);
-
-            /** The data needs to be labelled with the time
-                when it is valid */
-            novac::CDateTime	validFrom;
-            novac::CDateTime	validTo;
-
-            // The plume altitude (meters above sea level)
-            float		altitude;
-            float		altitudeError;
-            Meteorology::MET_SOURCE	altitudeSource;
-        };
-
-        // ----------------------------------------------------------------------
-        // ---------------------- PRIVATE DATA ----------------------------------
-        // ----------------------------------------------------------------------
-
-        /** This is the database of plume information. Each item in the list
-            holds the information of the plume for a single time frame.
-
-            Each CPlumeData object in the list MUST have an unique time frame.
-            */
-        std::list <CPlumeData> m_dataBase;
-
-
-        // ----------------------------------------------------------------------
-        // --------------------- PRIVATE METHODS --------------------------------
-        // ----------------------------------------------------------------------
-
-
-        // Calculates the average and error of the plume heights in the given list
-        void CalculateAverageHeight(const std::list <CPlumeData>& plumeList, double& averageAltitude, double& altitudeError) const;
-
+        // The plume altitude (meters above sea level)
+        float		altitude;
+        float		altitudeError;
+        Meteorology::MET_SOURCE	altitudeSource;
     };
+
+    // ----------------------------------------------------------------------
+    // ---------------------- PRIVATE DATA ----------------------------------
+    // ----------------------------------------------------------------------
+
+    /** This is the database of plume information. Each item in the list
+        holds the information of the plume for a single time frame.
+
+        Each CPlumeData object in the list MUST have an unique time frame.
+        */
+    std::list <CPlumeData> m_dataBase;
+
+
+    // ----------------------------------------------------------------------
+    // --------------------- PRIVATE METHODS --------------------------------
+    // ----------------------------------------------------------------------
+
+
+    // Calculates the average and error of the plume heights in the given list
+    void CalculateAverageHeight(const std::list <CPlumeData>& plumeList, double& averageAltitude, double& altitudeError) const;
+
+};
 }

@@ -753,7 +753,8 @@ int CPostEvaluationController::GetDarkCurrentSettings(novac::CScanFileHandler* s
 }
 
 
-int CPostEvaluationController::CheckQualityOfFluxMeasurement(CScanResult* result, const novac::CString& pakFileName) const {
+int CPostEvaluationController::CheckQualityOfFluxMeasurement(CScanResult* result, const novac::CString& pakFileName) const
+{
     novac::CString errorMessage;
 
     // Check if this is a flux measurement at all

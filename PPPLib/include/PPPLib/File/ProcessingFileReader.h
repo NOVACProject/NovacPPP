@@ -4,7 +4,8 @@
 #include <PPPLib/Configuration/UserConfiguration.h>
 #include <PPPLib/PPPLib.h>
 
-namespace FileHandler {
+namespace FileHandler
+{
 
 /** The class <b>CSetupFileReader</b> is used to read and write the setup
     files for NovacPPP. The setup files contains the setup data for

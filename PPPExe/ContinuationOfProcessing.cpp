@@ -26,7 +26,8 @@ CContinuationOfProcessing::~CContinuationOfProcessing(void)
         at an earlier point.
     if g_userSettings.m_fIsContinuation == false then this will just return without
         doing anything.	 */
-void CContinuationOfProcessing::ScanStatusLogFileForOldScans() {
+void CContinuationOfProcessing::ScanStatusLogFileForOldScans()
+{
     novac::CString oldStatusLogfile;
     novac::CString fileName;
 
@@ -40,15 +41,18 @@ void CContinuationOfProcessing::ScanStatusLogFileForOldScans() {
         return;
 
     FILE* f = fopen(oldStatusLogfile, "r");
-    if (f == NULL) {
+    if (f == NULL)
+    {
         return;
     }
 
     char* buffer = new char[16384];
 
-    while (NULL != fgets(buffer, 16383, f)) {
+    while (NULL != fgets(buffer, 16383, f))
+    {
         char* pt = strstr(buffer, " does not see the plume");
-        if (NULL != pt) {
+        if (NULL != pt)
+        {
             // if this line corresponds to an ignored scan
             pt[0] = '\0';
             fileName.Format("%s", buffer + 8);
@@ -59,9 +63,11 @@ void CContinuationOfProcessing::ScanStatusLogFileForOldScans() {
     fclose(f);
 }
 
-bool CContinuationOfProcessing::IsPreviouslyIgnored(const novac::CString& pakFileName) {
+bool CContinuationOfProcessing::IsPreviouslyIgnored(const novac::CString& pakFileName)
+{
     auto p = m_previouslyIgnoredFiles.GetHeadPosition();
-    while (p != NULL) {
+    while (p != NULL)
+    {
         novac::CString& fileName = m_previouslyIgnoredFiles.GetNext(p);
         if (Equals(fileName, pakFileName))
             return true;

@@ -281,7 +281,8 @@ int CPostCalibration::RunInstrumentCalibration(const std::vector<std::string>& s
             std::sort(
                 begin(scanFileInfo.second),
                 end(scanFileInfo.second),
-                [](const BasicScanInfo& first, const BasicScanInfo& second) {
+                [](const BasicScanInfo& first, const BasicScanInfo& second)
+                {
                     return first.startTime < second.startTime;
                 });
 

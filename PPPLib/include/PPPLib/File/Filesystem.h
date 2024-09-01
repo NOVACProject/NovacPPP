@@ -11,7 +11,8 @@ namespace Filesystem
 struct FileSearchCriterion
 {
     FileSearchCriterion()
-        : fileExtension("") {
+        : fileExtension("")
+    {
     }
 
     novac::CDateTime startTime;

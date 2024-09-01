@@ -215,10 +215,12 @@ void CXMLWindFileReader::ReadWindDirectory(const novac::CString& directory, Mete
         localFileName.Format("%s", (const char*)localFileList.GetNext(p));
 
         // make sure that this file falls in the appropriate date-range
-        if (dateFrom != nullptr) {
+        if (dateFrom != nullptr)
+        {
 
         }
-        if (dateTo != nullptr) {
+        if (dateTo != nullptr)
+        {
 
         }
 

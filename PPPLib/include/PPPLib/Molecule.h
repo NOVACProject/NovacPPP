@@ -8,7 +8,8 @@
     This is also able to use these numbers to convert between columns in number
     of molecules and in mass.
 */
-enum STANDARD_MOLECULE {
+enum STANDARD_MOLECULE
+{
     MOLEC_SO2,
     MOLEC_O3,
     MOLEC_BRO,
@@ -26,16 +27,10 @@ const double AVOGADROS_NUMBER = 6.02214179e23;
 class CMolecule
 {
 public:
-    /** Default constructor */
-    CMolecule(void);
 
-    /** Constructor for a standard gas
-        Creates an object which has the properties
-        of the standard gas supplied */
+    CMolecule();
+
     CMolecule(STANDARD_MOLECULE molec);
-
-    /** Default destructor */
-    ~CMolecule(void);
 
     // ----------------------------------------------------------------------
     // ---------------------- PUBLIC DATA -----------------------------------
@@ -46,7 +41,7 @@ public:
 
     /** The molecular weight of the molecule
         In grams per mol (g/mol) or (u/molecule) */
-    double	m_molecularWeight;
+    double m_molecularWeight;
 
     // ----------------------------------------------------------------------
     // --------------------- PUBLIC METHODS ---------------------------------

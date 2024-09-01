@@ -14,15 +14,15 @@ class CStringTokenizer
 {
 public:
     CStringTokenizer(void);
-    CStringTokenizer(const char* string, const char *separators);
+    CStringTokenizer(const char* string, const char* separators);
     ~CStringTokenizer(void);
 
     /** Returns the next token */
-    const char *NextToken();
+    const char* NextToken();
 
 private:
     /** The string that we are to interpret */
-    char	*m_stringToInterpret;
+    char* m_stringToInterpret;
 
     /** The length of the string to interpret */
     size_t	m_strLen;
@@ -31,7 +31,7 @@ private:
     size_t	m_stringPos;
 
     /** Local buffer holding the last token returned */
-    char	*m_lastToken;
+    char* m_lastToken;
 
     /** The separator characters */
     char	m_separators[MAX_N_SEPARATORS];

@@ -467,7 +467,8 @@ void SimplifyString(const CString& in, CString& out)
     out.Format("%s", buffer.data());
 }
 
-int Equals(const CString& str1, const CString& str2) {
+int Equals(const CString& str1, const CString& str2)
+{
 #ifdef _MSC_VER
     return (0 == _strnicmp(str1, str2, std::max(strlen(str1), strlen(str2))));
 #else
@@ -494,7 +495,8 @@ int Equals(const std::string& str1, const std::string& str2)
 }
 
 
-int Equals(const CString& str1, const CString& str2, size_t nCharacters) {
+int Equals(const CString& str1, const CString& str2, size_t nCharacters)
+{
 #ifdef _MSC_VER
     return (0 == _strnicmp(str1, str2, std::min(nCharacters, std::max(strlen(str1), strlen(str2)))));
 #else

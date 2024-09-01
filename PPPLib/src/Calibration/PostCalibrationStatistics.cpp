@@ -34,9 +34,9 @@ void CPostCalibrationStatistics::RememberCalibrationPerformed(
             begin(collection.calibrationsPerformed),
             end(collection.calibrationsPerformed),
             [](const InstrumentCalibration& c1, const InstrumentCalibration& c2)
-                {
-                    return c1.calibrationTimeStamp < c2.calibrationTimeStamp;
-                });
+            {
+                return c1.calibrationTimeStamp < c2.calibrationTimeStamp;
+            });
     }
 }
 

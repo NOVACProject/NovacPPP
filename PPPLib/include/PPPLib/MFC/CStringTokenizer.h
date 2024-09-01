@@ -6,19 +6,19 @@
 
 namespace novac
 {
-    class CStringTokenizer
-    {
-    public:
-        CStringTokenizer(const char* text, const char* separators);
+class CStringTokenizer
+{
+public:
+    CStringTokenizer(const char* text, const char* separators);
 
-        const char* NextToken();
+    const char* NextToken();
 
-    private:
+private:
 
-        const std::string m_data;
-        std::vector<std::string> m_tokens;
-        int m_curToken = 0;
-    };
+    const std::string m_data;
+    std::vector<std::string> m_tokens;
+    int m_curToken = 0;
+};
 }  // namespace novac
 
 #endif  // NOVAC_PPPLIB_CSTRING_TOKENIZER_H

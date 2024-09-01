@@ -27,12 +27,14 @@ extern std::string s_exeFileName;
 #undef min
 #undef max
 
-void UpdateMessage(const novac::CString& message) {
+void UpdateMessage(const novac::CString& message)
+{
     Poco::Logger& log = Poco::Logger::get("NovacPPP");
     log.information(message.std_str());
 }
 
-void ShowMessage(const novac::CString& message) {
+void ShowMessage(const novac::CString& message)
+{
     Poco::Logger& log = Poco::Logger::get("NovacPPP");
     log.information(message.std_str());
 }
@@ -41,7 +43,8 @@ void ShowMessage(const std::string& message)
     Poco::Logger& log = Poco::Logger::get("NovacPPP");
     log.information(message);
 }
-void ShowMessage(const novac::CString& message, novac::CString connectionID) {
+void ShowMessage(const novac::CString& message, novac::CString connectionID)
+{
     novac::CString msg;
 
     msg.Format("<%s> : %s", (const char*)connectionID, (const char*)message);
@@ -50,7 +53,8 @@ void ShowMessage(const novac::CString& message, novac::CString connectionID) {
     log.information(msg.std_str());
 }
 
-void ShowMessage(const char message[]) {
+void ShowMessage(const char message[])
+{
     novac::CString msg;
     msg.Format("%s", message);
     ShowMessage(msg);
@@ -88,7 +92,8 @@ Common::Common()
 
 /** Calculate the distance (in meters) between the two points (lat1, lon1) and
     (lat2, lon2). All latitudes and longitudes should be in degrees. */
-double Common::GPSDistance(double lat1, double lon1, double lat2, double lon2) {
+double Common::GPSDistance(double lat1, double lon1, double lat2, double lon2)
+{
     const double R_Earth = 6367000; // radius of the earth
     lat1 = lat1 * DEGREETORAD;
     lat2 = lat2 * DEGREETORAD;
@@ -146,7 +151,8 @@ double Common::GPSBearing(double lat1, double lon1, double lat2, double lon2)
 /** This function calculates the latitude and longitude for a point
         which is the distance 'dist' m and bearing 'az' degrees from
         the point defied by 'lat1' and 'lon1' */
-void Common::CalculateDestination(double lat1, double lon1, double dist, double az, double& lat2, double& lon2) {
+void Common::CalculateDestination(double lat1, double lon1, double dist, double az, double& lat2, double& lon2)
+{
     const double R_Earth = 6367000; // radius of the earth
 
     double dR = dist / R_Earth;
@@ -170,7 +176,8 @@ void Common::CalculateDestination(double lat1, double lon1, double dist, double 
         for the site specified by (lat, lon) and for the time given in gmtTime.
         Note that the returned angles are in degrees and that the specified
         time _must_ be GMT-time. */
-RETURN_CODE Common::GetSunPosition(const novac::CDateTime& gmtTime, double lat, double lon, double& SZA, double& SAZ) {
+RETURN_CODE Common::GetSunPosition(const novac::CDateTime& gmtTime, double lat, double lon, double& SZA, double& SAZ)
+{
     SZA = SAZ = 0; // reset the numbers
 
     // Get the julian day
@@ -230,7 +237,8 @@ double Common::CalculateFlux(const double* scanAngle, const double* scanAngle2, 
 }
 
 
-void Common::GuessSpecieName(const novac::CString& fileName, novac::CString& specie) {
+void Common::GuessSpecieName(const novac::CString& fileName, novac::CString& specie)
+{
     specie.Format("");
     novac::CString spc[] = { "SO2", "NO2", "O3", "O4", "HCHO", "RING", "H2O", "CLO", "BRO", "CHOCHO", "Glyoxal", "Formaldehyde", "HONO", "NO3" };
     int nSpecies = 12;
@@ -243,8 +251,10 @@ void Common::GuessSpecieName(const novac::CString& fileName, novac::CString& spe
     fil.Format("%s", (const char*)fileName.Right((int)strlen(fileName) - index - 1));
     fil.MakeUpper();
 
-    for (int i = 0; i < nSpecies; ++i) {
-        if (strstr(fil, spc[i])) {
+    for (int i = 0; i < nSpecies; ++i)
+    {
+        if (strstr(fil, spc[i]))
+        {
             specie.Format("%s", (const char*)spc[i]);
             return;
         }
@@ -264,7 +274,8 @@ void Common::GetFileName(novac::CString& fileName)
 
 /** Take out the directory from a long path name.
     @param fileName - the complete path of the file */
-void Common::GetDirectory(novac::CString& fileName) {
+void Common::GetDirectory(novac::CString& fileName)
+{
     int position = fileName.ReverseFind('\\');
     if (position >= 0)
     {
@@ -287,7 +298,8 @@ long Common::RetrieveFileSize(novac::CString& fileName)
 
 
 /** Compares two files to see if their contents are the same */
-bool Common::AreIdenticalFiles(const novac::CString& fileName1, const novac::CString& fileName2) {
+bool Common::AreIdenticalFiles(const novac::CString& fileName1, const novac::CString& fileName2)
+{
     if (Equals(fileName1, fileName2))
         return true; // a file is always identical to itself
 
@@ -299,16 +311,20 @@ bool Common::AreIdenticalFiles(const novac::CString& fileName1, const novac::CSt
     if (f2 == NULL)
         return false;
 
-    while (1) {
+    while (1)
+    {
         int c1 = fgetc(f1);
         int c2 = fgetc(f2);
 
-        if (c1 == EOF) {
+        if (c1 == EOF)
+        {
             fclose(f1); fclose(f2);
-            if (c2 == EOF) {
+            if (c2 == EOF)
+            {
                 return true;
             }
-            else {
+            else
+            {
                 return false;
             }
         }
@@ -326,13 +342,15 @@ bool Common::AreIdenticalFiles(const novac::CString& fileName1, const novac::CSt
 
 /** If there's a file with the given input name, then it will be renamed to
     PATH\\FILENAME_creationDate_creationTime.FILEENDING */
-bool Common::ArchiveFile(const novac::CString& fileName) {
+bool Common::ArchiveFile(const novac::CString& fileName)
+{
     novac::CString newFileName, errorMsg;
 
     // Search for the file
     Poco::File oldFile(fileName.std_str());
 
-    if (!oldFile.exists()) {
+    if (!oldFile.exists())
+    {
         return false; // file does not exist
     }
 
@@ -342,11 +360,13 @@ bool Common::ArchiveFile(const novac::CString& fileName) {
 
     // build the new file-name
     int lastDot = fileName.ReverseFind('.');
-    if (lastDot == -1) {
+    if (lastDot == -1)
+    {
         newFileName.Format("%s_%04d%02d%02d_%02d%02d", (const char*)fileName,
             creationTime.year(), creationTime.month(), creationTime.day(), creationTime.hour(), creationTime.minute());
     }
-    else {
+    else
+    {
         newFileName.Format("%s_%04d%02d%02d_%02d%02d%s", (const char*)fileName.Left(lastDot),
             creationTime.year(), creationTime.month(), creationTime.day(), creationTime.hour(), creationTime.minute(), (const char*)fileName.Right(fileName.GetLength() - lastDot));
     }
@@ -401,7 +421,8 @@ void Common::EquatorialCoordinates(double D, double& RA, double& dec, double& EQ
     EQT = q_deg / 15.0 - RA / 15.0;
 }
 
-void Common::HorizontalCoordinates(double lat, double H, double dec, double& elev, double& azim) {
+void Common::HorizontalCoordinates(double lat, double H, double dec, double& elev, double& azim)
+{
     const double H_rad = H * DEGREETORAD;
     const double lat_rad = lat * DEGREETORAD;
     const double dec_rad = dec * DEGREETORAD;
@@ -435,7 +456,8 @@ void Common::HorizontalCoordinates(double lat, double H, double dec, double& ele
 }
 
 /** Returns the hour angle given the longitude and equation of time. */
-double Common::GetHourAngle(double hr, double lon, double EqT) {
+double Common::GetHourAngle(double hr, double lon, double EqT)
+{
     double H = 15.0 * (hr + lon / 15 + EqT - 12);
     //    printf("HOUR ANGLE (from noon,increasing with time): %f\n",H);
     return(H);

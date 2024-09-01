@@ -21,7 +21,8 @@ public:
     // ---------------------- PUBLIC DATA -----------------------------------
     // ----------------------------------------------------------------------
 
-    enum REASON_FOR_REJECTION {
+    enum REASON_FOR_REJECTION
+    {
         SKY_SPEC_SATURATION,
         SKY_SPEC_DARK,
         SKY_SPEC_TOO_LONG_EXPTIME,
@@ -55,7 +56,8 @@ public:
     void WriteStatToFile(const novac::CString& file);
 
 private:
-    class CInstrumentStats {
+    class CInstrumentStats
+    {
     public:
         CInstrumentStats();
         ~CInstrumentStats();

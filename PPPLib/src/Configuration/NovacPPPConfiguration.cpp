@@ -12,12 +12,14 @@ CNovacPPPConfiguration::CNovacPPPConfiguration()
 {
 }
 
-const CInstrumentConfiguration* CNovacPPPConfiguration::GetInstrument(const novac::CString& serial) const {
+const CInstrumentConfiguration* CNovacPPPConfiguration::GetInstrument(const novac::CString& serial) const
+{
     std::string stdSerial{ (const char*)serial };
     return GetInstrument(stdSerial);
 }
 
-const CInstrumentConfiguration* CNovacPPPConfiguration::GetInstrument(const std::string& serial) const {
+const CInstrumentConfiguration* CNovacPPPConfiguration::GetInstrument(const std::string& serial) const
+{
     novac::CString errorMessage;
 
     for (auto& instrument : m_instrument)
@@ -35,7 +37,8 @@ const CInstrumentConfiguration* CNovacPPPConfiguration::GetInstrument(const std:
     return nullptr;
 }
 
-int CNovacPPPConfiguration::GetInstrumentLocation(const novac::CString& serial, const CDateTime& day, CInstrumentLocation& instrLocation) const {
+int CNovacPPPConfiguration::GetInstrumentLocation(const novac::CString& serial, const CDateTime& day, CInstrumentLocation& instrLocation) const
+{
     CInstrumentLocation singleLocation;
 
     // First of all find the instrument 
@@ -46,17 +49,20 @@ int CNovacPPPConfiguration::GetInstrumentLocation(const novac::CString& serial, 
     // Next find the instrument location that is valid for this date
     const CLocationConfiguration& locationconf = instrumentConf->m_location;
     bool foundValidLocation = false;
-    for (unsigned int k = 0; k < locationconf.GetLocationNum(); ++k) {
+    for (unsigned int k = 0; k < locationconf.GetLocationNum(); ++k)
+    {
         locationconf.GetLocation(k, singleLocation);
 
-        if (singleLocation.m_validFrom < day && (day < singleLocation.m_validTo || day == singleLocation.m_validTo)) {
+        if (singleLocation.m_validFrom < day && (day < singleLocation.m_validTo || day == singleLocation.m_validTo))
+        {
             instrLocation = singleLocation;
             foundValidLocation = true;
             break;
         }
     }
 
-    if (!foundValidLocation) {
+    if (!foundValidLocation)
+    {
         novac::CString errorMessage;
         errorMessage.Format("Recieved spectrum from instrument %s which is does not have a configured location on %04d.%02d.%02d. Cannot Evaluate!", (const char*)serial, day.year, day.month, day.day);
         ShowMessage(errorMessage);
@@ -77,10 +83,12 @@ int CNovacPPPConfiguration::GetFitWindow(
     CDateTime evalValidFrom, evalValidTo;
     novac::CString errorMessage, windowName;
 
-    if (fitWindowName != nullptr) {
+    if (fitWindowName != nullptr)
+    {
         windowName.Format(*fitWindowName);
     }
-    else {
+    else
+    {
         windowName.Format("");
     }
 
@@ -92,19 +100,24 @@ int CNovacPPPConfiguration::GetFitWindow(
     // Then find the evaluation fit-window that is valid for this date
     const Configuration::CEvaluationConfiguration& evalConf = instrumentConf->m_eval;
     bool foundValidEvaluation = false;
-    for (int k = 0; k < evalConf.NumberOfFitWindows(); ++k) {
+    for (int k = 0; k < evalConf.NumberOfFitWindows(); ++k)
+    {
         evalConf.GetFitWindow(k, window, evalValidFrom, evalValidTo);
 
-        if (evalValidFrom < dateAndTime && (dateAndTime < evalValidTo || dateAndTime == evalValidTo) && ((channel % 16) == window.channel)) {
-            if (windowName.GetLength() >= 1) {
-                if (Equals(windowName, window.name)) {
+        if (evalValidFrom < dateAndTime && (dateAndTime < evalValidTo || dateAndTime == evalValidTo) && ((channel % 16) == window.channel))
+        {
+            if (windowName.GetLength() >= 1)
+            {
+                if (Equals(windowName, window.name))
+                {
                     // if we're searching for a specific name of fit-windows
                     //	then the name must also match
                     foundValidEvaluation = true;
                     break;
                 }
             }
-            else {
+            else
+            {
                 // if we're not searching for any specific name, then anything
                 //	which is valid within the given time-range will do.
                 foundValidEvaluation = true;
@@ -113,11 +126,14 @@ int CNovacPPPConfiguration::GetFitWindow(
         }
     }
 
-    if (!foundValidEvaluation) {
-        if (windowName.GetLength() >= 1) {
+    if (!foundValidEvaluation)
+    {
+        if (windowName.GetLength() >= 1)
+        {
             errorMessage.Format("Recieved spectrum from instrument %s which is does not have a configured fit-window \"%s\" on %04d.%02d.%02d. Cannot Evaluate!", (const char*)serial, (const char*)windowName, dateAndTime.year, dateAndTime.month, dateAndTime.day);
         }
-        else {
+        else
+        {
             errorMessage.Format("Recieved spectrum from instrument %s which is does not have a configured fit-window on %04d.%02d.%02d. Cannot Evaluate!", (const char*)serial, dateAndTime.year, dateAndTime.month, dateAndTime.day);
         }
         ShowMessage(errorMessage);

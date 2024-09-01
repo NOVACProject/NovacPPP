@@ -19,11 +19,11 @@
 
 namespace Geometry
 {
-    class CPlumeHeight;
+class CPlumeHeight;
 }
 namespace Meteorology
 {
-    class CWindField;
+class CWindField;
 }
 
 // ---------------------------------------------------------------
@@ -98,7 +98,8 @@ void UpdateMessage(const novac::CString& message);
     do not really fit anywhere else.
 */
 
-class Common {
+class Common
+{
 
 public:
     Common();
@@ -218,9 +219,11 @@ public:
         @param pBuffer - The array in which to search for an element.
         @param bufLen - The length of the array.
         @return - The minimum value in the array */
-template <class T> T Min(T* pBuffer, long bufLen) {
+template <class T> T Min(T* pBuffer, long bufLen)
+{
     T minValue = pBuffer[0];
-    for (long i = 1; i < bufLen; i++) {
+    for (long i = 1; i < bufLen; i++)
+    {
         if (pBuffer[i] < minValue)
             minValue = pBuffer[i];
     }
@@ -234,18 +237,23 @@ template <class T> T Min(T* pBuffer, long bufLen) {
         @param nElements - the number of elements in the supplied array
         @param output - the output array, must be at least 'N'- elements long
         @param N - the number of values to take out. 	*/
-template <class T> bool FindNLowest(const T array[], long nElements, T output[], int N, int* indices = NULL) {
+template <class T> bool FindNLowest(const T array[], long nElements, T output[], int N, int* indices = NULL)
+{
     for (int i = 0; i < N; ++i)
         output[i] = 1e16; // to get some initial value
 
     // loop through all elements in the array
-    for (int i = 0; i < nElements; ++i) {
+    for (int i = 0; i < nElements; ++i)
+    {
 
         // compare this element with all elements in the output array.
-        for (int j = 0; j < N; ++j) {
-            if (array[i] < output[j]) {
+        for (int j = 0; j < N; ++j)
+        {
+            if (array[i] < output[j])
+            {
                 // If we found a higher value, shift all other values down one step...
-                for (int k = N - 1; k > j; --k) {
+                for (int k = N - 1; k > j; --k)
+                {
                     output[k] = output[k - 1];
                     if (indices)							indices[k] = indices[k - 1];
                 }
@@ -262,12 +270,14 @@ template <class T> bool FindNLowest(const T array[], long nElements, T output[],
         in the supplied array.
         @param array - the array of which to calculate the average value
         @param nElements - the length of the array. */
-template <class T> double Average(T array[], long nElements) {
+template <class T> double Average(T array[], long nElements)
+{
     if (nElements <= 0)
         return 0.0;
 
     double sum = 0;
-    for (int k = 0; k < nElements; ++k) {
+    for (int k = 0; k < nElements; ++k)
+    {
         sum += array[k];
     }
     return (sum / nElements);
@@ -277,7 +287,8 @@ template <class T> double Average(T array[], long nElements) {
         in the supplied array.
         @param array - the array of which to calculate the average value
         @param nElements - the length of the array. */
-template <class T> double Variance(T array[], long nElements) {
+template <class T> double Variance(T array[], long nElements)
+{
     if (nElements <= 0)
         return 0.0;
 
@@ -285,7 +296,8 @@ template <class T> double Variance(T array[], long nElements) {
     T mean = Average(array, nElements);
 
     double sum = 0;
-    for (int k = 0; k < nElements; ++k) {
+    for (int k = 0; k < nElements; ++k)
+    {
         sum += (array[k] - mean) * (array[k] - mean);
     }
     sum = sum / nElements;
@@ -296,7 +308,8 @@ template <class T> double Variance(T array[], long nElements) {
         in the supplied array.
         @param array - the array of which to calculate the average value
         @param nElements - the length of the array. */
-template <class T> double Std(T array[], long nElements) {
+template <class T> double Std(T array[], long nElements)
+{
     if (nElements <= 0)
         return 0.0;
 

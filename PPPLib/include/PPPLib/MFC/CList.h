@@ -6,399 +6,399 @@
 
 namespace novac
 {
-	template<class TYPE>
-	struct POSITION
-	{
-	public:
-		POSITION()
-			: m_emptyList(), m_data(&m_emptyList)
-		{
-			m_position = m_data->begin();
-		}
-		
-		POSITION(std::list<TYPE>& data)
-			: m_emptyList(), m_data(&data)
-		{
-			m_position = m_data->begin();
-		}
+template<class TYPE>
+struct POSITION
+{
+public:
+    POSITION()
+        : m_emptyList(), m_data(&m_emptyList)
+    {
+        m_position = m_data->begin();
+    }
 
-		POSITION(const TYPE* )
-			: m_emptyList(), m_data(&m_emptyList)
-		{
-			m_position = m_data->begin();
-		}
+    POSITION(std::list<TYPE>& data)
+        : m_emptyList(), m_data(&data)
+    {
+        m_position = m_data->begin();
+    }
 
-		POSITION(const POSITION& other)
-			: m_emptyList(), m_data(other.m_data)
-		{
-			m_position = other.m_position;
-		}
+    POSITION(const TYPE*)
+        : m_emptyList(), m_data(&m_emptyList)
+    {
+        m_position = m_data->begin();
+    }
 
-		POSITION& operator=(const POSITION& other)
-		{
-			this->m_data = other.m_data;
-			this->m_position = other.m_position;
+    POSITION(const POSITION& other)
+        : m_emptyList(), m_data(other.m_data)
+    {
+        m_position = other.m_position;
+    }
 
-			return *this;
-		}
+    POSITION& operator=(const POSITION& other)
+    {
+        this->m_data = other.m_data;
+        this->m_position = other.m_position;
 
-		POSITION& operator=(const TYPE*)
-		{
-			this->m_data = &m_emptyList;
-			this->m_position = m_emptyList.begin();
+        return *this;
+    }
 
-			return *this;
-		}
+    POSITION& operator=(const TYPE*)
+    {
+        this->m_data = &m_emptyList;
+        this->m_position = m_emptyList.begin();
 
-		bool HasNext() const
-		{
-			if (nullptr == m_data || 0 == m_data->size())
-			{
-				return false;
-			}
-			else
-			{
-				return m_position != m_data->end(); 
-			}
-		}
+        return *this;
+    }
 
-		TYPE& GetNext()
-		{
-			TYPE& data = *this->m_position;
-			++(this->m_position);
-			return data;
-		}
+    bool HasNext() const
+    {
+        if (nullptr == m_data || 0 == m_data->size())
+        {
+            return false;
+        }
+        else
+        {
+            return m_position != m_data->end();
+        }
+    }
 
-		TYPE& GetAt() const
-		{
-			return *(this->m_position);
-		}
+    TYPE& GetNext()
+    {
+        TYPE& data = *this->m_position;
+        ++(this->m_position);
+        return data;
+    }
 
-		void InsertBefore(TYPE item)
-		{
-			m_data->insert(m_position, item);
-		}
+    TYPE& GetAt() const
+    {
+        return *(this->m_position);
+    }
 
-		bool operator==(void* data)
-		{
-			return (nullptr == data) ? (!this->HasNext()) : false;
-		}
+    void InsertBefore(TYPE item)
+    {
+        m_data->insert(m_position, item);
+    }
 
-		bool operator!=(void* data)
-		{
-			return (nullptr == data) ? (this->HasNext()) : true;
-		}
+    bool operator==(void* data)
+    {
+        return (nullptr == data) ? (!this->HasNext()) : false;
+    }
 
-	private:
-		typename std::list<TYPE>::iterator m_position;
-		std::list<TYPE> m_emptyList;
-		std::list<TYPE>* m_data;
-	};
+    bool operator!=(void* data)
+    {
+        return (nullptr == data) ? (this->HasNext()) : true;
+    }
 
-	template<class TYPE>
-	struct CONST_POSITION : public POSITION<TYPE>
-	{
-	public:
-		CONST_POSITION()
-			: m_emptyList(), m_data(&m_emptyList)
-		{
-			m_position = m_data->begin();
-		}
+private:
+    typename std::list<TYPE>::iterator m_position;
+    std::list<TYPE> m_emptyList;
+    std::list<TYPE>* m_data;
+};
 
-		CONST_POSITION(const std::list<TYPE>& data)
-			: m_emptyList(), m_data(&data)
-		{
-			m_position = m_data->begin();
-		}
+template<class TYPE>
+struct CONST_POSITION : public POSITION<TYPE>
+{
+public:
+    CONST_POSITION()
+        : m_emptyList(), m_data(&m_emptyList)
+    {
+        m_position = m_data->begin();
+    }
 
-		CONST_POSITION(const TYPE*)
-			: m_emptyList(), m_data(&m_emptyList)
-		{
-			m_position = m_data->begin();
-		}
+    CONST_POSITION(const std::list<TYPE>& data)
+        : m_emptyList(), m_data(&data)
+    {
+        m_position = m_data->begin();
+    }
 
-		CONST_POSITION(const CONST_POSITION& other)
-			: m_emptyList(), m_data(other.m_data)
-		{
-			m_position = other.m_position;
-		}
+    CONST_POSITION(const TYPE*)
+        : m_emptyList(), m_data(&m_emptyList)
+    {
+        m_position = m_data->begin();
+    }
 
-		POSITION<TYPE>& operator=(const TYPE*)
-		{
-			this->m_position = m_data->end();
-			return *this;
-		}
+    CONST_POSITION(const CONST_POSITION& other)
+        : m_emptyList(), m_data(other.m_data)
+    {
+        m_position = other.m_position;
+    }
 
-		bool HasNext() const
-		{
-			if (nullptr == m_data || 0 == m_data->size())
-			{
-				return false;
-			}
-			else
-			{
-				return m_position != m_data->end();
-			}
-		}
+    POSITION<TYPE>& operator=(const TYPE*)
+    {
+        this->m_position = m_data->end();
+        return *this;
+    }
 
-		const TYPE& GetAt() const
-		{
-			return *(this->m_position);
-		}
+    bool HasNext() const
+    {
+        if (nullptr == m_data || 0 == m_data->size())
+        {
+            return false;
+        }
+        else
+        {
+            return m_position != m_data->end();
+        }
+    }
 
-		const TYPE& GetNext()
-		{
-			const TYPE& data = *this->m_position;
-			++(this->m_position);
-			return data;
-		}
+    const TYPE& GetAt() const
+    {
+        return *(this->m_position);
+    }
 
-		bool operator==(void* data)
-		{
-			return (nullptr == data) ? (!this->HasNext()) : false;
-		}
+    const TYPE& GetNext()
+    {
+        const TYPE& data = *this->m_position;
+        ++(this->m_position);
+        return data;
+    }
 
-		bool operator!=(void* data)
-		{
-			return (nullptr == data) ? (this->HasNext()) : true;
-		}
+    bool operator==(void* data)
+    {
+        return (nullptr == data) ? (!this->HasNext()) : false;
+    }
 
-	private:
-		typename std::list<TYPE>::const_iterator m_position;
-		const std::list<TYPE> m_emptyList;
-		const std::list<TYPE>* m_data;
-	};
+    bool operator!=(void* data)
+    {
+        return (nullptr == data) ? (this->HasNext()) : true;
+    }
 
-	template<class TYPE>
-	struct REVERSE_POSITION
-	{
-	public:
-		REVERSE_POSITION()
-			: m_emptyList(), m_data(&m_emptyList)
-		{
-			m_position = m_data->rbegin();
-		}
+private:
+    typename std::list<TYPE>::const_iterator m_position;
+    const std::list<TYPE> m_emptyList;
+    const std::list<TYPE>* m_data;
+};
 
-		REVERSE_POSITION(std::list<TYPE>& data)
-			: m_emptyList(), m_data(&data)
-		{
-			m_position = data.rbegin();
-		}
+template<class TYPE>
+struct REVERSE_POSITION
+{
+public:
+    REVERSE_POSITION()
+        : m_emptyList(), m_data(&m_emptyList)
+    {
+        m_position = m_data->rbegin();
+    }
 
-		REVERSE_POSITION(void*)
-			: m_emptyList(), m_data(&m_emptyList)
-		{
-			m_position = m_data->rbegin();
-		}
+    REVERSE_POSITION(std::list<TYPE>& data)
+        : m_emptyList(), m_data(&data)
+    {
+        m_position = data.rbegin();
+    }
 
-		bool HasPrevious() const
-		{
-			if (m_data->size() == 0)
-			{
-				return false;
-			}
-			else
-			{
-				return m_position != m_data->rend();
-			}
-		}
+    REVERSE_POSITION(void*)
+        : m_emptyList(), m_data(&m_emptyList)
+    {
+        m_position = m_data->rbegin();
+    }
 
-		TYPE& GetAt()
-		{
-			return *(this->m_position);
-		}
+    bool HasPrevious() const
+    {
+        if (m_data->size() == 0)
+        {
+            return false;
+        }
+        else
+        {
+            return m_position != m_data->rend();
+        }
+    }
 
-		TYPE& GetPrev()
-		{
-			TYPE& data = *m_position;
-			++(m_position);
-			return data;
-		}
+    TYPE& GetAt()
+    {
+        return *(this->m_position);
+    }
 
-		bool operator==(void* data)
-		{
-			return (nullptr == data) ? (!this->HasPrevious()) : false;
-		}
+    TYPE& GetPrev()
+    {
+        TYPE& data = *m_position;
+        ++(m_position);
+        return data;
+    }
 
-		bool operator!=(void* data)
-		{
-			return (nullptr == data) ? (this->HasPrevious()) : true;
-		}
+    bool operator==(void* data)
+    {
+        return (nullptr == data) ? (!this->HasPrevious()) : false;
+    }
 
-	private:
-		typename std::list<TYPE>::reverse_iterator  m_position;
-		std::list<TYPE> m_emptyList;
-		std::list<TYPE>* m_data;
-	};
+    bool operator!=(void* data)
+    {
+        return (nullptr == data) ? (this->HasPrevious()) : true;
+    }
 
-	template<class TYPE>
-	struct CONST_REVERSE_POSITION
-	{
-	public:
-		CONST_REVERSE_POSITION()
-			: m_emptyList(), m_data(&m_emptyList)
-		{
-			m_position = m_data->crbegin();
-		}
+private:
+    typename std::list<TYPE>::reverse_iterator  m_position;
+    std::list<TYPE> m_emptyList;
+    std::list<TYPE>* m_data;
+};
 
-		CONST_REVERSE_POSITION(const std::list<TYPE>& data)
-			: m_emptyList(), m_data(data)
-		{
-			m_position = data.crbegin();
-		}
+template<class TYPE>
+struct CONST_REVERSE_POSITION
+{
+public:
+    CONST_REVERSE_POSITION()
+        : m_emptyList(), m_data(&m_emptyList)
+    {
+        m_position = m_data->crbegin();
+    }
 
-		CONST_REVERSE_POSITION(void*)
-			: m_emptyList(), m_data(&m_emptyList)
-		{
-			m_position = m_data->crbegin();
-		}
+    CONST_REVERSE_POSITION(const std::list<TYPE>& data)
+        : m_emptyList(), m_data(data)
+    {
+        m_position = data.crbegin();
+    }
 
-		bool HasPrevious() const
-		{
-			if (m_data->size() == 0)
-			{
-				return false;
-			}
-			else
-			{
-				return m_position != m_data->crend();
-			}
-		}
+    CONST_REVERSE_POSITION(void*)
+        : m_emptyList(), m_data(&m_emptyList)
+    {
+        m_position = m_data->crbegin();
+    }
 
-		TYPE& GetAt()
-		{
-			return *(this->m_position);
-		}
+    bool HasPrevious() const
+    {
+        if (m_data->size() == 0)
+        {
+            return false;
+        }
+        else
+        {
+            return m_position != m_data->crend();
+        }
+    }
 
-		const TYPE& GetPrev() const
-		{
-			const TYPE& data = *m_position;
-			++(m_position);
-			return data;
-		}
-		bool operator==(void* data)
-		{
-			return (nullptr == data) ? (!this->HasPrevious()) : false;
-		}
+    TYPE& GetAt()
+    {
+        return *(this->m_position);
+    }
 
-		bool operator!=(void* data)
-		{
-			return (nullptr == data) ? (this->HasPrevious()) : true;
-		}
+    const TYPE& GetPrev() const
+    {
+        const TYPE& data = *m_position;
+        ++(m_position);
+        return data;
+    }
+    bool operator==(void* data)
+    {
+        return (nullptr == data) ? (!this->HasPrevious()) : false;
+    }
 
-	private:
-		const typename std::list<TYPE>::const_reverse_iterator  m_position;
-		const std::list<TYPE> m_emptyList;
-		const std::list<TYPE>* m_data;
-	};
+    bool operator!=(void* data)
+    {
+        return (nullptr == data) ? (this->HasPrevious()) : true;
+    }
 
-	template<class TYPE, class ARG_TYPE = const TYPE&>
-	class CList
-	{
-	public:
+private:
+    const typename std::list<TYPE>::const_reverse_iterator  m_position;
+    const std::list<TYPE> m_emptyList;
+    const std::list<TYPE>* m_data;
+};
 
-		// ---------------------- Construction -----------------------
-		CList()
-		{
-		}
+template<class TYPE, class ARG_TYPE = const TYPE&>
+class CList
+{
+public:
 
-		~CList()
-		{
-		}
+    // ---------------------- Construction -----------------------
+    CList()
+    {
+    }
 
-		int GetSize() const
-		{
-			return (int)m_data.size();
-		}
+    ~CList()
+    {
+    }
 
-		int GetCount() const
-		{
-			return (int)m_data.size();
-		}
+    int GetSize() const
+    {
+        return (int)m_data.size();
+    }
 
-		POSITION<TYPE> GetHeadPosition()
-		{
-			POSITION<TYPE> p(m_data);
-			return p;
-		}
+    int GetCount() const
+    {
+        return (int)m_data.size();
+    }
 
-		const CONST_POSITION<TYPE> GetHeadPosition() const
-		{
-			CONST_POSITION<TYPE> p(m_data);
-			return p;
-		}
+    POSITION<TYPE> GetHeadPosition()
+    {
+        POSITION<TYPE> p(m_data);
+        return p;
+    }
 
-		REVERSE_POSITION<TYPE> GetTailPosition()
-		{
-			REVERSE_POSITION<TYPE> p(m_data);
-			return p;
-		}
+    const CONST_POSITION<TYPE> GetHeadPosition() const
+    {
+        CONST_POSITION<TYPE> p(m_data);
+        return p;
+    }
 
-		ARG_TYPE GetAt(POSITION<TYPE>& p) const
-		{
-			return p.GetAt();
-		}
+    REVERSE_POSITION<TYPE> GetTailPosition()
+    {
+        REVERSE_POSITION<TYPE> p(m_data);
+        return p;
+    }
 
-		ARG_TYPE GetAt(REVERSE_POSITION<TYPE>& p) const
-		{
-			return p.GetAt();
-		}
+    ARG_TYPE GetAt(POSITION<TYPE>& p) const
+    {
+        return p.GetAt();
+    }
 
-		const ARG_TYPE GetAt(CONST_POSITION<TYPE>& p) const
-		{
-			return p.GetAt();
-		}
+    ARG_TYPE GetAt(REVERSE_POSITION<TYPE>& p) const
+    {
+        return p.GetAt();
+    }
 
-		ARG_TYPE GetNext(POSITION<TYPE>& p) const
-		{
-			return p.GetNext();
-		}
+    const ARG_TYPE GetAt(CONST_POSITION<TYPE>& p) const
+    {
+        return p.GetAt();
+    }
 
-		const ARG_TYPE GetNext(CONST_POSITION<TYPE>& p) const
-		{
-			return p.GetNext();
-		}
+    ARG_TYPE GetNext(POSITION<TYPE>& p) const
+    {
+        return p.GetNext();
+    }
 
-		ARG_TYPE GetPrev(REVERSE_POSITION<TYPE>& p) const
-		{
-			return p.GetPrev();
-		}
+    const ARG_TYPE GetNext(CONST_POSITION<TYPE>& p) const
+    {
+        return p.GetNext();
+    }
 
-		ARG_TYPE GetPrev(CONST_REVERSE_POSITION<TYPE>& p) const
-		{
-			return p.GetPrev();
-		}
+    ARG_TYPE GetPrev(REVERSE_POSITION<TYPE>& p) const
+    {
+        return p.GetPrev();
+    }
 
-		// ---------------------- Operations -----------------------
+    ARG_TYPE GetPrev(CONST_REVERSE_POSITION<TYPE>& p) const
+    {
+        return p.GetPrev();
+    }
 
-		void RemoveAll()
-		{
-			m_data.clear();
-		}
+    // ---------------------- Operations -----------------------
 
-		void RemoveTail()
-		{
-			m_data.erase(--m_data.end());
-		}
+    void RemoveAll()
+    {
+        m_data.clear();
+    }
 
-		void AddTail(TYPE item)
-		{
-			m_data.push_back(item);
-		}
+    void RemoveTail()
+    {
+        m_data.erase(--m_data.end());
+    }
 
-		void AddHead(TYPE item)
-		{
-			m_data.push_front(item);
-		}
+    void AddTail(TYPE item)
+    {
+        m_data.push_back(item);
+    }
 
-		void InsertBefore(POSITION<TYPE>& pos, TYPE item)
-		{
-			pos.InsertBefore(item);
-		}
+    void AddHead(TYPE item)
+    {
+        m_data.push_front(item);
+    }
 
-	private:
-		std::list<TYPE> m_data;
-	};
+    void InsertBefore(POSITION<TYPE>& pos, TYPE item)
+    {
+        pos.InsertBefore(item);
+    }
+
+private:
+    std::list<TYPE> m_data;
+};
 }
 
 #endif // !NOVAC_PPPLIB_CLIST_H

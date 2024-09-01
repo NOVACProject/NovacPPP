@@ -64,11 +64,13 @@ void CXMLFileReader::Close()
 }
 
 
-char* CXMLFileReader::NextToken() {
+char* CXMLFileReader::NextToken()
+{
     char separators[] = "<>\t";
     szToken = nullptr;
 
-    if (nLinesRead == 0) {
+    if (nLinesRead == 0)
+    {
         // if this is the first call to this function
         m_File->ReadString(szLine, 4095);
         szToken = (char*)szLine;
@@ -77,16 +79,20 @@ char* CXMLFileReader::NextToken() {
         ++nLinesRead;
         return m_tokenPt;
     }
-    else {
+    else
+    {
         // this is not the first call to this function
         m_tokenPt = strtok(szToken, separators);
-        if (nullptr != m_tokenPt) {
+        if (nullptr != m_tokenPt)
+        {
             return m_tokenPt;
         }
 
         szLine[0] = 0;
-        while (0 == strlen(szLine)) {
-            if (!m_File->ReadString(szLine, 4095)) {
+        while (0 == strlen(szLine))
+        {
+            if (!m_File->ReadString(szLine, 4095))
+            {
                 return nullptr;
             }
         }
@@ -97,10 +103,12 @@ char* CXMLFileReader::NextToken() {
         ++nLinesRead;
     }
 
-    if (nullptr == m_tokenPt || strlen(m_tokenPt) < 2) {
+    if (nullptr == m_tokenPt || strlen(m_tokenPt) < 2)
+    {
         return NextToken();
     }
-    else {
+    else
+    {
         return m_tokenPt;
     }
 }
@@ -109,7 +117,8 @@ const char* CXMLFileReader::GetAttributeValue(const novac::CString& label)
 {
     novac::CString toSearchFor;
 
-    if (nLinesRead == 0 || szToken == nullptr) {
+    if (nLinesRead == 0 || szToken == nullptr)
+    {
         return nullptr; // we haven't started reading the file yet...
     }
 
@@ -120,14 +129,16 @@ const char* CXMLFileReader::GetAttributeValue(const novac::CString& label)
     // search for the attribute in szToken
     toSearchFor.Format("%s=\"", (const char*)label);
     char* pt_start = strstr(copyOfToken, toSearchFor);
-    if (pt_start == nullptr) {
+    if (pt_start == nullptr)
+    {
         return nullptr;
     }
     pt_start += toSearchFor.GetLength(); // point to the character after the double-quote
 
     // search for the ending double-quote
     char* pt_end = strstr(pt_start, "\"");
-    if (pt_end == nullptr) {
+    if (pt_end == nullptr)
+    {
         return nullptr;
     }
     *pt_end = '\0'; // make the string end at the position of the double-quote
@@ -142,7 +153,8 @@ int CXMLFileReader::Parse_StringItem(const novac::CString& label, novac::CString
 {
     string.Format("");
 
-    while (nullptr != (szToken = NextToken())) {
+    while (nullptr != (szToken = NextToken()))
+    {
 
         if (IsClosingTag(label, szToken))
         {
@@ -159,7 +171,8 @@ int CXMLFileReader::Parse_StringItem(const novac::CString& label, std::string& s
 {
     string = "";
 
-    while (nullptr != (szToken = NextToken())) {
+    while (nullptr != (szToken = NextToken()))
+    {
 
         if (IsClosingTag(label, szToken))
         {
