@@ -1,53 +1,12 @@
-#include "stdafx.h"
-#include "PostProcessingStatistics.h"
-#include "Common/Common.h"
+#include <PPPLib/PostProcessingStatistics.h>
 #include <PPPLib/MFC/CCriticalSection.h>
 #include <PPPLib/MFC/CSingleLock.h>
 #include <PPPLib/File/Filesystem.h>
 
-// Include synchronization classes
-// #include <afxmt.h>
-
 novac::CCriticalSection g_processingStatCritSect; // synchronization access to the processing statistics
 
-CPostProcessingStatistics::CInstrumentStats::CInstrumentStats()
-{
-    // the serial of this instrument
-    serial.Format("");
-
-    // accepted scans
-    acceptedScans = 0;
-
-    // rejected scans
-    noPlumeNum = 0;
-    lowCompletenessNum = 0;
-    darkSkySpecNum = 0;
-    saturatedSkySpecNum = 0;
-    tooLongExpTime = 0;
-}
-
-CPostProcessingStatistics::CInstrumentStats::~CInstrumentStats()
-{
-
-}
-
-
-CPostProcessingStatistics::CPostProcessingStatistics(void)
-{
-    // performance statistics
-    nSpectraEvaluated = 0;
-    timeSpentOnEvaluations = 0.0;
-}
-
-CPostProcessingStatistics::~CPostProcessingStatistics(void)
-{
-}
-
-/** Inserts information on a rejected scan from a certain instrument
-    into the database. */
 void CPostProcessingStatistics::InsertRejection(const novac::CString& serial, const REASON_FOR_REJECTION& reason)
 {
-
     novac::CSingleLock singleLock(&g_processingStatCritSect);
     singleLock.Lock();
     if (singleLock.IsLocked())
@@ -64,11 +23,11 @@ void CPostProcessingStatistics::InsertRejection(const novac::CString& serial, co
             {
                 switch (reason)
                 {
-                case SKY_SPEC_SATURATION:		++stat.saturatedSkySpecNum; return;
-                case SKY_SPEC_DARK:				++stat.darkSkySpecNum; return;
-                case SKY_SPEC_TOO_LONG_EXPTIME:	++stat.tooLongExpTime; return;
-                case COMPLETENESS_LOW:			++stat.lowCompletenessNum; return;
-                case NO_PLUME:					++stat.noPlumeNum; return;
+                case SKY_SPEC_SATURATION:       ++stat.saturatedSkySpecNum; return;
+                case SKY_SPEC_DARK:             ++stat.darkSkySpecNum; return;
+                case SKY_SPEC_TOO_LONG_EXPTIME: ++stat.tooLongExpTime; return;
+                case COMPLETENESS_LOW:          ++stat.lowCompletenessNum; return;
+                case NO_PLUME:                  ++stat.noPlumeNum; return;
                 };
             }
         }
@@ -78,11 +37,11 @@ void CPostProcessingStatistics::InsertRejection(const novac::CString& serial, co
         stat.serial.Format(serial);
         switch (reason)
         {
-        case SKY_SPEC_SATURATION:		++stat.saturatedSkySpecNum; break;
-        case SKY_SPEC_DARK:				++stat.darkSkySpecNum; break;
-        case SKY_SPEC_TOO_LONG_EXPTIME:	++stat.tooLongExpTime; break;
-        case COMPLETENESS_LOW:			++stat.lowCompletenessNum; break;
-        case NO_PLUME:					++stat.noPlumeNum; break;
+        case SKY_SPEC_SATURATION:       ++stat.saturatedSkySpecNum; break;
+        case SKY_SPEC_DARK:             ++stat.darkSkySpecNum; break;
+        case SKY_SPEC_TOO_LONG_EXPTIME: ++stat.tooLongExpTime; break;
+        case COMPLETENESS_LOW:          ++stat.lowCompletenessNum; break;
+        case NO_PLUME:                  ++stat.noPlumeNum; break;
         };
         m_instrumentStats.push_back(stat);
     }
@@ -90,7 +49,6 @@ void CPostProcessingStatistics::InsertRejection(const novac::CString& serial, co
     singleLock.Unlock();
 }
 
-/** Inserts information on a accepted scan from a certain instrument into the database. */
 void CPostProcessingStatistics::InsertAcception(const novac::CString& serial)
 {
 
@@ -124,10 +82,8 @@ void CPostProcessingStatistics::InsertAcception(const novac::CString& serial)
     singleLock.Unlock();
 }
 
-/** Retrieves the number of rejected full scans due to the specified reason */
 unsigned long CPostProcessingStatistics::GetRejectionNum(const novac::CString& serial, const REASON_FOR_REJECTION& reason)
 {
-
     // look for the correct instrument
     std::list<CInstrumentStats>::const_iterator pos = m_instrumentStats.begin();
     while (pos != m_instrumentStats.end())
@@ -139,11 +95,11 @@ unsigned long CPostProcessingStatistics::GetRejectionNum(const novac::CString& s
         {
             switch (reason)
             {
-            case SKY_SPEC_SATURATION:		return stat.saturatedSkySpecNum;
-            case SKY_SPEC_DARK:				return stat.darkSkySpecNum;
-            case SKY_SPEC_TOO_LONG_EXPTIME:	return stat.tooLongExpTime;
-            case COMPLETENESS_LOW:			return stat.lowCompletenessNum;
-            case NO_PLUME:					return stat.noPlumeNum;
+            case SKY_SPEC_SATURATION:       return stat.saturatedSkySpecNum;
+            case SKY_SPEC_DARK:             return stat.darkSkySpecNum;
+            case SKY_SPEC_TOO_LONG_EXPTIME: return stat.tooLongExpTime;
+            case COMPLETENESS_LOW:          return stat.lowCompletenessNum;
+            case NO_PLUME:                  return stat.noPlumeNum;
             };
         }
     }
@@ -152,10 +108,8 @@ unsigned long CPostProcessingStatistics::GetRejectionNum(const novac::CString& s
     return 0;
 }
 
-/** Retrieves the number of accepted full scans */
 unsigned long CPostProcessingStatistics::GetAcceptionNum(const novac::CString& serial)
 {
-
     // look for the correct instrument
     std::list<CInstrumentStats>::const_iterator pos = m_instrumentStats.begin();
     while (pos != m_instrumentStats.end())
@@ -174,16 +128,12 @@ unsigned long CPostProcessingStatistics::GetAcceptionNum(const novac::CString& s
 
 }
 
-/** Inserts the successful evaluation of a single spectrum into the statistics.
-    This also increases the counter on the total amount of time used on
-    evaluating spectra */
 void CPostProcessingStatistics::InsertEvaluatedSpectrum(double timeUsed)
 {
     ++nSpectraEvaluated;
     timeSpentOnEvaluations += timeUsed;
 }
 
-/** Creates a small output file containing the statistical results */
 void CPostProcessingStatistics::WriteStatToFile(const novac::CString& file)
 {
     novac::CSingleLock singleLock(&g_processingStatCritSect);

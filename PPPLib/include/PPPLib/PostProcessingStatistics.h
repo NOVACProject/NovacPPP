@@ -7,15 +7,9 @@
     track of the statistics of the processing. E.g. how many
     scans from a certain instrument are rejected due to different
     problems or how many scans have been processed... */
-
 class CPostProcessingStatistics
 {
 public:
-    /** Default constructor */
-    CPostProcessingStatistics(void);
-
-    /** Default destructor */
-    ~CPostProcessingStatistics(void);
 
     // ----------------------------------------------------------------------
     // ---------------------- PUBLIC DATA -----------------------------------
@@ -59,15 +53,13 @@ private:
     class CInstrumentStats
     {
     public:
-        CInstrumentStats();
-        ~CInstrumentStats();
-        novac::CString serial;
-        unsigned long acceptedScans;
-        unsigned long noPlumeNum;
-        unsigned long lowCompletenessNum;
-        unsigned long darkSkySpecNum;
-        unsigned long saturatedSkySpecNum;
-        unsigned long tooLongExpTime;
+        novac::CString serial = "";
+        unsigned long acceptedScans = 0;
+        unsigned long noPlumeNum = 0;
+        unsigned long lowCompletenessNum = 0;
+        unsigned long darkSkySpecNum = 0;
+        unsigned long saturatedSkySpecNum = 0;
+        unsigned long tooLongExpTime = 0;
     };
 
 
@@ -78,16 +70,10 @@ private:
     /** The statistics for each of the instrument */
     std::list <CInstrumentStats> m_instrumentStats;
 
-    // ----------- Statistics on the performance of the program 
-
     /** The number of spectra evaluated */
-    unsigned long nSpectraEvaluated;
+    unsigned long nSpectraEvaluated = 0;
 
     /** The total amount of time spent in the DOAS evaluations */
-    double timeSpentOnEvaluations;
-
-    // ----------------------------------------------------------------------
-    // --------------------- PRIVATE METHODS --------------------------------
-    // ----------------------------------------------------------------------
+    double timeSpentOnEvaluations = 0;
 
 };

@@ -44,7 +44,9 @@ int CNovacPPPConfiguration::GetInstrumentLocation(const novac::CString& serial, 
     // First of all find the instrument 
     const CInstrumentConfiguration* instrumentConf = GetInstrument(serial);
     if (instrumentConf == nullptr)
+    {
         return 1;
+    }
 
     // Next find the instrument location that is valid for this date
     const CLocationConfiguration& locationconf = instrumentConf->m_location;

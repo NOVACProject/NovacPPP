@@ -33,6 +33,7 @@ add_library(PPPLib
     ${PppLib_INCLUDE_DIRS}/PPPLib/Measurement.h
     ${PppLib_INCLUDE_DIRS}/PPPLib/Molecule.h
     ${PppLib_INCLUDE_DIRS}/PPPLib/PPPLib.h
+    ${PppLib_INCLUDE_DIRS}/PPPLib/PostProcessingStatistics.h
     ${PppLib_INCLUDE_DIRS}/PPPLib/SpectrometerId.h
     ${PppLib_INCLUDE_DIRS}/PPPLib/ThreadUtils.h
     ${PppLib_INCLUDE_DIRS}/PPPLib/VolcanoInfo.h
@@ -40,6 +41,7 @@ add_library(PPPLib
     ${CMAKE_CURRENT_LIST_DIR}/src/Gps.cpp
     ${CMAKE_CURRENT_LIST_DIR}/src/VolcanoInfo.cpp
     ${CMAKE_CURRENT_LIST_DIR}/src/Molecule.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/src/PostProcessingStatistics.cpp
 )
 
 target_include_directories(PPPLib PRIVATE 

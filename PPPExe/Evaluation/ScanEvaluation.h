@@ -2,6 +2,7 @@
 
 #include "ScanResult.h"
 #include "../Common/Common.h"
+#include <PPPLib/Configuration/UserConfiguration.h>
 #include <SpectralEvaluation/File/ScanFileHandler.h>
 #include <SpectralEvaluation/Evaluation/ScanEvaluationBase.h>
 
@@ -24,24 +25,20 @@ class CScanEvaluation : public novac::ScanEvaluationBase
 {
 
 public:
-    /** Default constructor */
-    CScanEvaluation(void);
+    CScanEvaluation(const Configuration::CUserConfiguration& userSettings);
 
-    /** Default destructor */
-    ~CScanEvaluation(void);
+    ~CScanEvaluation();
 
-    /** if pView != NULL then after the evaluation of a spectrum, a 'WM_EVAL_SUCCESS'
-        message will be sent to pView. */
-        // CWnd *pView;
-
-        /** The evaluation results from the last scan evaluated */
+    /** The evaluation results from the last scan evaluated */
     CScanResult* m_result = nullptr;
 
     /** Called to evaluate one scan.
-            @return the number of spectra evaluated. */
+        @return the number of spectra evaluated. */
     long EvaluateScan(novac::CScanFileHandler* scan, const novac::CFitWindow& fitWindow, const Configuration::CDarkSettings* darkSettings = NULL);
 
 private:
+
+    const Configuration::CUserConfiguration& m_userSettings;
 
     // ----------------------- PRIVATE METHODS ---------------------------
 
@@ -83,12 +80,6 @@ private:
 
     /** Remember the index of the spectrum with the highest absorption, to be able to
         adjust the shift and squeeze with it later */
-    int m_indexOfMostAbsorbingSpectrum;
-
-    /** how many spectra there are in the current scan-file (for showing the progress) */
-    long m_prog_SpecNum;
-
-    /** which spectrum we are on in the current scan-file (for showing the progress) */
-    long m_prog_SpecCur;
+    int m_indexOfMostAbsorbingSpectrum = -1;
 };
 }

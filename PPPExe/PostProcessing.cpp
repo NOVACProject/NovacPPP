@@ -43,7 +43,7 @@
 #include <SpectralEvaluation/Calibration/StandardCrossSectionSetup.h>
 
 // we want to make some statistics on the processing
-#include "PostProcessingStatistics.h"
+#include <PPPLib/PostProcessingStatistics.h>
 
 // we need to be able to download data from the FTP-server
 #include <PPPLib/Communication/FTPServerConnection.h>
@@ -61,7 +61,7 @@ using namespace novac;
 
 
 // this is the working-thread that takes care of evaluating a portion of the scans
-void EvaluateScansThread(const Configuration::CUserConfiguration& userSettings);
+void EvaluateScansThread(const Configuration::CNovacPPPConfiguration& setup, const Configuration::CUserConfiguration& userSettings);
 
 // this takes care of adding the evaluated log-files to the list in an synchronized way
 //  the parameter passed in a reference to an array of strings holding the names of the 
@@ -344,7 +344,9 @@ novac::GuardedList<Evaluation::CExtendedScanResult> s_evalLogs;
 
 volatile unsigned long s_nFilesToProcess;
 
-void CPostProcessing::EvaluateScans(const std::vector<std::string>& pakFileList, novac::CList <Evaluation::CExtendedScanResult, Evaluation::CExtendedScanResult&>& evalLogFiles)
+void CPostProcessing::EvaluateScans(
+    const std::vector<std::string>& pakFileList,
+    novac::CList <Evaluation::CExtendedScanResult, Evaluation::CExtendedScanResult&>& evalLogFiles) const
 {
     s_nFilesToProcess = (long)pakFileList.size();
     novac::CString messageToUser;
@@ -363,7 +365,7 @@ void CPostProcessing::EvaluateScans(const std::vector<std::string>& pakFileList,
     std::vector<std::thread> evalThreads(m_userSettings.m_maxThreadNum);
     for (unsigned int threadIdx = 0; threadIdx < m_userSettings.m_maxThreadNum; ++threadIdx)
     {
-        std::thread t{ EvaluateScansThread, m_userSettings };
+        std::thread t{ EvaluateScansThread, m_setup, m_userSettings };
         evalThreads[threadIdx] = std::move(t);
     }
 
@@ -380,12 +382,12 @@ void CPostProcessing::EvaluateScans(const std::vector<std::string>& pakFileList,
     ShowMessage(messageToUser);
 }
 
-void EvaluateScansThread(const Configuration::CUserConfiguration& userSettings)
+void EvaluateScansThread(const Configuration::CNovacPPPConfiguration& setup, const Configuration::CUserConfiguration& userSettings)
 {
     std::string fileName;
 
     // create a new CPostEvaluationController
-    Evaluation::CPostEvaluationController eval;
+    Evaluation::CPostEvaluationController eval { setup, userSettings};
 
     // while there are more .pak-files
     while (s_pakFilesRemaining.PopFront(fileName))

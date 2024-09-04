@@ -11,14 +11,11 @@
 // This is the information we need to continue an old processing
 #include "../ContinuationOfProcessing.h"
 
-// This is the settings for how to do the procesing
-#include <PPPLib/Configuration/UserConfiguration.h>
-
 // ... support for handling the evaluation-log files...
 #include "../Common/EvaluationLogFileHandler.h"
 
 // we want to make some statistics on the processing
-#include "../PostProcessingStatistics.h"
+#include <PPPLib/PostProcessingStatistics.h>
 
 #include <Poco/Path.h>
 
@@ -30,12 +27,14 @@ using namespace Evaluation;
 using namespace FileHandler;
 using namespace novac;
 
-extern Configuration::CNovacPPPConfiguration    g_setup;    // <-- The settings
-extern Configuration::CUserConfiguration        g_userSettings;// <-- The settings of the user
 extern CPostProcessingStatistics                g_processingStats; // <-- The statistics of the processing itself
 extern CContinuationOfProcessing                g_continuation;  // <-- Information on what has already been done when continuing an old processing round
 
-int CPostEvaluationController::EvaluateScan(const novac::CString& pakFileName, const novac::CString& fitWindowName, novac::CString* txtFileName, CPlumeInScanProperty* plumeProperties)
+int CPostEvaluationController::EvaluateScan(
+    const novac::CString& pakFileName,
+    const novac::CString& fitWindowName,
+    novac::CString* txtFileName,
+    CPlumeInScanProperty* plumeProperties)
 {
     novac::CString errorMessage, message, serialNumber;
     Meteorology::CWindField windField;
@@ -57,7 +56,7 @@ int CPostEvaluationController::EvaluateScan(const novac::CString& pakFileName, c
     const std::string pakFileNameStr((const char*)pakFileName);
     if (!scan.CheckScanFile(pakFileNameStr))
     {
-        errorMessage.Format("Could not read recieved pak-file %s. Will not evaulate.", (const char*)pakFileName);
+        errorMessage.Format("Could not read recieved pak-file %s. Will not evaluate.", (const char*)pakFileName);
         ShowMessage(errorMessage);
         return 2;
     }
@@ -85,7 +84,7 @@ int CPostEvaluationController::EvaluateScan(const novac::CString& pakFileName, c
 
     // Check if we have already evaluated this scan. Only if this is a re-run of
     // an old processing...
-    if (g_userSettings.m_fIsContinuation)
+    if (m_userSettings.m_fIsContinuation)
     {
         if (g_continuation.IsPreviouslyIgnored(pakFileName))
         {
@@ -126,7 +125,7 @@ int CPostEvaluationController::EvaluateScan(const novac::CString& pakFileName, c
     }
 
     // 6. Evaluate the scan
-    CScanEvaluation ev;
+    CScanEvaluation ev{ m_userSettings };
     const long spectrumNum = ev.EvaluateScan(&scan, fitWindow, &darkSettings);
 
     // 7. Check the reasonability of the evaluation
@@ -144,7 +143,7 @@ int CPostEvaluationController::EvaluateScan(const novac::CString& pakFileName, c
     }
 
     // TODO: Make use of this really useful index...
-    const int specieIndex = m_lastResult->GetSpecieIndex(CMolecule(g_userSettings.m_molecule).m_name);
+    const int specieIndex = m_lastResult->GetSpecieIndex(CMolecule(m_userSettings.m_molecule).m_name);
 
     // 9. Get the mode of the evaluation
     m_lastResult->CheckMeasurementMode();
@@ -163,11 +162,11 @@ int CPostEvaluationController::EvaluateScan(const novac::CString& pakFileName, c
 
     // 11. If this was a flux-measurement then we need to see the plume for the measurement to be useful
     //  this check should only be performed on the main fit window.
-    if (Equals(fitWindow.name, g_userSettings.m_fitWindowsToUse[g_userSettings.m_mainFitWindow]))
+    if (Equals(fitWindow.name, m_userSettings.m_fitWindowsToUse[m_userSettings.m_mainFitWindow]))
     {
         if (0 == CheckQualityOfFluxMeasurement(m_lastResult, pakFileName))
         {
-            errorMessage.Format("Flux-calculation of pak-file %s failed.", (const char*)pakFileName);
+            errorMessage.Format("Could not calculate flux from pak-file %s.", (const char*)pakFileName);
             ShowMessage(errorMessage);
             delete m_lastResult; m_lastResult = nullptr;
             return 6;
@@ -180,32 +179,39 @@ int CPostEvaluationController::EvaluateScan(const novac::CString& pakFileName, c
         m_lastResult->GetCalculatedPlumeProperties(*plumeProperties);
     }
 
-    {
-        const std::string outputDirectoryStr =
-            std::string(g_userSettings.m_outputDirectory) +
-            "/" + std::string(fitWindowName) +
-            "/PlumeSpectra/" +
-            m_lastResult->GetSerial().std_str();
-
-        int ret = Filesystem::CreateDirectoryStructure(outputDirectoryStr);
-        if (ret)
-        {
-            novac::CString userMessage;
-            userMessage.Format("Could not create directory for archiving plume spectra: %s", outputDirectoryStr.c_str());
-            ShowMessage(userMessage);
-        }
-        else
-        {
-            PlumeSpectrumSelector spectrumSelector;
-            spectrumSelector.CreatePlumeSpectrumFile(scan, *m_lastResult, *plumeProperties, specieIndex, outputDirectoryStr);
-        }
-    }
+    CreatePlumespectrumFile(fitWindowName, scan, plumeProperties, specieIndex);
 
     // 13. Clean up
     delete m_lastResult;
     m_lastResult = nullptr;
 
     return 0;
+}
+
+void CPostEvaluationController::CreatePlumespectrumFile(
+    const novac::CString& fitWindowName,
+    novac::CScanFileHandler& scan,
+    novac::CPlumeInScanProperty* plumeProperties,
+    int specieIndex)
+{
+    const std::string outputDirectoryStr =
+        std::string(m_userSettings.m_outputDirectory) +
+        "/" + std::string(fitWindowName) +
+        "/PlumeSpectra/" +
+        m_lastResult->GetSerial().std_str();
+
+    int ret = Filesystem::CreateDirectoryStructure(outputDirectoryStr);
+    if (ret)
+    {
+        novac::CString userMessage;
+        userMessage.Format("Could not create directory for archiving plume spectra: %s", outputDirectoryStr.c_str());
+        ShowMessage(userMessage);
+    }
+    else
+    {
+        PlumeSpectrumSelector spectrumSelector;
+        spectrumSelector.CreatePlumeSpectrumFile(scan, *m_lastResult, *plumeProperties, specieIndex, outputDirectoryStr);
+    }
 }
 
 RETURN_CODE CPostEvaluationController::WriteRatioResult(const std::vector<Ratio>& result, const novac::CScanFileHandler& scan, const novac::CFitWindow& window)
@@ -215,7 +221,7 @@ RETURN_CODE CPostEvaluationController::WriteRatioResult(const std::vector<Ratio>
 
     novac::CString fileName;
     fileName.Format("%s%c%s%cRatioSummary_%s.txt",
-        (const char*)g_userSettings.m_outputDirectory,
+        (const char*)m_userSettings.m_outputDirectory,
         Poco::Path::separator(),
         window.name.c_str(),
         Poco::Path::separator(),
@@ -512,7 +518,7 @@ RETURN_CODE CPostEvaluationController::AppendToEvaluationSummaryFile(const CScan
 
     // we can also write an evaluation-summary log file
     evalSummaryLog.Format("%s%c%s%cEvaluationSummary_%s.txt",
-        (const char*)g_userSettings.m_outputDirectory,
+        (const char*)m_userSettings.m_outputDirectory,
         Poco::Path::separator(),
         window->name.c_str(),
         Poco::Path::separator(),
@@ -567,7 +573,7 @@ RETURN_CODE CPostEvaluationController::AppendToPakFileSummaryFile(const CScanRes
     bool fWriteHeaderLine = false;
 
     // we can also write an evaluation-summary log file
-    pakSummaryLog.Format("%s%cPakfileSummary.txt", (const char*)g_userSettings.m_outputDirectory, Poco::Path::separator());
+    pakSummaryLog.Format("%s%cPakfileSummary.txt", (const char*)m_userSettings.m_outputDirectory, Poco::Path::separator());
 
     if (!Filesystem::IsExistingFile(pakSummaryLog))
     {
@@ -576,7 +582,9 @@ RETURN_CODE CPostEvaluationController::AppendToPakFileSummaryFile(const CScanRes
 
     FILE* f = fopen(pakSummaryLog, "a");
     if (f == nullptr)
+    {
         return RETURN_CODE::FAIL;
+    }
 
     if (fWriteHeaderLine)
     {
@@ -624,13 +632,13 @@ RETURN_CODE CPostEvaluationController::GetArchivingfileName(novac::CString& pakF
     int i = 0;
     while (1)
     {
-        pakFile.Format("%s%cUnknownScans%c%d.pak", (const char*)g_userSettings.m_outputDirectory, Poco::Path::separator(), Poco::Path::separator(), ++i);
+        pakFile.Format("%s%cUnknownScans%c%d.pak", (const char*)m_userSettings.m_outputDirectory, Poco::Path::separator(), Poco::Path::separator(), ++i);
         if (!Filesystem::IsExistingFile(pakFile))
         {
             break;
         }
     }
-    txtFile.Format("%s%cUnknownScans%c%d.txt", (const char*)g_userSettings.m_outputDirectory, Poco::Path::separator(), Poco::Path::separator(), i);
+    txtFile.Format("%s%cUnknownScans%c%d.txt", (const char*)m_userSettings.m_outputDirectory, Poco::Path::separator(), Poco::Path::separator(), i);
 
     // 1. Read the first spectrum in the scan
     const std::string temporaryScanFileStr((const char*)temporaryScanFile);
@@ -665,7 +673,7 @@ RETURN_CODE CPostEvaluationController::GetArchivingfileName(novac::CString& pakF
     // 4. Write the archiving name of the spectrum file
 
     // 4a. Write the folder name
-    pakFile.Format("%s%s%c%s%c%s%c", (const char*)g_userSettings.m_outputDirectory, (const char*)fitWindowName, Poco::Path::separator(),
+    pakFile.Format("%s%s%c%s%c%s%c", (const char*)m_userSettings.m_outputDirectory, (const char*)fitWindowName, Poco::Path::separator(),
         (const char*)dateStr2, Poco::Path::separator(), (const char*)serialNumber, Poco::Path::separator());
     txtFile.Format("%s", (const char*)pakFile);
 
@@ -694,12 +702,17 @@ RETURN_CODE CPostEvaluationController::GetArchivingfileName(novac::CString& pakF
 
     // 4c. Write the name of the archiving file itself
     if (channel < 128 && channel > MAX_CHANNEL_NUM)
+    {
         channel = channel % 16;
+    }
+
     pakFile.AppendFormat("%s_%s_%s_%1d_%4s.pak", (const char*)serialNumber, (const char*)dateStr, (const char*)timeStr, channel, (const char*)modeStr);
     txtFile.AppendFormat("%s_%s_%s_%1d_%4s.txt", (const char*)serialNumber, (const char*)dateStr, (const char*)timeStr, channel, (const char*)modeStr);
 
     if (strlen(pakFile) > MAX_PATH - 2)
+    {
         return RETURN_CODE::FAIL;
+    }
 
     return RETURN_CODE::SUCCESS;
 }
@@ -721,13 +734,13 @@ int CPostEvaluationController::GetLocationAndFitWindow(
     serialNumber = (skySpec.m_info.m_device);
 
     // Find the instrument location that is valid for this date
-    if (g_setup.GetInstrumentLocation(serialNumber, day, instrLocation))
+    if (m_setup.GetInstrumentLocation(serialNumber, day, instrLocation))
     {
         return 1;
     }
 
     // Then find the evaluation fit-window that is valid for this date
-    if (g_setup.GetFitWindow(serialNumber, scan->m_channel, day, window, &fitWindowName))
+    if (m_setup.GetFitWindow(serialNumber, scan->m_channel, day, window, &fitWindowName))
     {
         return 1;
     }
@@ -735,11 +748,6 @@ int CPostEvaluationController::GetLocationAndFitWindow(
     return 0;
 }
 
-/** Looks in the configuration of the instrument and searches
-    for the settings on how the dark-current should be removed
-    from the collected spectra.
-    On successful return will the settings be stored in 'settings'
-    @return 0 on successful, otherwise non-zero. */
 int CPostEvaluationController::GetDarkCurrentSettings(novac::CScanFileHandler* scan, Configuration::CDarkSettings& settings)
 {
     CSpectrum skySpec;
@@ -749,9 +757,8 @@ int CPostEvaluationController::GetDarkCurrentSettings(novac::CScanFileHandler* s
     scan->GetSky(skySpec);
     serialNumber = skySpec.m_info.m_device;
 
-    return g_setup.GetDarkCorrection(serialNumber, skySpec.m_info.m_startTime, settings);
+    return m_setup.GetDarkCorrection(serialNumber, skySpec.m_info.m_startTime, settings);
 }
-
 
 int CPostEvaluationController::CheckQualityOfFluxMeasurement(CScanResult* result, const novac::CString& pakFileName) const
 {
@@ -762,9 +769,9 @@ int CPostEvaluationController::CheckQualityOfFluxMeasurement(CScanResult* result
     {
         return -1;
     }
-    if (0 == result->CalculateOffset(CMolecule(g_userSettings.m_molecule)))
+    if (0 == result->CalculateOffset(CMolecule(m_userSettings.m_molecule)))
     {
-        if (0 == result->CalculatePlumeCentre(CMolecule(g_userSettings.m_molecule)))
+        if (0 == result->CalculatePlumeCentre(CMolecule(m_userSettings.m_molecule)))
         {
             // no plume found!
             errorMessage.Format(" - Scan %s does not see the plume. Scan ignored.", (const char*)pakFileName);
@@ -775,8 +782,6 @@ int CPostEvaluationController::CheckQualityOfFluxMeasurement(CScanResult* result
     return 1;
 }
 
-/** Checks the supplied scan if it's good enough to bother evaluating.
-    @returns false if the scan is too bad and should be ignored. Else return true. */
 bool CPostEvaluationController::IsGoodEnoughToEvaluate(const novac::CScanFileHandler* scan, const novac::CFitWindow& fitWindow, Configuration::CInstrumentLocation& instrLocation)
 {
     CSpectrum skySpectrum;
@@ -795,8 +800,8 @@ bool CPostEvaluationController::IsGoodEnoughToEvaluate(const novac::CScanFileHan
         return false;
     }
 
-    if ((instrLocation.m_instrumentType == INSTRUMENT_TYPE::INSTR_GOTHENBURG && skySpectrum.ExposureTime() > g_userSettings.m_maxExposureTime_got) ||
-        (instrLocation.m_instrumentType == INSTRUMENT_TYPE::INSTR_HEIDELBERG && skySpectrum.ExposureTime() > g_userSettings.m_maxExposureTime_hei))
+    if ((instrLocation.m_instrumentType == INSTRUMENT_TYPE::INSTR_GOTHENBURG && skySpectrum.ExposureTime() > m_userSettings.m_maxExposureTime_got) ||
+        (instrLocation.m_instrumentType == INSTRUMENT_TYPE::INSTR_HEIDELBERG && skySpectrum.ExposureTime() > m_userSettings.m_maxExposureTime_hei))
     {
         errorMessage.Format(" - Sky spectrum in scan %s has too long exposure time (%ld ms). Will not evaluate scan", scan->GetFileName().c_str(), skySpectrum.ExposureTime());
         ShowMessage(errorMessage);

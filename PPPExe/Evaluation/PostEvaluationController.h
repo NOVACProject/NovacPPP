@@ -5,6 +5,7 @@
 #include <SpectralEvaluation/File/ScanFileHandler.h>
 #include <SpectralEvaluation/Evaluation/Ratio.h>
 #include <PPPLib/Configuration/NovacPPPConfiguration.h>
+#include <PPPLib/Configuration/UserConfiguration.h>
 
 namespace Evaluation
 {
@@ -21,7 +22,10 @@ namespace Evaluation
 class CPostEvaluationController
 {
 public:
-    CPostEvaluationController() = default;
+    CPostEvaluationController(const Configuration::CNovacPPPConfiguration& setup, const Configuration::CUserConfiguration& userSettings)
+        : m_setup(setup), m_userSettings(userSettings)
+    {
+    }
 
     // ----------------------------------------------------------------------
     // ---------------------- PUBLIC DATA -----------------------------------
@@ -58,6 +62,9 @@ private:
     // ---------------------- PRIVATE DATA ----------------------------------
     // ----------------------------------------------------------------------
 
+    Configuration::CNovacPPPConfiguration m_setup;
+
+    Configuration::CUserConfiguration m_userSettings;
 
     // ----------------------------------------------------------------------
     // --------------------- PRIVATE METHODS --------------------------------
@@ -127,5 +134,10 @@ private:
         @return -1 - if the measurement is not a flux measurement.
         */
     int CheckQualityOfFluxMeasurement(CScanResult* result, const novac::CString& pakFileName) const;
+
+    /** Creates the 'pluem spectrum file' which is a text file containing a list of which spectra are judged to be _in_ the plume
+        and which spectra are judged to be _out_ of the plume. Useful for determining plume composition at a later stage */
+    void CreatePlumespectrumFile(const novac::CString& fitWindowName, novac::CScanFileHandler& scan, novac::CPlumeInScanProperty* plumeProperties, int specieIndex);
+
 };
 }

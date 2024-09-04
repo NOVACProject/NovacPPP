@@ -25,8 +25,6 @@ add_executable(NovacPPP
     ${CMAKE_CURRENT_LIST_DIR}/ObservatoryInfo.h
     ${CMAKE_CURRENT_LIST_DIR}/PostProcessing.cpp
     ${CMAKE_CURRENT_LIST_DIR}/PostProcessing.h
-    ${CMAKE_CURRENT_LIST_DIR}/PostProcessingStatistics.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/PostProcessingStatistics.h
     ${CMAKE_CURRENT_LIST_DIR}/StringTokenizer.cpp
     ${CMAKE_CURRENT_LIST_DIR}/StringTokenizer.h
 

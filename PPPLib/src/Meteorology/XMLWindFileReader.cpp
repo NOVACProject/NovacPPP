@@ -375,7 +375,6 @@ int CXMLWindFileReader::Parse_WindField(Meteorology::CWindDataBase& dataBase)
             // we have now enough information to make a wind-field and insert it into the database
             w = CWindField(windspeed, windspeederror, windSource, winddirection, winddirectionerror, windSource, validFrom, validTo, latitude, longitude, altitude);
 
-            ShowMessage("Inserting wind data into wind database");
             dataBase.InsertWindField(w);
         }
     }
