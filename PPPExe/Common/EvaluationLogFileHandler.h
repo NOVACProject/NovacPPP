@@ -7,6 +7,7 @@
 
 namespace FileHandler
 {
+
 class CEvaluationLogFileHandler
 {
 public:
@@ -50,10 +51,10 @@ public:
     novac::CString m_specie[20];
 
     /** The number of species found in the evaluation log */
-    long    m_specieNum;
+    long m_specieNum;
 
     /** The currently selected specie */
-    long    m_curSpecie;
+    long m_curSpecie;
 
     /** The instrument-type for the instrument that generated the results */
     INSTRUMENT_TYPE m_instrumentType;
@@ -133,6 +134,6 @@ protected:
     /** Merges the two arrays in a sorted way and stores the
             result in the output-array 'result' */
     static void MergeArrays(novac::CArray<Evaluation::CScanResult, Evaluation::CScanResult&>& array1, novac::CArray<Evaluation::CScanResult, Evaluation::CScanResult&>& array2, novac::CArray<Evaluation::CScanResult, Evaluation::CScanResult&>& result, bool ascending = true);
-
 };
+
 }

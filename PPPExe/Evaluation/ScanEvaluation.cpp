@@ -12,8 +12,6 @@
 
 #include <cstdint>
 
-extern CPostProcessingStatistics     g_processingStats; // <-- The statistics of the processing itself
-
 using namespace Evaluation;
 using namespace novac;
 
@@ -31,7 +29,11 @@ CScanEvaluation::~CScanEvaluation()
     }
 }
 
-long CScanEvaluation::EvaluateScan(novac::CScanFileHandler* scan, const CFitWindow& fitWindow, const Configuration::CDarkSettings* darkSettings)
+long CScanEvaluation::EvaluateScan(
+    novac::CScanFileHandler* scan,
+    const CFitWindow& fitWindow,
+    const novac::SpectrometerModel& spectrometerModel,
+    const Configuration::CDarkSettings* darkSettings)
 {
     CEvaluationBase* eval = nullptr; // the evaluator
     CFitWindow adjustedFitWindow = fitWindow; // we may need to make some small adjustments to the fit-window. This is a modified copy
@@ -86,7 +88,7 @@ long CScanEvaluation::EvaluateScan(novac::CScanFileHandler* scan, const CFitWind
         eval = new CEvaluationBase(window2);
 
         // evaluate the scan one time
-        if (-1 == EvaluateOpenedScan(scan, eval, darkSettings))
+        if (-1 == EvaluateOpenedScan(scan, eval, spectrometerModel, darkSettings))
         {
             delete eval;
             return 0;
@@ -124,7 +126,7 @@ long CScanEvaluation::EvaluateScan(novac::CScanFileHandler* scan, const CFitWind
     }
 
     // Make the real evaluation of the scan
-    int nSpectra = EvaluateOpenedScan(scan, eval, darkSettings);
+    int nSpectra = EvaluateOpenedScan(scan, eval, spectrometerModel, darkSettings);
 
     // Clean up
     delete eval;
@@ -138,7 +140,7 @@ long CScanEvaluation::EvaluateScan(novac::CScanFileHandler* scan, const CFitWind
     return m_result->GetEvaluatedNum();
 }
 
-long CScanEvaluation::EvaluateOpenedScan(novac::CScanFileHandler* scan, CEvaluationBase* eval, const Configuration::CDarkSettings* darkSettings)
+long CScanEvaluation::EvaluateOpenedScan(novac::CScanFileHandler* scan, CEvaluationBase* eval, const novac::SpectrometerModel& spectrometer, const Configuration::CDarkSettings* darkSettings)
 {
     novac::CString message; // used for ShowMessage messages
     int curSpectrumIndex = 0;  // keeping track of the index of the current spectrum into the .pak-file
@@ -295,7 +297,7 @@ long CScanEvaluation::EvaluateOpenedScan(novac::CScanFileHandler* scan, CEvaluat
         m_result->AppendResult(eval->GetEvaluationResult(), current.m_info);
 
         // f. Check if this was an ok data point (CScanResult)
-        m_result->CheckGoodnessOfFit(current.m_info);
+        m_result->CheckGoodnessOfFit(current.m_info, &spectrometer);
 
         // g. If it is ok, then check if the value is higher than any of the previous ones
         if (m_result->IsOk(m_result->GetEvaluatedNum() - 1) && fabs(m_result->GetColumn(m_result->GetEvaluatedNum() - 1, 0)) > highestColumnInScan)

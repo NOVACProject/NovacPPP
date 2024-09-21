@@ -34,7 +34,7 @@ public:
 
     /** Called to evaluate one scan.
         @return the number of spectra evaluated. */
-    long EvaluateScan(novac::CScanFileHandler* scan, const novac::CFitWindow& fitWindow, const Configuration::CDarkSettings* darkSettings = NULL);
+    long EvaluateScan(novac::CScanFileHandler* scan, const novac::CFitWindow& fitWindow, const novac::SpectrometerModel& spectrometerModel, const Configuration::CDarkSettings* darkSettings = nullptr);
 
 private:
 
@@ -45,7 +45,7 @@ private:
     /** Performs the evaluation using the supplied evaluator
         @return the number of spectra evaluated
         @return -1 if something goes wrong */
-    long EvaluateOpenedScan(novac::CScanFileHandler* scan, novac::CEvaluationBase* eval, const Configuration::CDarkSettings* darkSettings = NULL);
+    long EvaluateOpenedScan(novac::CScanFileHandler* scan, novac::CEvaluationBase* eval, const novac::SpectrometerModel& spectrometer, const Configuration::CDarkSettings* darkSettings = nullptr);
 
     /** This returns the sky spectrum that is to be used in the fitting.
         Which spectrum to be used is taken from the given settings.

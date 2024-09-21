@@ -11,6 +11,11 @@
 #include <PPPLib/MFC/CString.h>
 #include <PPPLib/MFC/CArray.h>
 
+namespace novac
+{
+struct SpectrometerModel;
+}
+
 namespace Evaluation
 {
 /** <b>CScanResult</b> is a class designed to handle the results
@@ -76,12 +81,12 @@ public:
     /** Check the last spectrum point for goodness of fit.
         The parameters 'deltaLimit', 'upperLimit' and 'lowerLimit' are for
         development purposes only. */
-    bool CheckGoodnessOfFit(const novac::CSpectrumInfo& info, float chi2Limit = -1, float upperLimit = -1, float lowerLimit = -1);
+    bool CheckGoodnessOfFit(const novac::CSpectrumInfo& info, const novac::SpectrometerModel* spectrometer, float chi2Limit = -1, float upperLimit = -1, float lowerLimit = -1);
 
     /** Check spectrum number 'index' for goodness of fit.
         The parameters 'deltaLimit', 'upperLimit' and 'lowerLimit' are for
         development purposes only. */
-    bool CheckGoodnessOfFit(const novac::CSpectrumInfo& info, int index, float chi2Limit = -1, float upperLimit = -1, float lowerLimit = -1);
+    bool CheckGoodnessOfFit(const novac::CSpectrumInfo& info, int index, const novac::SpectrometerModel* spectrometer, float chi2Limit = -1, float upperLimit = -1, float lowerLimit = -1);
 
     /** Gets the offset of the scan. The offset is calculated as the average of the
       three lowest columns values (bad values are skipped). After this function has

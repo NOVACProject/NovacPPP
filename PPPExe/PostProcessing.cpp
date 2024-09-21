@@ -24,9 +24,6 @@
 // The flux CFluxStatistics takes care of the statistical part of the fluxes
 #include "Flux/FluxStatistics.h"
 
-// This is the settings for how to do the procesing
-#include <PPPLib/Configuration/UserConfiguration.h>
-
 // We also need to read the evaluation-log files
 #include "Common/EvaluationLogFileHandler.h"
 
@@ -42,9 +39,6 @@
 #include <SpectralEvaluation/Evaluation/CrossSectionData.h>
 #include <SpectralEvaluation/Calibration/StandardCrossSectionSetup.h>
 
-// we want to make some statistics on the processing
-#include <PPPLib/PostProcessingStatistics.h>
-
 // we need to be able to download data from the FTP-server
 #include <PPPLib/Communication/FTPServerConnection.h>
 
@@ -55,18 +49,17 @@
 #undef max
 
 extern novac::CVolcanoInfo  g_volcanoes;   // <-- A list of all known volcanoes
-CPostProcessingStatistics   g_processingStats; // <-- The statistics of the processing itself
 
 using namespace novac;
 
 
 // this is the working-thread that takes care of evaluating a portion of the scans
-void EvaluateScansThread(const Configuration::CNovacPPPConfiguration& setup, const Configuration::CUserConfiguration& userSettings);
+void EvaluateScansThread(const Configuration::CNovacPPPConfiguration& setup, const Configuration::CUserConfiguration& userSettings, CPostProcessingStatistics& processingStats);
 
 // this takes care of adding the evaluated log-files to the list in an synchronized way
 //  the parameter passed in a reference to an array of strings holding the names of the 
 //  eval-log files generated
-void AddResultToList(const novac::CString& pakFileName, const novac::CString(&evalLog)[MAX_FIT_WINDOWS], const CPlumeInScanProperty& scanProperties, const Configuration::CUserConfiguration& userSettings);
+void AddResultToList(const novac::CString& pakFileName, const novac::CString(&evalLog)[MAX_FIT_WINDOWS], const CPlumeInScanProperty& scanProperties, const Configuration::CUserConfiguration& userSettings, CPostProcessingStatistics& processingStats);
 
 CPostProcessing::CPostProcessing(ILogger& logger, Configuration::CNovacPPPConfiguration setup, Configuration::CUserConfiguration userSettings)
     : m_log(logger), m_setup(setup), m_userSettings(userSettings)
@@ -168,7 +161,7 @@ void CPostProcessing::DoPostProcessing_Flux()
     novac::CString statFileName;
     statFileName.Format("%s%cProcessingStatistics.txt", (const char*)m_userSettings.m_outputDirectory, Poco::Path::separator());
     Common::ArchiveFile(statFileName);
-    g_processingStats.WriteStatToFile(statFileName);
+    m_processingStats.WriteStatToFile(statFileName);
 
     // 8. Also write the wind field that we have created to file
     windFileName.Format("%s%cGeneratedWindField.wxml", (const char*)m_userSettings.m_outputDirectory, Poco::Path::separator());
@@ -316,7 +309,7 @@ void CPostProcessing::DoPostProcessing_Strat()
     // 7. Write the statistics
     statFileName.Format("%s%cProcessingStatistics.txt", (const char*)m_userSettings.m_outputDirectory, Poco::Path::separator());
     Common::ArchiveFile(statFileName);
-    g_processingStats.WriteStatToFile(statFileName);
+    m_processingStats.WriteStatToFile(statFileName);
 }
 
 void CPostProcessing::CheckForSpectraOnFTPServer(std::vector<std::string>& fileList)
@@ -365,7 +358,7 @@ void CPostProcessing::EvaluateScans(
     std::vector<std::thread> evalThreads(m_userSettings.m_maxThreadNum);
     for (unsigned int threadIdx = 0; threadIdx < m_userSettings.m_maxThreadNum; ++threadIdx)
     {
-        std::thread t{ EvaluateScansThread, m_setup, m_userSettings };
+        std::thread t{ EvaluateScansThread, m_setup, m_userSettings, m_processingStats };
         evalThreads[threadIdx] = std::move(t);
     }
 
@@ -382,12 +375,12 @@ void CPostProcessing::EvaluateScans(
     ShowMessage(messageToUser);
 }
 
-void EvaluateScansThread(const Configuration::CNovacPPPConfiguration& setup, const Configuration::CUserConfiguration& userSettings)
+void EvaluateScansThread(const Configuration::CNovacPPPConfiguration& setup, const Configuration::CUserConfiguration& userSettings, CPostProcessingStatistics& processingStats)
 {
     std::string fileName;
 
     // create a new CPostEvaluationController
-    Evaluation::CPostEvaluationController eval { setup, userSettings};
+    Evaluation::CPostEvaluationController eval { setup, userSettings, processingStats};
 
     // while there are more .pak-files
     while (s_pakFilesRemaining.PopFront(fileName))
@@ -410,7 +403,7 @@ void EvaluateScansThread(const Configuration::CNovacPPPConfiguration& setup, con
         if (evaluationSucceeded)
         {
             // If we made it this far then the measurement is ok, insert it into the list!
-            AddResultToList(fileName, evalLog, scanProperties[userSettings.m_mainFitWindow], userSettings);
+            AddResultToList(fileName, evalLog, scanProperties[userSettings.m_mainFitWindow], userSettings, processingStats);
 
             // Tell the user what is happening
             novac::CString messageToUser;
@@ -420,13 +413,18 @@ void EvaluateScansThread(const Configuration::CNovacPPPConfiguration& setup, con
         else
         {
             novac::CString messageToUser;
-            messageToUser.Format(" - Evaluation of scan %s failed", fileName.c_str());
+            messageToUser.Format(" - No flux calculated for scan %s ", fileName.c_str());
             ShowMessage(messageToUser);
         }
     }
 }
 
-void AddResultToList(const novac::CString& pakFileName, const novac::CString(&evalLog)[MAX_FIT_WINDOWS], const CPlumeInScanProperty& scanProperties, const Configuration::CUserConfiguration& userSettings)
+void AddResultToList(
+    const novac::CString& pakFileName,
+    const novac::CString(&evalLog)[MAX_FIT_WINDOWS],
+    const CPlumeInScanProperty& scanProperties,
+    const Configuration::CUserConfiguration& userSettings,
+    CPostProcessingStatistics& processingStats)
 {
     // these are not used...
     novac::CString serial;
@@ -448,7 +446,7 @@ void AddResultToList(const novac::CString& pakFileName, const novac::CString(&ev
     s_evalLogs.AddItem(newResult);
 
     // update the statistics
-    g_processingStats.InsertAcception(serial);
+    processingStats.InsertAcception(serial);
 }
 
 int CPostProcessing::CheckInstrumentCalibrationSettings() const

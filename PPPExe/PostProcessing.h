@@ -5,6 +5,8 @@
 #include <PPPLib/Meteorology/WindDataBase.h>
 #include <PPPLib/Configuration/NovacPPPConfiguration.h>
 #include <PPPLib/Configuration/UserConfiguration.h>
+#include <PPPLib/PostProcessingStatistics.h>
+
 #include "Geometry/PlumeDataBase.h"
 #include "Flux/FluxResult.h"
 #include "Evaluation/ExtendedScanResult.h"
@@ -69,6 +71,9 @@ protected:
     Configuration::CNovacPPPConfiguration m_setup;
 
     Configuration::CUserConfiguration m_userSettings;
+
+    // The statistics of the processing itself (number of successfully processed scans, vs number of rejected etc)
+    CPostProcessingStatistics m_processingStats;
 
     // ----------------------------------------------------------------------
     // --------------------- PRIVATE METHODS --------------------------------

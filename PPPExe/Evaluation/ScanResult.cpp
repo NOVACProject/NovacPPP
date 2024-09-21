@@ -155,22 +155,22 @@ void CScanResult::SetDarkCurrentSpecInfo(const CSpectrumInfo& darkCurSpecInfo)
     this->m_darkCurSpecInfo = darkCurSpecInfo;
 }
 
-/** Check the last spectrum point for goodness of fit */
-bool CScanResult::CheckGoodnessOfFit(const CSpectrumInfo& info, float chi2Limit, float upperLimit, float lowerLimit)
+bool CScanResult::CheckGoodnessOfFit(const CSpectrumInfo& info, const SpectrometerModel* spectrometer, float chi2Limit, float upperLimit, float lowerLimit)
 {
-    return CheckGoodnessOfFit(info, m_specNum - 1, chi2Limit, upperLimit, lowerLimit);
+    return CheckGoodnessOfFit(info, m_specNum - 1, spectrometer, chi2Limit, upperLimit, lowerLimit);
 }
 
-/** Check spectrum number 'index' for goodness of fit */
-bool CScanResult::CheckGoodnessOfFit(const CSpectrumInfo& info, int index, float chi2Limit, float upperLimit, float lowerLimit)
+bool CScanResult::CheckGoodnessOfFit(const CSpectrumInfo& info, int index, const SpectrometerModel* spectrometer, float chi2Limit, float upperLimit, float lowerLimit)
 {
     if (index < 0 || (unsigned int)index >= m_specNum)
+    {
         return false;
+    }
 
     // remember the electronic offset (NB. this is not same as the scan-offset)
     //  m_specInfo[index].m_offset    = (float)offsetLevel;
 
-    return m_spec[index].CheckGoodnessOfFit(info, chi2Limit, upperLimit, lowerLimit);
+    return m_spec[index].CheckGoodnessOfFit(info, spectrometer, chi2Limit, upperLimit, lowerLimit);
 }
 
 int CScanResult::CalculateOffset(const CMolecule& specie)

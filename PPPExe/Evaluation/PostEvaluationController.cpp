@@ -14,10 +14,10 @@
 // ... support for handling the evaluation-log files...
 #include "../Common/EvaluationLogFileHandler.h"
 
-// we want to make some statistics on the processing
-#include <PPPLib/PostProcessingStatistics.h>
-
 #include <Poco/Path.h>
+
+extern CContinuationOfProcessing                g_continuation;  // <-- Information on what has already been done when continuing an old processing round
+
 
 #if defined(linux) || defined(__linux) || defined(__linux__)
 #define MAX_PATH 512
@@ -26,9 +26,6 @@
 using namespace Evaluation;
 using namespace FileHandler;
 using namespace novac;
-
-extern CPostProcessingStatistics                g_processingStats; // <-- The statistics of the processing itself
-extern CContinuationOfProcessing                g_continuation;  // <-- Information on what has already been done when continuing an old processing round
 
 int CPostEvaluationController::EvaluateScan(
     const novac::CString& pakFileName,
@@ -124,9 +121,12 @@ int CPostEvaluationController::EvaluateScan(
         return 5;
     }
 
+    // Guess the spectrometer model, this is not written into the scan files themselves and must be guessed.
+    const novac::SpectrometerModel spectrometerModel = CSpectrometerDatabase::GetInstance().GuessModelFromSerial(scan.GetDeviceSerial());
+
     // 6. Evaluate the scan
     CScanEvaluation ev{ m_userSettings };
-    const long spectrumNum = ev.EvaluateScan(&scan, fitWindow, &darkSettings);
+    const long spectrumNum = ev.EvaluateScan(&scan, fitWindow, spectrometerModel, &darkSettings);
 
     // 7. Check the reasonability of the evaluation
     if (spectrumNum == 0)
@@ -179,7 +179,7 @@ int CPostEvaluationController::EvaluateScan(
         m_lastResult->GetCalculatedPlumeProperties(*plumeProperties);
     }
 
-    CreatePlumespectrumFile(fitWindowName, scan, plumeProperties, specieIndex);
+    CreatePlumespectrumFile(fitWindowName, scan, spectrometerModel, plumeProperties, specieIndex);
 
     // 13. Clean up
     delete m_lastResult;
@@ -191,6 +191,7 @@ int CPostEvaluationController::EvaluateScan(
 void CPostEvaluationController::CreatePlumespectrumFile(
     const novac::CString& fitWindowName,
     novac::CScanFileHandler& scan,
+    const novac::SpectrometerModel& spectrometerModel,
     novac::CPlumeInScanProperty* plumeProperties,
     int specieIndex)
 {
@@ -209,8 +210,17 @@ void CPostEvaluationController::CreatePlumespectrumFile(
     }
     else
     {
+        Configuration::RatioEvaluationSettings plumeCalculationSettings;
+
         PlumeSpectrumSelector spectrumSelector;
-        spectrumSelector.CreatePlumeSpectrumFile(scan, *m_lastResult, *plumeProperties, specieIndex, outputDirectoryStr);
+        spectrumSelector.CreatePlumeSpectrumFile(
+            scan, 
+            *m_lastResult,
+            *plumeProperties, 
+            plumeCalculationSettings,
+            spectrometerModel,
+            specieIndex,
+            outputDirectoryStr);
     }
 }
 
@@ -795,7 +805,7 @@ bool CPostEvaluationController::IsGoodEnoughToEvaluate(const novac::CScanFileHan
         ShowMessage(errorMessage);
 
         // update the statistics
-        g_processingStats.InsertRejection(scan->m_device, CPostProcessingStatistics::SKY_SPEC_DARK);
+        m_processingStats.InsertRejection(scan->m_device, CPostProcessingStatistics::SKY_SPEC_DARK);
 
         return false;
     }
@@ -807,7 +817,7 @@ bool CPostEvaluationController::IsGoodEnoughToEvaluate(const novac::CScanFileHan
         ShowMessage(errorMessage);
 
         // update the statistics
-        g_processingStats.InsertRejection(scan->m_device, CPostProcessingStatistics::SKY_SPEC_TOO_LONG_EXPTIME);
+        m_processingStats.InsertRejection(scan->m_device, CPostProcessingStatistics::SKY_SPEC_TOO_LONG_EXPTIME);
 
         return false;
     }
@@ -821,7 +831,7 @@ bool CPostEvaluationController::IsGoodEnoughToEvaluate(const novac::CScanFileHan
         ShowMessage(errorMessage);
 
         // update the statistics
-        g_processingStats.InsertRejection(scan->m_device, CPostProcessingStatistics::SKY_SPEC_SATURATION);
+        m_processingStats.InsertRejection(scan->m_device, CPostProcessingStatistics::SKY_SPEC_SATURATION);
 
         return false;
     }

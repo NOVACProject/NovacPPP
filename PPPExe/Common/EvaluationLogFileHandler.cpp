@@ -94,7 +94,7 @@ void CEvaluationLogFileHandler::ParseScanHeader(const char szLine[8192])
         if (Equals(szToken, elevation, strlen(elevation)))
         {
             m_col.position = curCol;
-            szToken = NULL;
+            szToken = nullptr;
             continue;
         }
 
@@ -102,7 +102,7 @@ void CEvaluationLogFileHandler::ParseScanHeader(const char szLine[8192])
         if (Equals(szToken, scanAngle, strlen(scanAngle)))
         {
             m_col.position = curCol;
-            szToken = NULL;
+            szToken = nullptr;
             continue;
         }
 
@@ -110,7 +110,7 @@ void CEvaluationLogFileHandler::ParseScanHeader(const char szLine[8192])
         if (Equals(szToken, obsAngle, strlen(obsAngle)))
         {
             m_col.position = curCol;
-            szToken = NULL;
+            szToken = nullptr;
             continue;
         }
 
@@ -118,7 +118,7 @@ void CEvaluationLogFileHandler::ParseScanHeader(const char szLine[8192])
         if (Equals(szToken, azimuth, strlen(azimuth)))
         {
             m_col.position2 = curCol;
-            szToken = NULL;
+            szToken = nullptr;
             continue;
         }
 
@@ -126,7 +126,7 @@ void CEvaluationLogFileHandler::ParseScanHeader(const char szLine[8192])
         if (Equals(szToken, exposureTime, strlen(exposureTime)))
         {
             m_col.expTime = curCol;
-            szToken = NULL;
+            szToken = nullptr;
             continue;
         }
 
@@ -134,7 +134,7 @@ void CEvaluationLogFileHandler::ParseScanHeader(const char szLine[8192])
         if (Equals(szToken, starttime, strlen(starttime)))
         {
             m_col.starttime = curCol;
-            szToken = NULL;
+            szToken = nullptr;
             continue;
         }
 
@@ -142,7 +142,7 @@ void CEvaluationLogFileHandler::ParseScanHeader(const char szLine[8192])
         if (Equals(szToken, stoptime, strlen(stoptime)))
         {
             m_col.stoptime = curCol;
-            szToken = NULL;
+            szToken = nullptr;
             continue;
         }
 
@@ -150,7 +150,7 @@ void CEvaluationLogFileHandler::ParseScanHeader(const char szLine[8192])
         if (Equals(szToken, nameStr, strlen(nameStr)))
         {
             m_col.name = curCol;
-            szToken = NULL;
+            szToken = nullptr;
             continue;
         }
 
@@ -158,7 +158,7 @@ void CEvaluationLogFileHandler::ParseScanHeader(const char szLine[8192])
         if (Equals(szToken, numSpec, strlen(numSpec)))
         {
             m_col.nSpec = curCol;
-            szToken = NULL;
+            szToken = nullptr;
             continue;
         }
 
@@ -166,7 +166,7 @@ void CEvaluationLogFileHandler::ParseScanHeader(const char szLine[8192])
         if (Equals(szToken, offset, strlen(offset)))
         {
             m_col.offset = curCol;
-            szToken = NULL;
+            szToken = nullptr;
             continue;
         }
 
@@ -174,7 +174,7 @@ void CEvaluationLogFileHandler::ParseScanHeader(const char szLine[8192])
         if (Equals(szToken, columnError, strlen(columnError)))
         {
             m_col.columnError[m_evResult.m_referenceResult.size() - 1] = curCol;
-            szToken = NULL;
+            szToken = nullptr;
             continue;
         }
 
@@ -187,7 +187,7 @@ void CEvaluationLogFileHandler::ParseScanHeader(const char szLine[8192])
             std::string specieStr(pt);
             m_evResult.InsertSpecie(specieStr);
             ++m_col.nSpecies;
-            szToken = NULL;
+            szToken = nullptr;
             continue;
         }
 
@@ -195,7 +195,7 @@ void CEvaluationLogFileHandler::ParseScanHeader(const char szLine[8192])
         if (Equals(szToken, shiftError, strlen(shiftError)))
         {
             m_col.shiftError[m_evResult.m_referenceResult.size() - 1] = curCol;
-            szToken = NULL;
+            szToken = nullptr;
             continue;
         }
 
@@ -203,7 +203,7 @@ void CEvaluationLogFileHandler::ParseScanHeader(const char szLine[8192])
         if (Equals(szToken, shift, strlen(shift)))
         {
             m_col.shift[m_evResult.m_referenceResult.size() - 1] = curCol;
-            szToken = NULL;
+            szToken = nullptr;
             continue;
         }
 
@@ -211,7 +211,7 @@ void CEvaluationLogFileHandler::ParseScanHeader(const char szLine[8192])
         if (Equals(szToken, squeezeError, strlen(squeezeError)))
         {
             m_col.squeezeError[m_evResult.m_referenceResult.size() - 1] = curCol;
-            szToken = NULL;
+            szToken = nullptr;
             continue;
         }
 
@@ -219,7 +219,7 @@ void CEvaluationLogFileHandler::ParseScanHeader(const char szLine[8192])
         if (Equals(szToken, squeeze, strlen(squeeze)))
         {
             m_col.squeeze[m_evResult.m_referenceResult.size() - 1] = curCol;
-            szToken = NULL;
+            szToken = nullptr;
             continue;
         }
 
@@ -227,7 +227,7 @@ void CEvaluationLogFileHandler::ParseScanHeader(const char szLine[8192])
         if (Equals(szToken, intensity, strlen(intensity)))
         {
             m_col.intensity = curCol;
-            szToken = NULL;
+            szToken = nullptr;
             continue;
         }
 
@@ -237,7 +237,7 @@ void CEvaluationLogFileHandler::ParseScanHeader(const char szLine[8192])
         {
 
             m_col.fitIntensity = curCol;
-            szToken = NULL;
+            szToken = nullptr;
             continue;
         }
 
@@ -245,7 +245,7 @@ void CEvaluationLogFileHandler::ParseScanHeader(const char szLine[8192])
         if (Equals(szToken, peakSat, strlen(peakSat)))
         {
             m_col.peakSaturation = curCol;
-            szToken = NULL;
+            szToken = nullptr;
             continue;
         }
 
@@ -253,7 +253,7 @@ void CEvaluationLogFileHandler::ParseScanHeader(const char szLine[8192])
         if (Equals(szToken, fitSat, strlen(fitSat)))
         {
             m_col.fitSaturation = curCol;
-            szToken = NULL;
+            szToken = nullptr;
             continue;
         }
 
@@ -261,7 +261,7 @@ void CEvaluationLogFileHandler::ParseScanHeader(const char szLine[8192])
         if (Equals(szToken, delta, strlen(delta)))
         {
             m_col.delta = curCol;
-            szToken = NULL;
+            szToken = nullptr;
             continue;
         }
 
@@ -269,16 +269,18 @@ void CEvaluationLogFileHandler::ParseScanHeader(const char szLine[8192])
         if (Equals(szToken, chiSquare, strlen(chiSquare)))
         {
             m_col.chiSquare = curCol;
-            szToken = NULL;
+            szToken = nullptr;
             continue;
         }
 
-        szToken = NULL;
+        szToken = nullptr;
     }
 
-    m_specieNum = m_evResult.m_referenceResult.size();
+    m_specieNum = static_cast<long>(m_evResult.m_referenceResult.size());
     for (int k = 0; k < m_specieNum; ++k)
+    {
         m_specie[k] = novac::CString(m_evResult.m_referenceResult[k].m_specieName);
+    }
 
     return;
 }
@@ -318,7 +320,7 @@ RETURN_CODE CEvaluationLogFileHandler::ReadEvaluationLog()
     if (singleLock.IsLocked())
     {
         FILE* f = fopen(m_evaluationLog, "r");
-        if (NULL == f)
+        if (nullptr == f)
         {
             singleLock.Unlock();
             return RETURN_CODE::FAIL;
@@ -352,7 +354,7 @@ RETURN_CODE CEvaluationLogFileHandler::ReadEvaluationLog()
             }
 
             // find the next scan-information section
-            if (NULL != strstr(szLine, scanInformation))
+            if (nullptr != strstr(szLine, scanInformation))
             {
                 ResetScanInformation();
                 ParseScanInformation(m_specInfo, flux, f);
@@ -360,7 +362,7 @@ RETURN_CODE CEvaluationLogFileHandler::ReadEvaluationLog()
             }
 
             // find the next flux-information section
-            if (NULL != strstr(szLine, fluxInformation))
+            if (nullptr != strstr(szLine, fluxInformation))
             {
                 Meteorology::CWindField windField;
                 ParseFluxInformation(windField, flux, f);
@@ -368,19 +370,19 @@ RETURN_CODE CEvaluationLogFileHandler::ReadEvaluationLog()
                 continue;
             }
 
-            if (NULL != strstr(szLine, spectralData))
+            if (nullptr != strstr(szLine, spectralData))
             {
                 fReadingScan = true;
                 continue;
             }
-            else if (NULL != strstr(szLine, endofSpectralData))
+            else if (nullptr != strstr(szLine, endofSpectralData))
             {
                 fReadingScan = false;
                 continue;
             }
 
             // find the next start of a scan 
-            if (NULL != strstr(szLine, expTimeStr))
+            if (nullptr != strstr(szLine, expTimeStr))
             {
 
                 // check so that there was some information in the last scan read
@@ -451,7 +453,7 @@ RETURN_CODE CEvaluationLogFileHandler::ReadEvaluationLog()
                     m_specInfo.m_startTime.hour = (unsigned char)fValue1;
                     m_specInfo.m_startTime.minute = (unsigned char)fValue2;
                     m_specInfo.m_startTime.second = (unsigned char)fValue3;
-                    szToken = NULL;
+                    szToken = nullptr;
                     continue;
                 }
 
@@ -470,7 +472,7 @@ RETURN_CODE CEvaluationLogFileHandler::ReadEvaluationLog()
                     m_specInfo.m_stopTime.hour = (unsigned char)fValue1;
                     m_specInfo.m_stopTime.minute = (unsigned char)fValue2;
                     m_specInfo.m_stopTime.second = (unsigned char)fValue3;
-                    szToken = NULL;
+                    szToken = nullptr;
                     continue;
                 }
 
@@ -478,91 +480,91 @@ RETURN_CODE CEvaluationLogFileHandler::ReadEvaluationLog()
                 if (curCol == m_col.name)
                 {
                     m_specInfo.m_name = std::string(szToken);
-                    szToken = NULL;
+                    szToken = nullptr;
                     continue;
                 }
 
                 // ignore columns whose value cannot be parsed into a float
                 if (1 != sscanf(szToken, "%lf", &fValue))
                 {
-                    szToken = NULL;
+                    szToken = nullptr;
                     continue;
                 }
 
                 if (curCol == m_col.position)
                 {
                     m_specInfo.m_scanAngle = (float)fValue;
-                    szToken = NULL;
+                    szToken = nullptr;
                     continue;
                 }
 
                 if (curCol == m_col.position2)
                 {
                     m_specInfo.m_scanAngle2 = (float)fValue;
-                    szToken = NULL;
+                    szToken = nullptr;
                     continue;
                 }
 
                 if (curCol == m_col.intensity)
                 {
                     m_specInfo.m_peakIntensity = (float)fValue;
-                    szToken = NULL;
+                    szToken = nullptr;
                     continue;
                 }
 
                 if (curCol == m_col.fitIntensity)
                 {
                     m_specInfo.m_fitIntensity = (float)fValue;
-                    szToken = NULL;
+                    szToken = nullptr;
                     continue;
                 }
 
                 if (curCol == m_col.fitSaturation)
                 {
                     m_specInfo.m_fitIntensity = (float)fValue;
-                    szToken = NULL;
+                    szToken = nullptr;
                     continue;
                 }
 
                 if (curCol == m_col.peakSaturation)
                 {
                     m_specInfo.m_peakIntensity = (float)fValue;
-                    szToken = NULL;
+                    szToken = nullptr;
                     continue;
                 }
 
                 if (curCol == m_col.offset)
                 {
                     m_specInfo.m_offset = (float)fValue;
-                    szToken = NULL;
+                    szToken = nullptr;
                     continue;
                 }
 
                 if (curCol == m_col.delta)
                 {
                     m_evResult.m_delta = (float)fValue;
-                    szToken = NULL;
+                    szToken = nullptr;
                     continue;
                 }
 
                 if (curCol == m_col.chiSquare)
                 {
                     m_evResult.m_chiSquare = (float)fValue;
-                    szToken = NULL;
+                    szToken = nullptr;
                     continue;
                 }
 
                 if (curCol == m_col.nSpec)
                 {
                     m_specInfo.m_numSpec = (long)fValue;
-                    szToken = NULL;
+                    szToken = nullptr;
                     continue;
                 }
 
                 if (curCol == m_col.expTime)
                 {
                     m_specInfo.m_exposureTime = (long)fValue;
-                    szToken = NULL;
+                    szToken = nullptr;
                     continue;
                 }
 
@@ -599,7 +601,7 @@ RETURN_CODE CEvaluationLogFileHandler::ReadEvaluationLog()
                         break;
                     }
                 }
-                szToken = NULL;
+                szToken = nullptr;
             }
 
             // start reading the next line in the evaluation log (i.e. the next
@@ -631,10 +633,15 @@ RETURN_CODE CEvaluationLogFileHandler::ReadEvaluationLog()
             }
 
             if (m_col.peakSaturation != -1)
-            { // If the intensity is specified as a saturation ratio...
-// double dynamicRange = CSpectrometerModel::GetMaxIntensity(m_specInfo.m_specModel);
+            {
+                // If the intensity is specified as a saturation ratio...
+                // double dynamicRange = CSpectrometerModel::GetMaxIntensity(m_specInfo.m_specModel);
             }
-            newResult.CheckGoodnessOfFit(m_specInfo);
+
+            // Guess the spectrometer model
+            const novac::SpectrometerModel spectrometerModel = CSpectrometerDatabase::GetInstance().GuessModelFromSerial(m_specInfo.m_device);
+
+            newResult.CheckGoodnessOfFit(m_specInfo, &spectrometerModel);
             ++measNr;
         }
 
@@ -683,7 +690,7 @@ long CEvaluationLogFileHandler::CountScansInFile()
 
         // Open the evaluation log
         FILE* f = fopen(m_evaluationLog, "r");
-        if (NULL == f)
+        if (nullptr == f)
         {
             singleLock.Unlock();
             return 0;
@@ -699,7 +706,7 @@ long CEvaluationLogFileHandler::CountScansInFile()
             }
 
             // find the next start of a scan 
-            if (NULL != strstr(szLine, expTimeStr))
+            if (nullptr != strstr(szLine, expTimeStr))
             {
                 ++nScans;
             }
@@ -718,7 +725,7 @@ long CEvaluationLogFileHandler::CountScansInFile()
 void CEvaluationLogFileHandler::ParseScanInformation(CSpectrumInfo& scanInfo, double& flux, FILE* f)
 {
     char szLine[8192];
-    char* pt = NULL;
+    char* pt = nullptr;
     int tmpInt[3];
     double tmpDouble;
     char instrumentType[64];
@@ -920,7 +927,7 @@ void CEvaluationLogFileHandler::ParseScanInformation(CSpectrumInfo& scanInfo, do
 void CEvaluationLogFileHandler::ParseFluxInformation(Meteorology::CWindField& windField, double& flux, FILE* f)
 {
     char szLine[8192];
-    char* pt = NULL;
+    char* pt = nullptr;
     double windSpeed = 10, windDirection = 0, plumeHeight = 1000;
     Meteorology::MET_SOURCE windSpeedSource = Meteorology::MET_USER;
     Meteorology::MET_SOURCE windDirectionSource = Meteorology::MET_USER;
@@ -1245,7 +1252,7 @@ RETURN_CODE CEvaluationLogFileHandler::FormatEvaluationResult(const CSpectrumInf
     int itSpecie;
     Common common;
 
-    if (result != NULL && result->m_referenceResult.size() < nSpecies)
+    if (result != nullptr && result->m_referenceResult.size() < nSpecies)
         return RETURN_CODE::FAIL; // something's wrong here!
 
     // 1. The Scan angle
@@ -1282,13 +1289,13 @@ RETURN_CODE CEvaluationLogFileHandler::FormatEvaluationResult(const CSpectrumInf
     string.AppendFormat("%.2lf\t", (info->m_peakIntensity - info->m_offset) / info->m_exposureTime);
 
     // 7. The delta of the fit
-    if (result != NULL)
+    if (result != nullptr)
         string.AppendFormat("%.2e\t", result->m_delta);
     else
         string.AppendFormat("%.2e\t", 0.0);
 
     // 8. The chi-square of the fit
-    if (result != NULL)
+    if (result != nullptr)
         string.AppendFormat("%.2e\t", result->m_chiSquare);
     else
         string.AppendFormat("%.2e\t", 0.0);
@@ -1299,7 +1306,7 @@ RETURN_CODE CEvaluationLogFileHandler::FormatEvaluationResult(const CSpectrumInf
     // 10. The column/column error for each specie
     for (itSpecie = 0; itSpecie < nSpecies; ++itSpecie)
     {
-        if (result != NULL)
+        if (result != nullptr)
         {
             string.AppendFormat("%.2e\t%.2e\t", result->m_referenceResult[itSpecie].m_column, result->m_referenceResult[itSpecie].m_columnError);
             string.AppendFormat("%.2lf\t%.2lf\t", result->m_referenceResult[itSpecie].m_shift, result->m_referenceResult[itSpecie].m_shiftError);
@@ -1312,7 +1319,7 @@ RETURN_CODE CEvaluationLogFileHandler::FormatEvaluationResult(const CSpectrumInf
     }
 
     // 11. The quality of the fit
-    if (result != NULL)
+    if (result != nullptr)
         string.AppendFormat("%d\t", result->IsOK());
     else
         string.Append("1\t");
