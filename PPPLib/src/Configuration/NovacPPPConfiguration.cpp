@@ -64,17 +64,13 @@ CInstrumentLocation CNovacPPPConfiguration::GetInstrumentLocation(const std::str
     throw PPPLib::NotFoundException(errorMessage.std_str());
 }
 
-int CNovacPPPConfiguration::GetFitWindow(
-    const novac::CString& serial,
+novac::CFitWindow CNovacPPPConfiguration::GetFitWindow(
+    const std::string& serial,
     int channel,
     const CDateTime& dateAndTime,
-    novac::CFitWindow& window,
     const novac::CString* fitWindowName) const
 {
-
-    CDateTime evalValidFrom, evalValidTo;
-    novac::CString errorMessage, windowName;
-
+    novac::CString windowName;
     if (fitWindowName != nullptr)
     {
         windowName.Format(*fitWindowName);
@@ -87,13 +83,18 @@ int CNovacPPPConfiguration::GetFitWindow(
     // First of all find the instrument 
     const CInstrumentConfiguration* instrumentConf = GetInstrument(serial);
     if (instrumentConf == nullptr)
-        return 1;
+    {
+        novac::CString errorMessage;
+        errorMessage.Format("Cannot find configuration for instrument with serial number '%s'", serial.c_str());
+        throw PPPLib::NotFoundException(errorMessage.std_str());
+    }
 
     // Then find the evaluation fit-window that is valid for this date
     const Configuration::CEvaluationConfiguration& evalConf = instrumentConf->m_eval;
-    bool foundValidEvaluation = false;
     for (int k = 0; k < evalConf.NumberOfFitWindows(); ++k)
     {
+        novac::CFitWindow window;
+        CDateTime evalValidFrom, evalValidTo;
         evalConf.GetFitWindow(k, window, evalValidFrom, evalValidTo);
 
         if (evalValidFrom < dateAndTime && (dateAndTime < evalValidTo || dateAndTime == evalValidTo) && ((channel % 16) == window.channel))
@@ -104,35 +105,28 @@ int CNovacPPPConfiguration::GetFitWindow(
                 {
                     // if we're searching for a specific name of fit-windows
                     //	then the name must also match
-                    foundValidEvaluation = true;
-                    break;
+                    return window;
                 }
             }
             else
             {
                 // if we're not searching for any specific name, then anything
                 //	which is valid within the given time-range will do.
-                foundValidEvaluation = true;
-                break;
+                return window;
             }
         }
     }
 
-    if (!foundValidEvaluation)
+    novac::CString errorMessage;
+    if (windowName.GetLength() >= 1)
     {
-        if (windowName.GetLength() >= 1)
-        {
-            errorMessage.Format("Recieved spectrum from instrument %s which is does not have a configured fit-window \"%s\" on %04d.%02d.%02d. Cannot Evaluate!", (const char*)serial, (const char*)windowName, dateAndTime.year, dateAndTime.month, dateAndTime.day);
-        }
-        else
-        {
-            errorMessage.Format("Recieved spectrum from instrument %s which is does not have a configured fit-window on %04d.%02d.%02d. Cannot Evaluate!", (const char*)serial, dateAndTime.year, dateAndTime.month, dateAndTime.day);
-        }
-        ShowMessage(errorMessage);
-        return 1;
+        errorMessage.Format("Recieved spectrum from instrument %s which is does not have a configured fit-window \"%s\" on %04d.%02d.%02d. Cannot Evaluate!", serial.c_str(), (const char*)windowName, dateAndTime.year, dateAndTime.month, dateAndTime.day);
     }
-
-    return 0;
+    else
+    {
+        errorMessage.Format("Recieved spectrum from instrument %s which is does not have a configured fit-window on %04d.%02d.%02d. Cannot Evaluate!", serial.c_str(), dateAndTime.year, dateAndTime.month, dateAndTime.day);
+    }
+    throw PPPLib::NotFoundException(errorMessage.std_str());
 }
 
 int CNovacPPPConfiguration::GetDarkCorrection(const novac::CString& serial, const CDateTime& dateAndTime, CDarkSettings& settings) const

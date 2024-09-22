@@ -391,13 +391,21 @@ void EvaluateScansThread(const Configuration::CNovacPPPConfiguration& setup, con
         // evaluate the .pak-file in all the specified fit-windows and retrieve the name of the 
         // eval-logs. If any of the fit-windows fails then the scan is not inserted.
         bool evaluationSucceeded = true;
-        for (int fitWindowIndex = 0; fitWindowIndex < userSettings.m_nFitWindowsToUse; ++fitWindowIndex)
+        try
         {
-            if (0 != eval.EvaluateScan(fileName, userSettings.m_fitWindowsToUse[fitWindowIndex], &evalLog[fitWindowIndex], &scanProperties[fitWindowIndex]))
+            for (int fitWindowIndex = 0; fitWindowIndex < userSettings.m_nFitWindowsToUse; ++fitWindowIndex)
             {
-                evaluationSucceeded = false;
-                break;
+                if (0 != eval.EvaluateScan(fileName, userSettings.m_fitWindowsToUse[fitWindowIndex], &evalLog[fitWindowIndex], &scanProperties[fitWindowIndex]))
+                {
+                    evaluationSucceeded = false;
+                    break;
+                }
             }
+        }
+        catch (std::exception& ex)
+        {
+            ShowMessage(ex.what());
+            evaluationSucceeded = false;
         }
 
         if (evaluationSucceeded)

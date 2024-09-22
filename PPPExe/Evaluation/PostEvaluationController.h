@@ -77,9 +77,10 @@ private:
         for a configured location and fit-window (for evaluation) which
         is valid for the spectrometer that collected the given scan and
         is also valid at the time when the scan was made.
-        @return 0 if successful otherwise non-zero
-    */
-    int GetLocationAndFitWindow(novac::CScanFileHandler* scan, const novac::CString& fitWindowName,
+        @throws PPPLib::NotFoundException if either the fit window or the location could not be found. */
+    void GetLocationAndFitWindow(
+        const novac::CScanFileHandler& scan,
+        const novac::CString& fitWindowName,
         Configuration::CInstrumentLocation& instrLocation,
         novac::CFitWindow& window);
 

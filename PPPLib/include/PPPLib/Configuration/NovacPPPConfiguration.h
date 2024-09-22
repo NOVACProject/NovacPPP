@@ -46,12 +46,10 @@ public:
 
     /** Retrieves the CFitWindow that is valid for the given instrument and
         for the given time
-        if 'fitWindowName' is not NULL then only the fit-window with the specified
-            name will be returned.
-        if 'fitWindowName' is NULL then the first fit-window valid at the given time
-            will be returned.
-        @return 0 if successful otherwise non-zero */
-    int GetFitWindow(const novac::CString& serial, int channel, const novac::CDateTime& dateAndTime, novac::CFitWindow& window, const novac::CString* fitWindowName = NULL) const;
+        if 'fitWindowName' is not NULL then only the fit-window with the specified name will be returned.
+        if 'fitWindowName' is NULL then the first fit-window valid at the given time will be returned.
+    *   @throws PPPLib::NotFoundException if the instrument could not be found */
+    novac::CFitWindow GetFitWindow(const std::string& serial, int channel, const novac::CDateTime& dateAndTime, const novac::CString* fitWindowName = NULL) const;
 
     /** Retrieves the CDarkSettings that is valid for the given instrument and
         for the given time

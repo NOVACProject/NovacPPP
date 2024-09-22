@@ -65,12 +65,7 @@ int CPostEvaluationController::EvaluateScan(
     // reader.ReadSpectrum(pakFileName, 0, spec); // TODO: check for errors!!
 
     //  Find the information in the configuration about this instrument
-    if (GetLocationAndFitWindow(&scan, fitWindowName, instrLocation, fitWindow))
-    {
-        errorMessage.Format("Could not read location and fit-window for pak-file %s. Will not evaulate.", (const char*)pakFileName);
-        ShowMessage(errorMessage);
-        return 3;
-    }
+    GetLocationAndFitWindow(scan, fitWindowName, instrLocation, fitWindow); // Throws NotFoundException if either the instrument or the fit window isn't found.
 
     // the settings for how to correct for dark
     if (GetDarkCurrentSettings(&scan, darkSettings))
@@ -728,33 +723,22 @@ RETURN_CODE CPostEvaluationController::GetArchivingfileName(novac::CString& pakF
     return RETURN_CODE::SUCCESS;
 }
 
-int CPostEvaluationController::GetLocationAndFitWindow(
-    novac::CScanFileHandler* scan,
+void CPostEvaluationController::GetLocationAndFitWindow(
+    const novac::CScanFileHandler& scan,
     const novac::CString& fitWindowName,
     Configuration::CInstrumentLocation& instrLocation,
     novac::CFitWindow& window)
 {
-    CSpectrum skySpec;
-    CDateTime day, evalValidFrom, evalValidTo;
-    Configuration::CInstrumentLocation singleLocation;
-    novac::CString serialNumber, errorMessage;
-
     // Get the sky-spectrum. Read out serial-number and start-time from this
-    scan->GetSky(skySpec);
-    day = skySpec.m_info.m_startTime;
-    serialNumber = (skySpec.m_info.m_device);
+    const std::string device = scan.GetDeviceSerial();
+    const novac::CDateTime startTime = scan.GetScanStartTime();
 
     // Find the instrument location that is valid for this date
     // TODO: Make sure that the FileNotFoundException thrown here is caught
-    instrLocation = m_setup.GetInstrumentLocation(skySpec.m_info.m_device, day);
+    instrLocation = m_setup.GetInstrumentLocation(device, startTime);
 
     // Then find the evaluation fit-window that is valid for this date
-    if (m_setup.GetFitWindow(serialNumber, scan->m_channel, day, window, &fitWindowName))
-    {
-        return 1;
-    }
-
-    return 0;
+    window = m_setup.GetFitWindow(device, scan.m_channel, startTime, &fitWindowName);
 }
 
 int CPostEvaluationController::GetDarkCurrentSettings(novac::CScanFileHandler* scan, Configuration::CDarkSettings& settings)
