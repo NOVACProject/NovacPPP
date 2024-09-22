@@ -3,6 +3,7 @@
 
 namespace novac
 {
+
 TEST_CASE("EvaluationConfiguration has reasonable initial values", "[EvaluationConfiguration][Configuration]")
 {
     SECTION("Initially no fit windows defined")

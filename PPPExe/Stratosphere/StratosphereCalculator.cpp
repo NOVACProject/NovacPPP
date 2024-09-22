@@ -116,7 +116,6 @@ void CStratosphereCalculator::BuildMeasurementList(const std::list <Evaluation::
     novac::CString mainFitWindowName = novac::CString(g_userSettings.m_fitWindowsToUse[g_userSettings.m_mainFitWindow]);
     novac::CString evalLogfileToRead;
     CMolecule specie = CMolecule(g_userSettings.m_molecule);
-    Configuration::CInstrumentLocation instrLocation;
 
     // loop through all the evaluation log files
     while (p != results.end())
@@ -151,23 +150,29 @@ void CStratosphereCalculator::BuildMeasurementList(const std::list <Evaluation::
 
         for (int k = 0; k < scanResult.GetEvaluatedNum(); ++k)
         {
-            // make sure that we only insert zenith measurements
-            if (fabs(scanResult.GetScanAngle(k)) > 1.0)
-                continue;
+            try
+            {
+                // make sure that we only insert zenith measurements
+                if (fabs(scanResult.GetScanAngle(k)) > 1.0)
+                    continue;
 
-            CZenithMeasurement meas;
-            scanResult.GetStartTime(k, meas.time);
-            meas.column = scanResult.GetColumn(k, specie);
+                CZenithMeasurement meas;
+                scanResult.GetStartTime(k, meas.time);
+                meas.column = scanResult.GetColumn(k, specie);
 
-            // find the location of this instrument
-            if (g_setup.GetInstrumentLocation(scanResult.GetSerial(), meas.time, instrLocation))
-                continue;
-            CGPSData location = CGPSData(instrLocation.m_latitude, instrLocation.m_longitude, instrLocation.m_altitude);
+                // find the location of this instrument
+                auto instrLocation = g_setup.GetInstrumentLocation(scanResult.GetSerial().std_str(), meas.time);
+                CGPSData location = CGPSData(instrLocation.m_latitude, instrLocation.m_longitude, instrLocation.m_altitude);
 
-            // calculate the AMF
-            meas.AMF = GetAMF_ZenithMeasurement(location, meas.time);
+                // calculate the AMF
+                meas.AMF = GetAMF_ZenithMeasurement(location, meas.time);
 
-            measurementDay.measList.push_back(meas);
+                measurementDay.measList.push_back(meas);
+            }
+            catch (PPPLib::NotFoundException& ex)
+            {
+                ShowMessage(ex.message);
+            }
         }
         InsertIntoMeasurementList(measurementDay);
     }

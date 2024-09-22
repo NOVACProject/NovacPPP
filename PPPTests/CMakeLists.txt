@@ -18,6 +18,7 @@ add_executable(PPPTests
     ${CMAKE_CURRENT_LIST_DIR}/src/UnitTest_CStringTokenizer.cpp
     ${CMAKE_CURRENT_LIST_DIR}/src/UnitTest_EvaluationConfiguration.cpp
     ${CMAKE_CURRENT_LIST_DIR}/src/UnitTest_EvaluationConfigurationParser.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/src/UnitTest_NovacPPPConfiguration.cpp
     ${CMAKE_CURRENT_LIST_DIR}/src/UnitTest_PostCalibrationStatistics.cpp
     ${CMAKE_CURRENT_LIST_DIR}/src/UnitTest_ProcessingFileReader.cpp
     ${CMAKE_CURRENT_LIST_DIR}/src/UnitTest_SetupFileReader.cpp

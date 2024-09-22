@@ -7,6 +7,7 @@
 #include <SpectralEvaluation/Evaluation/PlumeSpectrumSelector.h>
 #include <PPPLib/File/Filesystem.h>
 #include <PPPLib/Meteorology/WindField.h>
+#include <SpectralEvaluation/Spectra/SpectrometerModel.h>
 
 // This is the information we need to continue an old processing
 #include "../ContinuationOfProcessing.h"
@@ -744,10 +745,8 @@ int CPostEvaluationController::GetLocationAndFitWindow(
     serialNumber = (skySpec.m_info.m_device);
 
     // Find the instrument location that is valid for this date
-    if (m_setup.GetInstrumentLocation(serialNumber, day, instrLocation))
-    {
-        return 1;
-    }
+    // TODO: Make sure that the FileNotFoundException thrown here is caught
+    instrLocation = m_setup.GetInstrumentLocation(skySpec.m_info.m_device, day);
 
     // Then find the evaluation fit-window that is valid for this date
     if (m_setup.GetFitWindow(serialNumber, scan->m_channel, day, window, &fitWindowName))

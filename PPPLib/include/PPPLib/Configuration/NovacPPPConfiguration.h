@@ -3,6 +3,7 @@
 #include <PPPLib/Configuration/InstrumentConfiguration.h>
 #include <PPPLib/MFC/CString.h>
 #include <PPPLib/SpectrometerId.h>
+#include <PPPLib/Exceptions.h>
 
 /**
     The class <b>CNovacPPPConfiguration</b> is the main configuration
@@ -18,7 +19,6 @@ namespace Configuration
 class CNovacPPPConfiguration
 {
 public:
-    CNovacPPPConfiguration();
 
     // ----------------------------------------------------------------------
     // ---------------------- PUBLIC DATA -----------------------------------
@@ -40,11 +40,9 @@ public:
     const CInstrumentConfiguration* GetInstrument(const novac::CString& serial) const;
     const CInstrumentConfiguration* GetInstrument(const std::string& serial) const;
 
-    /** Retrieves the CInstrumentLocation that is valid for the given instrument and
-        for the given time
-        @return 0 if successful otherwise non-zero
-    */
-    int GetInstrumentLocation(const novac::CString& serial, const novac::CDateTime& dateAndTime, CInstrumentLocation& instrLocation) const;
+    /** Retrieves and returns the CInstrumentLocation that is valid for the given instrument and for the given time
+    *   @throws PPPLib::NotFoundException if the instrument could not be found */
+    CInstrumentLocation GetInstrumentLocation(const std::string& serial, const novac::CDateTime& dateAndTime) const;
 
     /** Retrieves the CFitWindow that is valid for the given instrument and
         for the given time

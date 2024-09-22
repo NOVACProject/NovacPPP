@@ -1,16 +1,13 @@
 #include <PPPLib/Configuration/NovacPPPConfiguration.h>
 #include <PPPLib/Logging.h>
 
-// The global configuration object
+// The global configuration object. TODO: Remove as a global variable when no longer used by any other classes.
 Configuration::CNovacPPPConfiguration g_setup;
 
 using namespace novac;
 
 namespace Configuration
 {
-CNovacPPPConfiguration::CNovacPPPConfiguration()
-{
-}
 
 const CInstrumentConfiguration* CNovacPPPConfiguration::GetInstrument(const novac::CString& serial) const
 {
@@ -37,7 +34,7 @@ const CInstrumentConfiguration* CNovacPPPConfiguration::GetInstrument(const std:
     return nullptr;
 }
 
-int CNovacPPPConfiguration::GetInstrumentLocation(const novac::CString& serial, const CDateTime& day, CInstrumentLocation& instrLocation) const
+CInstrumentLocation CNovacPPPConfiguration::GetInstrumentLocation(const std::string& serial, const CDateTime& day) const
 {
     CInstrumentLocation singleLocation;
 
@@ -45,33 +42,26 @@ int CNovacPPPConfiguration::GetInstrumentLocation(const novac::CString& serial, 
     const CInstrumentConfiguration* instrumentConf = GetInstrument(serial);
     if (instrumentConf == nullptr)
     {
-        return 1;
+        novac::CString errorMessage;
+        errorMessage.Format("Cannot find configuration for instrument with serial number '%s'", serial.c_str());
+        throw PPPLib::NotFoundException(errorMessage.std_str());
     }
 
     // Next find the instrument location that is valid for this date
     const CLocationConfiguration& locationconf = instrumentConf->m_location;
-    bool foundValidLocation = false;
     for (unsigned int k = 0; k < locationconf.GetLocationNum(); ++k)
     {
         locationconf.GetLocation(k, singleLocation);
 
         if (singleLocation.m_validFrom < day && (day < singleLocation.m_validTo || day == singleLocation.m_validTo))
         {
-            instrLocation = singleLocation;
-            foundValidLocation = true;
-            break;
+            return singleLocation;
         }
     }
 
-    if (!foundValidLocation)
-    {
-        novac::CString errorMessage;
-        errorMessage.Format("Recieved spectrum from instrument %s which is does not have a configured location on %04d.%02d.%02d. Cannot Evaluate!", (const char*)serial, day.year, day.month, day.day);
-        ShowMessage(errorMessage);
-        return 1;
-    }
-
-    return 0;
+    novac::CString errorMessage;
+    errorMessage.Format("Recieved spectrum from instrument %s which is does not have a configured location on %04d.%02d.%02d. Cannot Evaluate!", serial.c_str(), day.year, day.month, day.day);
+    throw PPPLib::NotFoundException(errorMessage.std_str());
 }
 
 int CNovacPPPConfiguration::GetFitWindow(

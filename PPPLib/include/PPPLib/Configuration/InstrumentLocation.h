@@ -3,7 +3,6 @@
 #include <PPPLib/Configuration/InstrumentType.h>
 #include <SpectralEvaluation/DateTime.h>
 #include <PPPLib/MFC/CString.h>
-#include <SpectralEvaluation/Spectra/SpectrometerModel.h>
 
 /**
     The class <b>CInstrumentLocation</b> is used to store information
@@ -31,25 +30,25 @@ public:
     novac::CString m_volcano;
 
     /** The latitude of the location */
-    double  m_latitude;
+    double m_latitude;
 
     /** The longitude of the location */
-    double  m_longitude;
+    double m_longitude;
 
     /** The altitude of the location, in meters above sea level */
-    int     m_altitude;
+    int m_altitude;
 
     /** The compass direction of the instrument.
         this is in degrees from north, counting clockwise */
-    double  m_compass;
+    double m_compass;
 
     /** The cone-angle of the instrument during the setup here, in degrees.
         90 corresponds to a flat scanner and 60 corresponds to a 'normal'
         conical scanner */
-    double  m_coneangle;
+    double m_coneangle;
 
     /** The tilt of the instrument. In degrees from horizontal. This is typically 0. */
-    double  m_tilt;
+    double m_tilt;
 
     /** The type of instrument that was used */
     INSTRUMENT_TYPE m_instrumentType;

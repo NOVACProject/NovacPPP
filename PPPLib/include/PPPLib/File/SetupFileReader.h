@@ -5,6 +5,7 @@
 #include <PPPLib/Configuration/NovacPPPConfiguration.h>
 #include <PPPLib/MFC/CString.h>
 #include <PPPLib/MFC/CStdioFile.h>
+#include <SpectralEvaluation/Spectra/SpectrometerModel.h>
 
 namespace FileHandler
 {
