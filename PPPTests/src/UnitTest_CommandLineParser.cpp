@@ -112,7 +112,7 @@ TEST_CASE("Workdir overrides set workdir", "[CommandLineParser][Configuration]")
     CommandLineParser::ParseCommandLineOptions(arguments, userSettings, volcanoes, setExePath, logger);
 
     // Assert
-    REQUIRE(setExePath == "/home/novacuser/novacppp\\");
+    REQUIRE(setExePath == "/home/novacuser/novacppp/");
 }
 
 TEST_CASE("outputdirectory overrides set default", "[CommandLineParser][Configuration]")

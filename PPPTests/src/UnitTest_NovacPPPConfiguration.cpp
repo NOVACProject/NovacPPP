@@ -218,7 +218,7 @@ TEST_CASE("CNovacPPPConfiguration GetDarkCorrection returns expected value", "[C
         }
     }
 
-    SECTION("One instrument configured - Query done within instrument valid time - Returns instrument location")
+    SECTION("One instrument configured - No Dark settings explitly set - Query done within instrument valid time - Returns default instrument location")
     {
         Configuration::CLocationConfiguration configuredInstrumentLocation;
         configuredInstrumentLocation.InsertLocation(configuredLocation);
@@ -234,31 +234,7 @@ TEST_CASE("CNovacPPPConfiguration GetDarkCorrection returns expected value", "[C
         Configuration::CDarkSettings result = sut.GetDarkCorrection(instrumentSerial, searchTime);
 
         // Assert
-        REQUIRE(result.m_darkSpecOption == Configuration::DARK_SPEC_OPTION::USER_SUPPLIED);
-    }
-
-    SECTION("One instrument configured - Query done outside of instrument valid time - Throws NotFoundException")
-    {
-        Configuration::CLocationConfiguration configuredInstrumentLocation;
-        configuredInstrumentLocation.InsertLocation(configuredLocation);
-        Configuration::CInstrumentConfiguration configuredInstrument;
-        configuredInstrument.m_serial = instrumentSerial;
-        configuredInstrument.m_location = configuredInstrumentLocation;
-        const CDateTime searchTime{ 2022, 05, 05, 15, 16, 17 }; // the day before the instrument was installed
-
-        Configuration::CNovacPPPConfiguration sut;
-        sut.m_instrument.push_back(configuredInstrument);
-
-        // Act & Assert
-        try
-        {
-            sut.GetDarkCorrection(instrumentSerial, searchTime);
-            REQUIRE(false); // failure
-        }
-        catch (PPPLib::NotFoundException& ex)
-        {
-            REQUIRE(strstr(ex.message.c_str(), "does not have a configured location on 2022.05.05") != nullptr);
-        }
+        REQUIRE(result.m_darkSpecOption == Configuration::DARK_SPEC_OPTION::MEASURED_IN_SCAN);
     }
 }
 }

@@ -444,13 +444,13 @@ RETURN_CODE CEvaluationConfigurationParser::Parse_CalibrationSettings(Configurat
 
         if (Equals(szToken, "initialCalibrationFile"))
         {
-            Parse_StringItem("/initialCalibrationFile", calibrationSettings.m_initialCalibrationFile);
+            Parse_PathItem("/initialCalibrationFile", calibrationSettings.m_initialCalibrationFile);
             continue;
         }
 
         if (Equals(szToken, "initialInstrumentLineshapeFile"))
         {
-            Parse_StringItem("/initialInstrumentLineshapeFile", calibrationSettings.m_instrumentLineshapeFile);
+            Parse_PathItem("/initialInstrumentLineshapeFile", calibrationSettings.m_instrumentLineshapeFile);
             continue;
         }
     }

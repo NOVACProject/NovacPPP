@@ -16,11 +16,11 @@
 		<fitHigh>503</fitHigh>
 		<Reference>
 			<name></name>
-			<path>C:\SO2_reference.txt</path>
+			<path>C:/SO2_reference.txt</path>
 			<shiftOption>1</shiftOption>
 			<shiftValue>0.000000</shiftValue>
 			<squeezeOption>1</squeezeOption>
-			<squeezeValue>0.000000</squeezeValue>
+			<squeezeValue>1.000000</squeezeValue>
 			<columnOption>0</columnOption>
 		</Reference>
 	</fitWindow>
@@ -37,11 +37,11 @@
 		<fitHigh>503</fitHigh>
 		<Reference>
 			<name></name>
-			<path>C:\SO2_reference.txt</path>
+			<path>C:/SO2_reference.txt</path>
 			<shiftOption>1</shiftOption>
 			<shiftValue>0.000000</shiftValue>
 			<squeezeOption>1</squeezeOption>
-			<squeezeValue>0.000000</squeezeValue>
+			<squeezeValue>1.000000</squeezeValue>
 			<columnOption>0</columnOption>
 		</Reference>
 	</fitWindow>
@@ -50,7 +50,7 @@
 		<validTo>2029.12.31T14:15:16</validTo>
 		<dark>USER</dark>
 		<darkCurrentSpec></darkCurrentSpec>
-		<offsetSpec>C:\some_user_supplied_dark_spectrum_file.txt</offsetSpec>
+		<offsetSpec>C:/some_user_supplied_dark_spectrum_file.txt</offsetSpec>
 	</DarkCorrection>
 	<Calibration>
 		<initialCalibrationFile>/mnt/this/is_the_initial/instrument_calibration_file.clb</initialCalibrationFile>

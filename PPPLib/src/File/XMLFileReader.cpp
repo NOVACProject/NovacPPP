@@ -2,7 +2,10 @@
 #include <PPPLib/Logging.h>
 #include <cstdlib>
 #include <cstring>
+#include <algorithm>
 #include <Poco/Path.h>
+
+#include <iostream> // for debugging
 
 using namespace FileHandler;
 using namespace novac;
@@ -188,25 +191,14 @@ int CXMLFileReader::Parse_StringItem(const novac::CString& label, std::string& s
 
 int CXMLFileReader::Parse_PathItem(const novac::CString& label, novac::CString& path)
 {
-    int r = Parse_StringItem(label, path);
+    std::string p;
+    int r = Parse_PathItem(label, p);
     if (r != 0)
     {
-        std::string p = Poco::Path::expand(path.std_str());
-
-        if (!novac::EqualsIgnoringCase(p, path.ToStdString()))
-        {
-            novac::CString message;
-            message.Format("Expanded path: '%s' into '%s'", path.c_str(), p.c_str());
-            ShowMessage(message);
-
-            path.SetData(p);
-        }
-        return r;
+        path.SetData(p);
     }
-    else
-    {
-        return 0;
-    }
+
+    return r;
 }
 
 int CXMLFileReader::Parse_PathItem(const novac::CString& label, std::string& path)
@@ -214,16 +206,10 @@ int CXMLFileReader::Parse_PathItem(const novac::CString& label, std::string& pat
     int r = Parse_StringItem(label, path);
     if (r != 0)
     {
-        std::string p = Poco::Path::expand(path);
+        std::replace(begin(path), end(path), '\\', '/'); // replace windows backslash with universal foraward slashes
+        std::string p = Poco::Path::expand(path); // expand '~' into full path
+        path = p;
 
-        if (!novac::EqualsIgnoringCase(p, path))
-        {
-            novac::CString message;
-            message.Format("Expanded path: '%s' into '%s'", path.c_str(), p.c_str());
-            ShowMessage(message);
-
-            path = p;
-        }
         return r;
     }
     else

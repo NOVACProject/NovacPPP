@@ -30,7 +30,7 @@ static Configuration::CEvaluationConfiguration CreateEvaluationSettings()
     so2Evaluation.name = "SO2";
     so2Evaluation.polyOrder = 3;
     so2Evaluation.nRef = 1;
-    so2Evaluation.ref[0].m_path = "C:\\SO2_reference.txt";
+    so2Evaluation.ref[0].m_path = "C:/SO2_reference.txt";
     settings.InsertFitWindow(so2Evaluation, novac::CDateTime(1999, 01, 01, 12, 13, 14), novac::CDateTime(2029, 12, 31, 14, 15, 16));
 
 
@@ -41,9 +41,9 @@ static Configuration::CEvaluationConfiguration CreateEvaluationSettings()
     brOEvaluation.name = "BrO";
     brOEvaluation.polyOrder = 3;
     brOEvaluation.nRef = 3;
-    brOEvaluation.ref[0].m_path = "C:\\SO2_reference.txt";
-    brOEvaluation.ref[1].m_path = "C:\\Ring_reference.txt";
-    brOEvaluation.ref[2].m_path = "C:\\BrO_reference.txt";
+    brOEvaluation.ref[0].m_path = "C:/SO2_reference.txt";
+    brOEvaluation.ref[1].m_path = "C:/Ring_reference.txt";
+    brOEvaluation.ref[2].m_path = "C:/BrO_reference.txt";
     settings.InsertFitWindow(so2Evaluation, novac::CDateTime(1999, 01, 01, 12, 13, 14), novac::CDateTime(2029, 12, 31, 14, 15, 16));
 
     return settings;
@@ -54,7 +54,7 @@ static Configuration::CDarkCorrectionConfiguration CreateDarkCorrectionSettings(
     Configuration::CDarkCorrectionConfiguration settings;
     Configuration::CDarkSettings darkSettings;
     darkSettings.m_darkSpecOption = Configuration::DARK_SPEC_OPTION::USER_SUPPLIED;
-    darkSettings.m_offsetSpec = "C:\\some_user_supplied_dark_spectrum_file.txt";
+    darkSettings.m_offsetSpec = "C:/some_user_supplied_dark_spectrum_file.txt";
 
     settings.InsertDarkCurrentCorrectionSettings(darkSettings, novac::CDateTime(1999, 01, 01, 12, 13, 14), novac::CDateTime(2029, 12, 31, 14, 15, 16));
 
@@ -109,8 +109,8 @@ TEST_CASE("ReadConfigurationFile gives expected configuration", "[EvaluationConf
         REQUIRE(validTo == novac::CDateTime(2017, 2, 20, 5, 49, 1));
 
         REQUIRE(window.nRef == 3);
-        REQUIRE(window.ref[0].m_path == "D:\\NovacPostProcessingProgram\\TestRun_2021_12\\OutputFeb2017UTC\\2017.02.20/I2J8552/I2J8552_SO2_Bogumil_293K_170220_0348.txt");
-        REQUIRE(window.fraunhoferRef.m_path == "D:\\NovacPostProcessingProgram\\TestRun_2021_12\\OutputFeb2017UTC\\2017.02.20/I2J8552/I2J8552_Fraunhofer_170220_0348.txt");
+        REQUIRE(window.ref[0].m_path == "D:/NovacPostProcessingProgram/TestRun_2021_12/OutputFeb2017UTC/2017.02.20/I2J8552/I2J8552_SO2_Bogumil_293K_170220_0348.txt");
+        REQUIRE(window.fraunhoferRef.m_path == "D:/NovacPostProcessingProgram/TestRun_2021_12/OutputFeb2017UTC/2017.02.20/I2J8552/I2J8552_Fraunhofer_170220_0348.txt");
     }
 
     // Expected second evaluation fit window
@@ -126,8 +126,8 @@ TEST_CASE("ReadConfigurationFile gives expected configuration", "[EvaluationConf
         REQUIRE(validTo == novac::CDateTime(2017, 2, 20, 9, 53, 24));
 
         REQUIRE(window.nRef == 3);
-        REQUIRE(window.ref[0].m_path == "D:\\NovacPostProcessingProgram\\TestRun_2021_12\\OutputFeb2017UTC\\2017.02.20/I2J8552/I2J8552_SO2_Bogumil_293K_170220_0749.txt");
-        REQUIRE(window.fraunhoferRef.m_path == "D:\\NovacPostProcessingProgram\\TestRun_2021_12\\OutputFeb2017UTC\\2017.02.20/I2J8552/I2J8552_Fraunhofer_170220_0749.txt");
+        REQUIRE(window.ref[0].m_path == "D:/NovacPostProcessingProgram/TestRun_2021_12/OutputFeb2017UTC/2017.02.20/I2J8552/I2J8552_SO2_Bogumil_293K_170220_0749.txt");
+        REQUIRE(window.fraunhoferRef.m_path == "D:/NovacPostProcessingProgram/TestRun_2021_12/OutputFeb2017UTC/2017.02.20/I2J8552/I2J8552_Fraunhofer_170220_0749.txt");
     }
 
     // Expected third evaluation fit window
@@ -143,8 +143,8 @@ TEST_CASE("ReadConfigurationFile gives expected configuration", "[EvaluationConf
         REQUIRE(validTo == novac::CDateTime(9999, 12, 31, 23, 59, 59));
 
         REQUIRE(window.nRef == 3);
-        REQUIRE(window.ref[0].m_path == "D:\\NovacPostProcessingProgram\\TestRun_2021_12\\OutputFeb2017UTC\\2017.02.20/I2J8552/I2J8552_SO2_Bogumil_293K_170220_1157.txt");
-        REQUIRE(window.fraunhoferRef.m_path == "D:\\NovacPostProcessingProgram\\TestRun_2021_12\\OutputFeb2017UTC\\2017.02.20/I2J8552/I2J8552_Fraunhofer_170220_1157.txt");
+        REQUIRE(window.ref[0].m_path == "D:/NovacPostProcessingProgram/TestRun_2021_12/OutputFeb2017UTC/2017.02.20/I2J8552/I2J8552_SO2_Bogumil_293K_170220_1157.txt");
+        REQUIRE(window.fraunhoferRef.m_path == "D:/NovacPostProcessingProgram/TestRun_2021_12/OutputFeb2017UTC/2017.02.20/I2J8552/I2J8552_Fraunhofer_170220_1157.txt");
     }
 
     // Expected dark settings
@@ -161,7 +161,7 @@ TEST_CASE("ReadConfigurationFile gives expected configuration", "[EvaluationConf
 
     // Expected calibration settings
     {
-        REQUIRE("C:\\NOVAC\\novacP3\\Cross sections\\I2J8552_SolarSpec.xs" == resultingCalibrationSettings.m_initialCalibrationFile);
+        REQUIRE("C:/NOVAC/novacP3/Cross sections/I2J8552_SolarSpec.xs" == resultingCalibrationSettings.m_initialCalibrationFile);
     }
 }
 
