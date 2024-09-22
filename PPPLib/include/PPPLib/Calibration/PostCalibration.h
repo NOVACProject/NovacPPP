@@ -20,7 +20,7 @@ class CPostCalibration
 public:
 
     CPostCalibration(const novac::StandardCrossSectionSetup& standardCrossSections, ILogger& logger)
-        : m_log(logger), m_standardCrossSections(standardCrossSections)
+        : m_standardCrossSections(standardCrossSections), m_log(logger)
     {
     }
 

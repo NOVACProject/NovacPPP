@@ -5,6 +5,7 @@
 #include <PPPLib/MFC/CString.h>
 #include <PPPLib/MFC/CStringTokenizer.h>
 #include <SpectralEvaluation/StringUtils.h>
+#include <cstring>
 
 namespace Configuration
 {

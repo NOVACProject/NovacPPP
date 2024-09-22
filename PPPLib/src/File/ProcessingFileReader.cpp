@@ -622,7 +622,7 @@ RETURN_CODE CProcessingFileReader::WriteProcessingFile(const novac::CString& fil
     }
     else if (settings.sky.skyOption == Configuration::SKY_OPTION::SPECTRUM_INDEX_IN_SCAN) {
         fprintf(f, "\t\t<option>Index</option>\n");
-        fprintf(f, "\t\t<value>%ld</value>\n", settings.sky.indexInScan);
+        fprintf(f, "\t\t<value>%d</value>\n", settings.sky.indexInScan);
     }
     else if (settings.sky.skyOption == Configuration::SKY_OPTION::USER_SUPPLIED) {
         fprintf(f, "\t\t<option>User</option>\n");
@@ -680,7 +680,7 @@ void CProcessingFileReader::PrintParameter(FILE* f, int nTabs, const novac::CStr
 }
 void CProcessingFileReader::PrintParameter(FILE* f, int nTabs, const novac::CString& tag, const unsigned long& value) {
     PrintTabs(f, nTabs);
-    fprintf(f, "<%s>%u</%s>\n", (const char*)tag, value, (const char*)tag);
+    fprintf(f, "<%s>%lu</%s>\n", (const char*)tag, value, (const char*)tag);
     return;
 }
 void CProcessingFileReader::PrintParameter(FILE* f, int nTabs, const novac::CString& tag, const double& value) {

@@ -224,7 +224,7 @@ RETURN_CODE CSetupFileReader::WriteSetupFile(const novac::CString& fileName, con
             fprintf(f, "\t\t\t<compass>%.1lf</compass>\n", instrLocation.m_compass);
             fprintf(f, "\t\t\t<coneangle>%.0lf</coneangle>\n", instrLocation.m_coneangle);
             fprintf(f, "\t\t<tilt>%.0lf</tilt>\n", instrLocation.m_tilt);
-            fprintf(f, "\t\t<type>%d</type>\n", instrLocation.m_instrumentType);
+            fprintf(f, "\t\t<type>%d</type>\n", (int)instrLocation.m_instrumentType);
 
             const SpectrometerModel currentSpectrometer = CSpectrometerDatabase::GetInstance().GetModel(instrLocation.m_spectrometerModel);
             {

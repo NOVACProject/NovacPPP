@@ -122,8 +122,10 @@ protected:
         @param evalLogFiles - will on successful return be filled
             with the path's and filenames of each evaluation log
             file generated and the properties of each scan. */
-    void EvaluateScans(const std::vector<std::string>& pakFileList,
-        novac::CList <Evaluation::CExtendedScanResult, Evaluation::CExtendedScanResult&>& evalLogFiles) const;
+    void EvaluateScans(
+        const std::vector<std::string>& pakFileList,
+        novac::CList <Evaluation::CExtendedScanResult,
+        Evaluation::CExtendedScanResult&>& evalLogFiles);
 
     /** Runs through the supplied list of .pak files and performs an instrument calibration
         on each one.

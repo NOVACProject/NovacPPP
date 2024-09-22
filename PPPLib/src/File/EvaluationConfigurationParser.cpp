@@ -127,7 +127,7 @@ RETURN_CODE CEvaluationConfigurationParser::WriteConfigurationFile(
         fprintf(f, "\t\t<polyOrder>%d</polyOrder>\n", window.polyOrder);
 
         // the type of fit to use
-        fprintf(f, "\t\t<fitType>%d</fitType>\n", window.fitType);
+        fprintf(f, "\t\t<fitType>%d</fitType>\n", (int)window.fitType);
 
         // the boundaries of the fit (in pixels)
         fprintf(f, "\t\t<fitLow>%d</fitLow>\n", window.fitLow);
@@ -150,17 +150,17 @@ RETURN_CODE CEvaluationConfigurationParser::WriteConfigurationFile(
             fprintf(f, "\t\t\t<path>%s</path>\n", window.ref[j].m_path.c_str());
 
             // The value for the shift
-            fprintf(f, "\t\t\t<shiftOption>%d</shiftOption>\n", window.ref[j].m_shiftOption);
+            fprintf(f, "\t\t\t<shiftOption>%d</shiftOption>\n", (int)window.ref[j].m_shiftOption);
             if (window.ref[j].m_shiftOption != novac::SHIFT_TYPE::SHIFT_FREE)
                 fprintf(f, "\t\t\t<shiftValue>%lf</shiftValue>\n", window.ref[j].m_shiftValue);
 
             // The value for the squeeze
-            fprintf(f, "\t\t\t<squeezeOption>%d</squeezeOption>\n", window.ref[j].m_shiftOption);
-            if (window.ref[j].m_shiftOption != novac::SHIFT_TYPE::SHIFT_FREE)
-                fprintf(f, "\t\t\t<squeezeValue>%lf</squeezeValue>\n", window.ref[j].m_shiftValue);
+            fprintf(f, "\t\t\t<squeezeOption>%d</squeezeOption>\n", (int)window.ref[j].m_squeezeOption);
+            if (window.ref[j].m_squeezeOption != novac::SHIFT_TYPE::SHIFT_FREE)
+                fprintf(f, "\t\t\t<squeezeValue>%lf</squeezeValue>\n", window.ref[j].m_squeezeValue);
 
             // The value for the column
-            fprintf(f, "\t\t\t<columnOption>%d</columnOption>\n", window.ref[j].m_columnOption);
+            fprintf(f, "\t\t\t<columnOption>%d</columnOption>\n", (int)window.ref[j].m_columnOption);
             if (window.ref[j].m_columnOption != novac::SHIFT_TYPE::SHIFT_FREE)
                 fprintf(f, "\t\t\t<columnValue>%lf</columnValue>\n", window.ref[j].m_columnValue);
 

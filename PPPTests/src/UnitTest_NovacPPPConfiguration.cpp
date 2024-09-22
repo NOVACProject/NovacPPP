@@ -1,4 +1,5 @@
 #include <PPPLib/Configuration/NovacPPPConfiguration.h>
+#include <cstring>
 #include "catch.hpp"
 
 namespace novac

@@ -7,6 +7,7 @@
 
 #include <algorithm>
 #include <sstream>
+#include <functional>
 
 // the PostEvaluationController takes care of the DOAS evaluations
 #include "Evaluation/PostEvaluationController.h"
@@ -339,7 +340,8 @@ volatile unsigned long s_nFilesToProcess;
 
 void CPostProcessing::EvaluateScans(
     const std::vector<std::string>& pakFileList,
-    novac::CList <Evaluation::CExtendedScanResult, Evaluation::CExtendedScanResult&>& evalLogFiles) const
+    novac::CList <Evaluation::CExtendedScanResult,
+    Evaluation::CExtendedScanResult&>& evalLogFiles)
 {
     s_nFilesToProcess = (long)pakFileList.size();
     novac::CString messageToUser;
@@ -358,7 +360,7 @@ void CPostProcessing::EvaluateScans(
     std::vector<std::thread> evalThreads(m_userSettings.m_maxThreadNum);
     for (unsigned int threadIdx = 0; threadIdx < m_userSettings.m_maxThreadNum; ++threadIdx)
     {
-        std::thread t{ EvaluateScansThread, m_setup, m_userSettings, m_processingStats };
+        std::thread t( EvaluateScansThread, std::cref(m_setup), std::cref(m_userSettings), std::ref(m_processingStats) );
         evalThreads[threadIdx] = std::move(t);
     }
 

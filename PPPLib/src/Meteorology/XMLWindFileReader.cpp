@@ -9,6 +9,7 @@
 #include <PPPLib/MFC/CFileUtils.h>
 #include <PPPLib/MFC/CList.h>
 #include <PPPLib/Logging.h>
+#include <PPPLib/Exceptions.h>
 #include <Poco/Glob.h>
 #include <Poco/Path.h>
 #include <string.h>
@@ -49,13 +50,13 @@ void CXMLWindFileReader::ReadWindFile(const novac::CString& fileName, Meteorolog
         // make sure that the tmp-directory exists
         if (Filesystem::CreateDirectoryStructure(m_userSettings.m_tempDirectory))
         {
-            userMessage.Format("Could not create temp directory: %s", (const char*)m_userSettings.m_tempDirectory);
-            throw std::exception(userMessage.c_str());
+            userMessage.Format("Could not create temp directory: '%s' required for downloading wind field from ftp", (const char*)m_userSettings.m_tempDirectory);
+            throw PPPLib::FileIoException(userMessage.c_str());
         }
 
         if (ftp.DownloadFileFromFTP(fileName, localFileName, m_userSettings.m_FTPUsername, m_userSettings.m_FTPPassword))
         {
-            throw std::exception("Failed to download wind file from FTP server");
+            throw PPPLib::FileIoException("Failed to download wind file from FTP server");
         }
     }
     else
@@ -67,7 +68,7 @@ void CXMLWindFileReader::ReadWindFile(const novac::CString& fileName, Meteorolog
     if (!Open(localFileName))
     {
         std::string message{ std::string("Failed to open wind field file for reading: '") + localFileName.std_str() };
-        throw std::exception(message.c_str());
+        throw PPPLib::FileIoException(message.c_str());
     }
 
     // parse the file
@@ -128,14 +129,14 @@ void CXMLWindFileReader::ReadWindDirectory(const novac::CString& directory, Mete
         // Get the list of files on the server
         if (ftp->DownloadFileListFromFTP(ftpDir, remoteFileList, m_userSettings.m_FTPUsername, m_userSettings.m_FTPPassword))
         {
-            throw std::exception("Failed to download list of wind files from FTP server");
+            throw PPPLib::FileIoException("Failed to download list of wind files from FTP server");
         }
 
         // make sure that the tmp-directory exists
         if (Filesystem::CreateDirectoryStructure(m_userSettings.m_tempDirectory))
         {
-            userMessage.Format("Could not create temp directory: %s", (const char*)m_userSettings.m_tempDirectory);
-            throw std::exception(userMessage.c_str());
+            userMessage.Format("Could not create temp directory: '%s' required to download wind fields from FTP server", (const char*)m_userSettings.m_tempDirectory);
+            throw PPPLib::FileIoException(userMessage.c_str());
         }
 
         // Download the files, one at a time
@@ -178,7 +179,7 @@ void CXMLWindFileReader::ReadWindDirectory(const novac::CString& directory, Mete
 
                 if (ftp->DownloadFileFromFTP(remoteFileName, localFileName, m_userSettings.m_FTPUsername, m_userSettings.m_FTPPassword))
                 {
-                    throw std::exception("Failed to download wind file from FTP server");
+                    throw PPPLib::FileIoException("Failed to download wind file from FTP server");
                 }
             }
 
@@ -386,5 +387,3 @@ int CXMLWindFileReader::WriteWindFile(const novac::CString& fileName, const Mete
 {
     return dataBase.WriteToFile(fileName);
 }
-
-

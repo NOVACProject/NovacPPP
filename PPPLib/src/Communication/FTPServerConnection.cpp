@@ -262,7 +262,7 @@ void LoginAndDownloadDataFromDir(ftpLogin login, std::string directory, novac::G
         std::vector<std::shared_ptr<std::thread>> downloadThreads;
         std::vector<std::unique_ptr<Poco::Net::FTPClientSession>> connections{ g_userSettings.m_maxThreadNum };
 
-        for (int threadIdx = 0; threadIdx < g_userSettings.m_maxThreadNum; ++threadIdx) {
+        for (unsigned long threadIdx = 0; threadIdx < g_userSettings.m_maxThreadNum; ++threadIdx) {
 
             // Create the connection
             try {
@@ -280,12 +280,12 @@ void LoginAndDownloadDataFromDir(ftpLogin login, std::string directory, novac::G
         }
 
         // Wait for all the threads to terminate
-        for (int threadIdx = 0; threadIdx < g_userSettings.m_maxThreadNum; ++threadIdx) {
+        for (unsigned long threadIdx = 0; threadIdx < g_userSettings.m_maxThreadNum; ++threadIdx) {
             downloadThreads[threadIdx]->join();
         }
 
         // Close the connections
-        for (int threadIdx = 0; threadIdx < g_userSettings.m_maxThreadNum; ++threadIdx) {
+        for (unsigned long threadIdx = 0; threadIdx < g_userSettings.m_maxThreadNum; ++threadIdx) {
             connections[threadIdx]->close();
         }
 
