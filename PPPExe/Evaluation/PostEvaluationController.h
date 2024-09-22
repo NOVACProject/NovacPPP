@@ -73,24 +73,6 @@ private:
     // --------------------- PRIVATE METHODS --------------------------------
     // ----------------------------------------------------------------------
 
-    /** Looks in the configuration of the instruments and searches
-        for a configured location and fit-window (for evaluation) which
-        is valid for the spectrometer that collected the given scan and
-        is also valid at the time when the scan was made.
-        @throws PPPLib::NotFoundException if either the fit window or the location could not be found. */
-    void GetLocationAndFitWindow(
-        const novac::CScanFileHandler& scan,
-        const novac::CString& fitWindowName,
-        Configuration::CInstrumentLocation& instrLocation,
-        novac::CFitWindow& window);
-
-    /** Looks in the configuration of the instrument and searches
-        for the settings on how the dark-current should be removed
-        from the collected spectra.
-        On successful return will the settings be stored in 'settings'
-        @return 0 on successful, otherwise non-zero. */
-    int GetDarkCurrentSettings(novac::CScanFileHandler* scan, Configuration::CDarkSettings& settings);
-
     /** Checks the supplied scan if it's good enough to bother evaluating.
         @returns false if the scan is too bad and should be ignored. Else return true. */
     bool IsGoodEnoughToEvaluate(const novac::CScanFileHandler* scan, const novac::CFitWindow& window, Configuration::CInstrumentLocation& instrLocation);

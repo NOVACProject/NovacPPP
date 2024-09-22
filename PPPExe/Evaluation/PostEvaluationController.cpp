@@ -39,9 +39,6 @@ int CPostEvaluationController::EvaluateScan(
     CDateTime startTime;
     novac::CSpectrumIO reader;
     CSpectrum skySpectrum;
-    Configuration::CInstrumentLocation instrLocation;
-    CFitWindow fitWindow;
-    Configuration::CDarkSettings darkSettings;
 
     // The CScanFileHandler is a structure for reading the 
     //  spectral information from the scan-file
@@ -64,16 +61,11 @@ int CPostEvaluationController::EvaluateScan(
     //  Find the serial number of the spectrometer
     // reader.ReadSpectrum(pakFileName, 0, spec); // TODO: check for errors!!
 
-    //  Find the information in the configuration about this instrument
-    GetLocationAndFitWindow(scan, fitWindowName, instrLocation, fitWindow); // Throws NotFoundException if either the instrument or the fit window isn't found.
-
-    // the settings for how to correct for dark
-    if (GetDarkCurrentSettings(&scan, darkSettings))
-    {
-        errorMessage.Format("Could not read dark-settings for pak-file %s. Will not evaulate.", (const char*)pakFileName);
-        ShowMessage(errorMessage);
-        return 3;
-    }
+    // Find the information in the configuration about this instrument.
+    // Notice that these throws NotFoundException if the instrument, or its configuration could not be found.
+    auto instrLocation = m_setup.GetInstrumentLocation(scan.GetDeviceSerial(), scan.GetScanStartTime());
+    auto fitWindow = m_setup.GetFitWindow(scan.GetDeviceSerial(), scan.m_channel, scan.GetScanStartTime(), &fitWindowName);
+    auto darkSettings = m_setup.GetDarkCorrection(scan.m_device, scan.m_startTime);
 
     // Check if we have already evaluated this scan. Only if this is a re-run of
     // an old processing...
@@ -210,9 +202,9 @@ void CPostEvaluationController::CreatePlumespectrumFile(
 
         PlumeSpectrumSelector spectrumSelector;
         spectrumSelector.CreatePlumeSpectrumFile(
-            scan, 
+            scan,
             *m_lastResult,
-            *plumeProperties, 
+            *plumeProperties,
             plumeCalculationSettings,
             spectrometerModel,
             specieIndex,
@@ -721,36 +713,6 @@ RETURN_CODE CPostEvaluationController::GetArchivingfileName(novac::CString& pakF
     }
 
     return RETURN_CODE::SUCCESS;
-}
-
-void CPostEvaluationController::GetLocationAndFitWindow(
-    const novac::CScanFileHandler& scan,
-    const novac::CString& fitWindowName,
-    Configuration::CInstrumentLocation& instrLocation,
-    novac::CFitWindow& window)
-{
-    // Get the sky-spectrum. Read out serial-number and start-time from this
-    const std::string device = scan.GetDeviceSerial();
-    const novac::CDateTime startTime = scan.GetScanStartTime();
-
-    // Find the instrument location that is valid for this date
-    // TODO: Make sure that the FileNotFoundException thrown here is caught
-    instrLocation = m_setup.GetInstrumentLocation(device, startTime);
-
-    // Then find the evaluation fit-window that is valid for this date
-    window = m_setup.GetFitWindow(device, scan.m_channel, startTime, &fitWindowName);
-}
-
-int CPostEvaluationController::GetDarkCurrentSettings(novac::CScanFileHandler* scan, Configuration::CDarkSettings& settings)
-{
-    CSpectrum skySpec;
-    novac::CString serialNumber, errorMessage;
-
-    // Get the sky-spectrum. Read out serial-number and start-time from this
-    scan->GetSky(skySpec);
-    serialNumber = skySpec.m_info.m_device;
-
-    return m_setup.GetDarkCorrection(serialNumber, skySpec.m_info.m_startTime, settings);
 }
 
 int CPostEvaluationController::CheckQualityOfFluxMeasurement(CScanResult* result, const novac::CString& pakFileName) const

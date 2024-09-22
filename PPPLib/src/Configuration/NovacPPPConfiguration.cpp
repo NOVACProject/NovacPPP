@@ -9,12 +9,6 @@ using namespace novac;
 namespace Configuration
 {
 
-const CInstrumentConfiguration* CNovacPPPConfiguration::GetInstrument(const novac::CString& serial) const
-{
-    std::string stdSerial{ (const char*)serial };
-    return GetInstrument(stdSerial);
-}
-
 const CInstrumentConfiguration* CNovacPPPConfiguration::GetInstrument(const std::string& serial) const
 {
     novac::CString errorMessage;
@@ -129,16 +123,28 @@ novac::CFitWindow CNovacPPPConfiguration::GetFitWindow(
     throw PPPLib::NotFoundException(errorMessage.std_str());
 }
 
-int CNovacPPPConfiguration::GetDarkCorrection(const novac::CString& serial, const CDateTime& dateAndTime, CDarkSettings& settings) const
+CDarkSettings CNovacPPPConfiguration::GetDarkCorrection(const std::string& serial, const CDateTime& day) const
 {
     // First of all find the instrument 
     const CInstrumentConfiguration* instrumentConf = GetInstrument(serial);
     if (instrumentConf == nullptr)
-        return 1;
+    {
+        novac::CString errorMessage;
+        errorMessage.Format("Cannot find configuration for instrument with serial number '%s'", serial.c_str());
+        throw PPPLib::NotFoundException(errorMessage.std_str());
+    }
 
     // Next find the CDarkCorrectionConfiguration that is valid for this date
     const CDarkCorrectionConfiguration& darkConf = instrumentConf->m_darkCurrentCorrection;
-    return darkConf.GetDarkSettings(settings, dateAndTime);
+    CDarkSettings settings;
+    if (0 == darkConf.GetDarkSettings(settings, day))
+    {
+        return settings;
+    }
+
+    novac::CString errorMessage;
+    errorMessage.Format("Recieved spectrum from instrument %s which is does not have a configured dark current configuration on %04d.%02d.%02d. Cannot Evaluate!", serial.c_str(), day.year, day.month, day.day);
+    throw PPPLib::NotFoundException(errorMessage.std_str());
 }
 }
 
