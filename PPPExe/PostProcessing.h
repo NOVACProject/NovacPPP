@@ -1,14 +1,15 @@
 #pragma once
 
 #include <SpectralEvaluation/DateTime.h>
-#include "Geometry/GeometryCalculator.h"
+#include <PPPLib/Geometry/GeometryCalculator.h>
 #include <PPPLib/Meteorology/WindDataBase.h>
 #include <PPPLib/Configuration/NovacPPPConfiguration.h>
 #include <PPPLib/Configuration/UserConfiguration.h>
 #include <PPPLib/PostProcessingStatistics.h>
+#include <PPPLib/Logging.h>
 
-#include "Geometry/PlumeDataBase.h"
-#include "Flux/FluxResult.h"
+#include <PPPLib/Geometry/PlumeDataBase.h>
+#include <PPPLib/Flux/FluxResult.h>
 #include "Evaluation/ExtendedScanResult.h"
 #include <PPPLib/MFC/CList.h>
 #include <PPPLib/MFC/CString.h>

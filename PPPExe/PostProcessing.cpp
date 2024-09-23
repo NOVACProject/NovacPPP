@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "PostProcessing.h"
+#include "Common/Common.h"
 #include <SpectralEvaluation/File/File.h>
 
 #undef min
@@ -17,23 +18,21 @@
 #include <PPPLib/Calibration/PostCalibrationStatistics.h>
 
 // The FluxCalculator takes care of calculating the fluxes
-#include "Flux/FluxCalculator.h"
+#include <PPPLib/Flux/FluxCalculator.h>
 
 // The Stratospherecalculator takes care of calculating Stratospheric VCD's
 #include "Stratosphere/StratosphereCalculator.h"
 
 // The flux CFluxStatistics takes care of the statistical part of the fluxes
-#include "Flux/FluxStatistics.h"
+#include <PPPLib/Flux/FluxStatistics.h>
 
 // We also need to read the evaluation-log files
-#include "Common/EvaluationLogFileHandler.h"
+#include <PPPLib/File/EvaluationLogFileHandler.h>
 
 #include "WindMeasurement/WindSpeedCalculator.h"
 
 #include <PPPLib/Meteorology/XMLWindFileReader.h>
 #include <PPPLib/File/Filesystem.h>
-#include "Common/EvaluationLogFileHandler.h"
-
 #include <PPPLib/VolcanoInfo.h>
 #include <PPPLib/MFC/CFileUtils.h>
 #include <PPPLib/ThreadUtils.h>
@@ -931,7 +930,7 @@ void CPostProcessing::CalculateGeometries(novac::CList <Evaluation::CExtendedSca
             }
 
             // make sure that the distance between the instruments is not too long....
-            double instrumentDistance = Common::GPSDistance(location[0].m_latitude, location[0].m_longitude, location[1].m_latitude, location[1].m_longitude);
+            double instrumentDistance = novac::GpsMath::Distance(location[0].m_latitude, location[0].m_longitude, location[1].m_latitude, location[1].m_longitude);
             if (instrumentDistance < m_userSettings.m_calcGeometry_MinDistance || instrumentDistance > m_userSettings.m_calcGeometry_MaxDistance)
             {
                 ++nTooLongdistance;
@@ -1069,7 +1068,7 @@ void CPostProcessing::CalculateFluxes(novac::CList <Evaluation::CExtendedScanRes
     novac::CList <Flux::CFluxResult, Flux::CFluxResult&> calculatedFluxes;
 
     // Initiate the flux-calculator
-    Flux::CFluxCalculator fluxCalc;
+    Flux::CFluxCalculator fluxCalc(this->m_setup, this->m_userSettings);
 
     // Loop through the list of evaluation log files. For each of them, find
     // the best available wind-speed, wind-direction and plume height and

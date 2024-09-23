@@ -1,6 +1,6 @@
 #pragma once
 
-#include "ScanResult.h"
+#include <PPPLib/Evaluation/ScanResult.h>
 
 #include <SpectralEvaluation/File/ScanFileHandler.h>
 #include <SpectralEvaluation/Evaluation/Ratio.h>

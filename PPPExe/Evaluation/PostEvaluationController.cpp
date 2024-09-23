@@ -1,10 +1,11 @@
 #include <cstring>
 #include "PostEvaluationController.h"
-#include "ScanEvaluation.h"
+#include <PPPLib/Evaluation/ScanEvaluation.h>
 #include <SpectralEvaluation/File/SpectrumIO.h>
 #include <SpectralEvaluation/Configuration/DarkSettings.h>
 #include <SpectralEvaluation/Evaluation/RatioEvaluation.h>
 #include <SpectralEvaluation/Evaluation/PlumeSpectrumSelector.h>
+#include <PPPLib/Logging.h>
 #include <PPPLib/File/Filesystem.h>
 #include <PPPLib/Meteorology/WindField.h>
 #include <SpectralEvaluation/Spectra/SpectrometerModel.h>
@@ -13,7 +14,7 @@
 #include "../ContinuationOfProcessing.h"
 
 // ... support for handling the evaluation-log files...
-#include "../Common/EvaluationLogFileHandler.h"
+#include <PPPLib/File/EvaluationLogFileHandler.h>
 
 #include <Poco/Path.h>
 

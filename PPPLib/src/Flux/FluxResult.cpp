@@ -1,5 +1,6 @@
-#include "FluxResult.h"
+#include <PPPLib/Flux/FluxResult.h>
 #include <PPPLib/Meteorology/WindField.h>
+#include <SpectralEvaluation/Definitions.h>
 
 using namespace Flux;
 

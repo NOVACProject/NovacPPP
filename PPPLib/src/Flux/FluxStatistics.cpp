@@ -1,17 +1,10 @@
-#include "FluxStatistics.h"
+#include <PPPLib/Flux/FluxStatistics.h>
 #include <PPPLib/File/Filesystem.h>
+#include <SpectralEvaluation/VectorUtils.h>
 
 using namespace Flux;
 using namespace novac;
 
-CFluxStatistics::CMeasurementDay::CMeasurementDay()
-{
-
-}
-CFluxStatistics::CMeasurementDay::~CMeasurementDay()
-{
-
-}
 CFluxStatistics::CMeasurementDay& CFluxStatistics::CMeasurementDay::operator =(const CFluxStatistics::CMeasurementDay& m)
 {
     this->day = m.day;
@@ -45,8 +38,8 @@ void CFluxStatistics::CMeasurementDay::GetStatistics(novac::CString& str, novac:
 {
     double average, median, std;
     long nMeasurements = (long)this->fluxList.GetCount();
-    double* data = new double[nMeasurements];
-    double* sortedData = new double[nMeasurements];
+    std::vector<double> data(nMeasurements, 0.0);
+    std::vector <double> sortedData(nMeasurements, 0.0);
     int nMeasurementsFromThisInstrument = 0;
     int k = 0;
 
@@ -61,15 +54,19 @@ void CFluxStatistics::CMeasurementDay::GetStatistics(novac::CString& str, novac:
     }
 
     // get the statistical data
-    average = Average(data, nMeasurements);
-    std = Std(data, nMeasurements);
+    average = Average(data);
+    std = Stdev(data);
 
     // sort the data to get the median
-    FindNLowest(data, nMeasurements, sortedData, nMeasurements);
+    FindNLowest(data, nMeasurements, sortedData);
     if (nMeasurements % 2 == 0)
-        median = Average(sortedData + nMeasurements / 2 - 1, 2);
+    {
+        median = Average(sortedData.begin() + nMeasurements / 2 - 1, sortedData.begin() + nMeasurements / 2 + 1);
+    }
     else
+    {
         median = sortedData[nMeasurements / 2 + 1];
+    }
 
     // write what we now know to the string
     str.AppendFormat("%.2lf\t%.2lf\t%.2lf\t%d", average, median, std, nMeasurements);
@@ -94,9 +91,6 @@ void CFluxStatistics::CMeasurementDay::GetStatistics(novac::CString& str, novac:
     }
     str.Append("\n");
 
-
-    delete[] data;
-    delete[] sortedData;
     return;
 }
 

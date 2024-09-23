@@ -1,11 +1,12 @@
 #pragma once
 
-#include "../Common/Common.h"
+//#include "../Common/Common.h"
 #include <SpectralEvaluation/GPSData.h>
 #include <SpectralEvaluation/Flux/PlumeInScanProperty.h>
-#include "GeometryResult.h"
+#include <PPPLib/Meteorology/WindField.h>
+#include <PPPLib/Geometry/GeometryResult.h>
+#include <PPPLib/Geometry/PlumeHeight.h>
 #include <PPPLib/Configuration/InstrumentLocation.h>
-
 #include <PPPLib/MFC/CString.h>
 
 namespace Geometry

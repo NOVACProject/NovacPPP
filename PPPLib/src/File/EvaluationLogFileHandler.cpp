@@ -1,7 +1,6 @@
-#include "EvaluationLogFileHandler.h"
+#include <PPPLib/File/EvaluationLogFileHandler.h>
 #include <SpectralEvaluation/Spectra/SpectrometerModel.h>
 #include <SpectralEvaluation/StringUtils.h>
-#include "../Common/Version.h"
 #include <cstring>
 #include <algorithm>
 #include <PPPLib/File/Filesystem.h>
@@ -1098,8 +1097,7 @@ bool	CEvaluationLogFileHandler::IsSorted()
 }
 
 
-/** Writes the contents of the array 'm_scan' to a new evaluation-log file */
-RETURN_CODE CEvaluationLogFileHandler::WriteEvaluationLog(const novac::CString fileName)
+RETURN_CODE CEvaluationLogFileHandler::WriteEvaluationLog(const novac::CString fileName, int softwareMajorNumber, int softwareMinorNumber)
 {
     novac::CString string, specieName;
     novac::CString wsSrc, wdSrc, phSrc;
@@ -1176,7 +1174,7 @@ RETURN_CODE CEvaluationLogFileHandler::WriteEvaluationLog(const novac::CString f
 
         // Finally, the version of the file and the version of the program
         string.Append("\tversion=2.0\n");
-        string.AppendFormat("\tsoftwareversion=%d.%02d\n", CVersion::majorNumber, CVersion::minorNumber);
+        string.AppendFormat("\tsoftwareversion=%d.%02d\n", softwareMajorNumber, softwareMinorNumber);
         string.AppendFormat("\tcompiledate=%s\n", __DATE__);
 
         string.Append("</scaninformation>\n\n");
@@ -1250,7 +1248,6 @@ RETURN_CODE CEvaluationLogFileHandler::WriteEvaluationLog(const novac::CString f
 RETURN_CODE CEvaluationLogFileHandler::FormatEvaluationResult(const CSpectrumInfo* info, const novac::CEvaluationResult* result, INSTRUMENT_TYPE iType, double maxIntensity, int nSpecies, novac::CString& string)
 {
     int itSpecie;
-    Common common;
 
     if (result != nullptr && result->m_referenceResult.size() < nSpecies)
         return RETURN_CODE::FAIL; // something's wrong here!

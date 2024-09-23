@@ -7,8 +7,6 @@ cmake_minimum_required (VERSION 3.6)
 # Define the different groups of files
 add_subdirectory(Common)
 add_subdirectory(Evaluation)
-add_subdirectory(Flux)
-add_subdirectory(Geometry)
 add_subdirectory(Stratosphere)
 add_subdirectory(WindMeasurement)
 
@@ -36,10 +34,6 @@ add_executable(NovacPPP
     ${NPP_COMMON_SPECTRUM_FORMAT_SOURCES}
     ${NPP_EVALUATION_HEADERS}
     ${NPP_EVALUATION_SOURCES}
-    ${NPP_FLUX_HEADERS}
-    ${NPP_FLUX_SOURCES}
-    ${NPP_GEOMETRY_HEADERS}
-    ${NPP_GEOMETRY_SOURCES}
     ${NPP_STRATOSPHERE_HEADERS}
     ${NPP_STRATOSPHERE_SOURCES}
     ${NPP_WINDMEASUREMENT_HEADERS}

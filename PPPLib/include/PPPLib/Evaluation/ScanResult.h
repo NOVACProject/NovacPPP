@@ -6,7 +6,9 @@
 #include <SpectralEvaluation/Evaluation/FitParameter.h>
 #include <SpectralEvaluation/Evaluation/BasicScanEvaluationResult.h>
 
-#include "../Flux/FluxResult.h"
+#include <PPPLib/PPPLib.h>
+#include <PPPLib/Measurement.h>
+#include <PPPLib/Flux/FluxResult.h>
 #include <PPPLib/Molecule.h>
 #include <PPPLib/MFC/CString.h>
 #include <PPPLib/MFC/CArray.h>

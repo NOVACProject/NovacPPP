@@ -10,10 +10,6 @@ namespace Geometry
 class CGeometryResult
 {
 public:
-    CGeometryResult() = default;
-
-    ~CGeometryResult() = default;
-
     /** Assignment operator */
     CGeometryResult& operator=(const CGeometryResult& gr);
 

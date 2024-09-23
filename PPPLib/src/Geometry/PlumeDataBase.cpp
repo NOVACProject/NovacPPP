@@ -1,8 +1,8 @@
-#include "PlumeDataBase.h"
+#include <PPPLib/Geometry/PlumeDataBase.h>
 #include <math.h>
 #include <algorithm>
-
-#include "../Common/Common.h"
+#include <vector>
+#include <SpectralEvaluation/VectorUtils.h>
 
 // This is the settings for how to do the procesing
 #include <PPPLib/Configuration/UserConfiguration.h>
@@ -229,29 +229,23 @@ int CPlumeDataBase::WriteToFile(const novac::CString& /*fileName*/) const
     return 1;
 }
 
-// Calculates the average and error of the plume heights in the given list
 void CPlumeDataBase::CalculateAverageHeight(const std::list <CPlumeData>& plumeList, double& averageAltitude, double& altitudeError) const
 {
-    double* plumeAltitudes = new double[plumeList.size()];
-    double* plumeAltitudeErrors = new double[plumeList.size()];
-    int nAltitudes = 0;
+    std::vector<double> plumeAltitudes;
+    std::vector<double> plumeAltitudeErrors;
 
     // loop through the altitudes to extract the average and the errors
     std::list <CPlumeData>::const_iterator pos = plumeList.begin();
     while (pos != plumeList.end())
     {
         const CPlumeData& data = (CPlumeData&)*pos;
-        plumeAltitudes[nAltitudes] = data.altitude;
-        plumeAltitudeErrors[nAltitudes++] = data.altitudeError;
+        plumeAltitudes.push_back(data.altitude);
+        plumeAltitudeErrors.push_back(data.altitudeError);
 
         ++pos; // go to the next element in the list
     }
 
     // Calculate the error
-    averageAltitude = Average(plumeAltitudes, nAltitudes);
-    altitudeError = std::max(Std(plumeAltitudes, nAltitudes), Average(plumeAltitudeErrors, nAltitudes));
-
-    // Clean up...
-    delete[] plumeAltitudes;
-    delete[] plumeAltitudeErrors;
+    averageAltitude = Average(plumeAltitudes);
+    altitudeError = std::max(Stdev(plumeAltitudes), Average(plumeAltitudeErrors));
 }

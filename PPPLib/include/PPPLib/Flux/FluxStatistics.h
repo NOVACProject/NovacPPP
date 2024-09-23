@@ -5,7 +5,7 @@
 
 #include <PPPLib/MFC/CString.h>
 #include <PPPLib/MFC/CList.h>
-#include "FluxResult.h"
+#include <PPPLib/Flux/FluxResult.h>
 
 namespace Flux
 {
@@ -47,8 +47,6 @@ private:
     class CMeasurementDay
     {
     public:
-        CMeasurementDay();
-        ~CMeasurementDay();
         novac::CDateTime day; // the date of the measurement
         novac::CList <CFluxResult> fluxList;
         static void GetHeaderLine(novac::CString& str, novac::CList <novac::CString, novac::CString&>& instruments);
@@ -63,12 +61,6 @@ private:
     /** The list of instruments used. This is updated together with
         'm_measurements' when calling 'AttachFlux' */
     novac::CList <novac::CString, novac::CString&> m_instruments;
-
-    // ----------------------------------------------------------------------
-    // --------------------- PRIVATE METHODS --------------------------------
-    // ----------------------------------------------------------------------
-
-
 
 };
 }

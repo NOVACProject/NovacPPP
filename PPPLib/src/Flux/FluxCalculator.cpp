@@ -1,10 +1,11 @@
-#include "FluxCalculator.h"
-
-// Here we need to know about the global settings
+#include <PPPLib/Flux/FluxCalculator.h>
+#include <PPPLib/Logging.h>
 #include <PPPLib/Configuration/NovacPPPConfiguration.h>
+#include <SpectralEvaluation/File/File.h>
+#include <SpectralEvaluation/Flux/Flux.h>
 
 // ... support for handling the evaluation-log files...
-#include "../Common/EvaluationLogFileHandler.h"
+#include <PPPLib/File/EvaluationLogFileHandler.h>
 
 // This is the settings for how to do the procesing
 #include <PPPLib/Configuration/UserConfiguration.h>
@@ -13,30 +14,19 @@
 #include <PPPLib/MFC/CFileUtils.h>
 #include <Poco/Path.h>
 
-extern Configuration::CNovacPPPConfiguration g_setup;	   // <-- The settings
-extern Configuration::CUserConfiguration g_userSettings;// <-- The settings of the user
-
 using namespace Flux;
-using namespace novac;
 
-
-CFluxCalculator::CFluxCalculator(void)
+CFluxCalculator::CFluxCalculator(
+    const Configuration::CNovacPPPConfiguration& setup,
+    const Configuration::CUserConfiguration& userSettings)
+    : m_setup(setup), m_userSettings(userSettings)
 {
 }
 
-CFluxCalculator::~CFluxCalculator(void)
-{
-}
-
-/** Calculates the flux from the scan found in the given evaluation log file
-    @param evalLogFileName - the name of the .txt-file that contains
-        the result of the evaluation.
-    @return 0 on success, else non-zero value
-    */
 int CFluxCalculator::CalculateFlux(const novac::CString& evalLogFileName, const Meteorology::CWindDataBase& windDataBase, const Geometry::CPlumeHeight& plumeAltitude, CFluxResult& fluxResult)
 {
-    CDateTime skyStartTime;
-    novac::CString errorMessage, shortFileName, serial;
+    novac::CDateTime skyStartTime;
+    novac::CString errorMessage, serial;
     Geometry::CPlumeHeight relativePlumeHeight;
     Meteorology::CWindField windField;
     int channel;
@@ -50,8 +40,8 @@ int CFluxCalculator::CalculateFlux(const novac::CString& evalLogFileName, const 
     }
 
     // 2. Get some information about the scan from the file-name
-    shortFileName.Format(evalLogFileName);
-    Common::GetFileName(shortFileName);
+    std::string shortFileName = evalLogFileName.std_str();
+    shortFileName = novac::GetFileName(shortFileName);
     novac::CFileUtils::GetInfoFromFileName(shortFileName, skyStartTime, serial, channel, mode);
 
     // 3. Find the location of this instrument
@@ -64,7 +54,7 @@ int CFluxCalculator::CalculateFlux(const novac::CString& evalLogFileName, const 
     }
 
     // 4. Get the wind field at the time of the collection of this scan
-    if (!windDataBase.GetWindField(skyStartTime, CGPSData(instrLocation.m_latitude, instrLocation.m_longitude, plumeAltitude.m_plumeAltitude), Meteorology::INTERP_NEAREST_NEIGHBOUR, windField))
+    if (!windDataBase.GetWindField(skyStartTime, novac::CGPSData(instrLocation.m_latitude, instrLocation.m_longitude, plumeAltitude.m_plumeAltitude), Meteorology::INTERP_NEAREST_NEIGHBOUR, windField))
     {
         ShowMessage("Could not retrieve wind field at time of measurement. Could not calculate flux");
         return 4;
@@ -102,28 +92,28 @@ int CFluxCalculator::CalculateFlux(const novac::CString& evalLogFileName, const 
     result.GetSkyStartTime(skyStartTime);
 
     // 7. Calculate the offset of the scan
-    if (result.CalculateOffset(CMolecule(g_userSettings.m_molecule)))
+    if (result.CalculateOffset(CMolecule(m_userSettings.m_molecule)))
     {
         ShowMessage("Could not calculate offset for scan. No flux can be calculated.");
         return 7;
     }
 
     // 8. Check that the completeness is higher than our limit...
-    if (!result.CalculatePlumeCentre(CMolecule(g_userSettings.m_molecule)))
+    if (!result.CalculatePlumeCentre(CMolecule(m_userSettings.m_molecule)))
     {
         ShowMessage(" - Scan does not see the plume, no flux can be calculated");
         return 8;
     }
     double completeness = result.GetCalculatedPlumeCompleteness();
-    if (completeness < (g_userSettings.m_completenessLimitFlux + 0.01))
+    if (completeness < (m_userSettings.m_completenessLimitFlux + 0.01))
     {
-        errorMessage.Format(" - Scan has completeness = %.2lf which is less than limit of %.2lf. Rejected!", completeness, g_userSettings.m_completenessLimitFlux);
+        errorMessage.Format(" - Scan has completeness = %.2lf which is less than limit of %.2lf. Rejected!", completeness, m_userSettings.m_completenessLimitFlux);
         ShowMessage(errorMessage);
         return 8;
     }
 
     // 9. Calculate the flux
-    if (result.CalculateFlux(CMolecule(g_userSettings.m_molecule), windField, relativePlumeHeight, instrLocation.m_compass, instrLocation.m_coneangle, instrLocation.m_tilt))
+    if (result.CalculateFlux(CMolecule(m_userSettings.m_molecule), windField, relativePlumeHeight, instrLocation.m_compass, instrLocation.m_coneangle, instrLocation.m_tilt))
     {
         ShowMessage("Flux calculation failed. No flux generated");
         return 9;
@@ -191,19 +181,19 @@ int CFluxCalculator::CalculateFlux(const novac::CString& evalLogFileName, const 
     was made.
     @return 0 if successful otherwise non-zero
 */
-int CFluxCalculator::GetLocation(const novac::CString& serial, const CDateTime& startTime, Configuration::CInstrumentLocation& instrLocation)
+int CFluxCalculator::GetLocation(const novac::CString& serial, const novac::CDateTime& startTime, Configuration::CInstrumentLocation& instrLocation)
 {
-    CDateTime day, evalValidFrom, evalValidTo;
-    Configuration::CInstrumentConfiguration* instrumentConf = nullptr;
+    novac::CDateTime day, evalValidFrom, evalValidTo;
+    const Configuration::CInstrumentConfiguration* instrumentConf = nullptr;
     Configuration::CInstrumentLocation singleLocation;
     novac::CString errorMessage;
 
     // First of all find the instrument 
-    for (int k = 0; k < g_setup.NumberOfInstruments(); ++k)
+    for (int k = 0; k < m_setup.NumberOfInstruments(); ++k)
     {
-        if (Equals(g_setup.m_instrument[k].m_serial, serial))
+        if (Equals(m_setup.m_instrument[k].m_serial, serial))
         {
-            instrumentConf = &g_setup.m_instrument[k];
+            instrumentConf = &m_setup.m_instrument[k];
             break;
         }
     }
@@ -215,7 +205,7 @@ int CFluxCalculator::GetLocation(const novac::CString& serial, const CDateTime& 
     }
 
     // Next find the instrument location that is valid for this date
-    Configuration::CLocationConfiguration& locationconf = instrumentConf->m_location;
+    const Configuration::CLocationConfiguration& locationconf = instrumentConf->m_location;
     bool foundValidLocation = false;
     for (int k = 0; k < (int)locationconf.GetLocationNum(); ++k)
     {
@@ -239,16 +229,13 @@ int CFluxCalculator::GetLocation(const novac::CString& serial, const CDateTime& 
     return 0;
 }
 
-/** Appends the evaluated flux to the appropriate log file.
-    @param scan - the scan itself, also containing information about the evaluation and the flux.
-    @return SUCCESS if operation completed sucessfully. */
 RETURN_CODE CFluxCalculator::WriteFluxResult(const Flux::CFluxResult& fluxResult, const Evaluation::CScanResult* result)
 {
     novac::CString string, dateStr, dateStr2, serialNumber;
     novac::CString fluxLogFile, directory;
     novac::CString wdSrc, wsSrc, phSrc;
     novac::CString errorMessage;
-    CDateTime dateTime;
+    novac::CDateTime dateTime;
 
     // 0. Get the sources for the wind-field
     fluxResult.m_windField.GetWindSpeedSource(wsSrc);
@@ -332,18 +319,13 @@ RETURN_CODE CFluxCalculator::WriteFluxResult(const Flux::CFluxResult& fluxResult
 
     // 20a. Make the directory
     serialNumber.Format("%s", (const char*)result->GetSerial());
-    directory.Format("%s%s%c%s%c", (const char*)g_userSettings.m_outputDirectory, (const char*)dateStr2,
+    directory.Format("%s%s%c%s%c", (const char*)m_userSettings.m_outputDirectory, (const char*)dateStr2,
         Poco::Path::separator(), (const char*)serialNumber, Poco::Path::separator());
     if (Filesystem::CreateDirectoryStructure(directory))
     {
-        Common common;
-        directory.Format("%sOutput%c%s%c%s", (const char*)common.m_exePath, Poco::Path::separator(), (const char*)dateStr2, Poco::Path::separator(), (const char*)serialNumber);
-        if (Filesystem::CreateDirectoryStructure(directory))
-        {
-            errorMessage.Format("Could not create storage directory for flux-data. Please check settings and restart.");
-            ShowError(errorMessage);
-            return RETURN_CODE::FAIL;
-        }
+        errorMessage.Format("Could not create storage directory for flux-data. Please check settings and restart.");
+        ShowError(errorMessage);
+        return RETURN_CODE::FAIL;
     }
 
     // 20b. Get the file-name
@@ -380,3 +362,39 @@ RETURN_CODE CFluxCalculator::WriteFluxResult(const Flux::CFluxResult& fluxResult
 
     return RETURN_CODE::SUCCESS;
 }
+
+// region The actual flux calculations
+
+
+double CFluxCalculator::CalculateFlux(const double* scanAngle, const double* scanAngle2, const double* column, double offset, int nDataPoints, const Meteorology::CWindField& wind, const Geometry::CPlumeHeight& relativePlumeHeight, double compass, INSTRUMENT_TYPE type, double coneAngle, double tilt)
+{
+    double windSpeed = wind.GetWindSpeed();
+    double windDirection = wind.GetWindDirection();
+    double plumeHeight = relativePlumeHeight.m_plumeAltitude;
+
+    if (type == INSTRUMENT_TYPE::INSTR_HEIDELBERG)
+    {
+        return CalculateFluxHeidelbergScanner(scanAngle, scanAngle2, column, offset, nDataPoints, windSpeed, windDirection, plumeHeight, compass);
+    }
+    else if (type == INSTRUMENT_TYPE::INSTR_GOTHENBURG)
+    {
+        // In the NovacPPP, the gas factor isn't used. However the flux-calculation formula, shared with the NovacProgram, requires the gas factor.
+        //  This compensation factor is used to compensate for how the gas factor is weighted into the calculation...
+        const double gasFactorCompensation = 1e6;
+        if (fabs(coneAngle - 90.0) < 1.0)
+        {
+            return CalculateFluxFlatScanner(scanAngle, column, offset, nDataPoints, windSpeed, windDirection, plumeHeight, compass, gasFactorCompensation);
+        }
+        else
+        {
+            return CalculateFluxConicalScanner(scanAngle, column, offset, nDataPoints, windSpeed, windDirection, plumeHeight, compass, coneAngle, tilt, gasFactorCompensation);
+        }
+    }
+    else
+    {
+        return 0.0; // unsupported instrument-type
+    }
+}
+
+
+// endregion The actual flux calculations

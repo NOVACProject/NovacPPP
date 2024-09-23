@@ -1,7 +1,8 @@
 #pragma once
 
-#include "Common.h"
-#include "../Evaluation/ScanResult.h"
+#include <PPPLib/PPPLib.h>
+#include <PPPLib/Evaluation/ScanResult.h>
+#include <SpectralEvaluation/Definitions.h>
 #include <PPPLib/MFC/CString.h>
 #include <PPPLib/MFC/CArray.h>
 
@@ -22,7 +23,8 @@ public:
     RETURN_CODE ReadEvaluationLog();
 
     /** Writes the contents of the array 'm_scan' to a new evaluation-log file */
-    RETURN_CODE WriteEvaluationLog(const novac::CString fileName);
+    // TODO:refactor the software version here, this isn't that pretty.
+    RETURN_CODE WriteEvaluationLog(const novac::CString fileName, int softwareMajorNumber, int softwareMinorNumber);
 
     /** Returns true if the scan number 'scanNo' in the most recently read
             evaluation log file is a wind speed measurement. */

@@ -1,9 +1,10 @@
 #pragma once
 
-#include "../Common/Common.h"
 #include "WindSpeedMeasSettings.h"
+#include <PPPLib/PPPLib.h>
 #include <PPPLib/Configuration/NovacPPPConfiguration.h>
-
+#include <PPPLib/Geometry/PlumeHeight.h>
+#include <PPPLib/Meteorology/WindField.h>
 #include <PPPLib/MFC/CString.h>
 
 namespace WindSpeedMeasurement

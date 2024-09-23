@@ -1,9 +1,10 @@
-#include "../stdafx.h"
 #include "WindSpeedCalculator.h"
-#include "../Common/EvaluationLogFileHandler.h"
+#include <PPPLib/File/EvaluationLogFileHandler.h>
 #include <PPPLib/Meteorology/WindField.h>
 #include <PPPLib/File/Filesystem.h>
+#include <PPPLib/Logging.h>
 #include <cstring>
+#include <cmath>
 
 // This is the settings for how to do the procesing
 #include <PPPLib/Configuration/UserConfiguration.h>
@@ -12,6 +13,57 @@ extern Configuration::CUserConfiguration g_userSettings;// <-- The settings of t
 
 using namespace WindSpeedMeasurement;
 using namespace novac;
+
+
+/** This function calculates the average value of all the elements
+        in the supplied array.
+        @param array - the array of which to calculate the average value
+        @param nElements - the length of the array. */
+template <class T> double Average(T array[], long nElements)
+{
+    if (nElements <= 0)
+        return 0.0;
+
+    double sum = 0;
+    for (int k = 0; k < nElements; ++k)
+    {
+        sum += array[k];
+    }
+    return (sum / nElements);
+}
+
+/** This function calculates the variance of all the elements
+        in the supplied array.
+        @param array - the array of which to calculate the average value
+        @param nElements - the length of the array. */
+template <class T> double Variance(T array[], long nElements)
+{
+    if (nElements <= 0)
+        return 0.0;
+
+    // First get the mean-value
+    T mean = Average(array, nElements);
+
+    double sum = 0;
+    for (int k = 0; k < nElements; ++k)
+    {
+        sum += (array[k] - mean) * (array[k] - mean);
+    }
+    sum = sum / nElements;
+    return sum;
+}
+
+/** This function calculates the standard deviation of all the elements
+        in the supplied array.
+        @param array - the array of which to calculate the average value
+        @param nElements - the length of the array. */
+template <class T> double Std(T array[], long nElements)
+{
+    if (nElements <= 0)
+        return 0.0;
+
+    return std::sqrt(Variance(array, nElements));
+}
 
 
 CWindSpeedCalculator::CMeasurementSeries::CMeasurementSeries()

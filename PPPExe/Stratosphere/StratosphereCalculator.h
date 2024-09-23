@@ -1,9 +1,8 @@
 #pragma once
 
-#ifndef STRATCALC_H
-#define STRATCALC_H
-
 #include "../Evaluation/ExtendedScanResult.h"
+#include <SpectralEvaluation/GPSData.h>
+#include <SpectralEvaluation/DateTime.h>
 
 // include the list-template from the C++ standard library
 #include <list>
@@ -86,5 +85,3 @@ private:
 
 };
 }
-
-#endif

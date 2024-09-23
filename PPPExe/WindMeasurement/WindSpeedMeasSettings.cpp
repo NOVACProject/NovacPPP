@@ -1,6 +1,6 @@
 #include "../stdafx.h"
 #include "WindSpeedMeasSettings.h"
-#include "../Common/Common.h"
+#include <SpectralEvaluation/Definitions.h>
 
 using namespace WindSpeedMeasurement;
 

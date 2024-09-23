@@ -1,10 +1,8 @@
-#include "GeometryCalculator.h"
-
-#include "../Common/Common.h"
-
+#include <PPPLib/Geometry/GeometryCalculator.h>
 #include <PPPLib/VolcanoInfo.h>
+#include <PPPLib/File/EvaluationLogFileHandler.h>
 
-#include "../Common/EvaluationLogFileHandler.h"
+#include <SpectralEvaluation/GPSData.h>
 
 // This is the settings for how to do the procesing
 #include <PPPLib/Configuration/UserConfiguration.h>
@@ -107,7 +105,7 @@ void CGeometryCalculator::Rotate(double vec[3], double angle, int axis)
         @t2 - will on return be the parameter t2, as defined above
         @return true if the rays do intersect
         @return false if the rays don't intersect */
-bool	CGeometryCalculator::Intersection(const double o1[3], const double d1[3], const double o2[3], const double d2[3], double& t1, double& t2)
+bool CGeometryCalculator::Intersection(const double o1[3], const double d1[3], const double o2[3], const double d2[3], double& t1, double& t2)
 {
     double eps = 1e-19;
     double d1_cross_d2[3], point1[3], point2[3];
@@ -184,7 +182,6 @@ bool CGeometryCalculator::GetPlumeHeight_Exact(const CGPSData gps[2], const doub
     double distance, bearing;
     double posLower[3] = { 0, 0, 0 }; // <-- the position of the lower scanner in our changed coordinate system
     double posUpper[3];						// <-- the position of the higher scanner in our changed coordinate system
-    Common common;
 
     // 1. To make the calculations easier, we put a changed coordinate system
     //		on the lowest of the two scanners and calculate the position of the 
@@ -193,11 +190,11 @@ bool CGeometryCalculator::GetPlumeHeight_Exact(const CGPSData gps[2], const doub
     int upperScanner = 1 - lowerScanner;
 
     // 2. The distance between the two systems
-    distance = common.GPSDistance(gps[lowerScanner].m_latitude, gps[lowerScanner].m_longitude,
+    distance = GpsMath::Distance(gps[lowerScanner].m_latitude, gps[lowerScanner].m_longitude,
         gps[upperScanner].m_latitude, gps[upperScanner].m_longitude);
 
     // 3. The bearing from the lower to the higher system (degrees from north, counted clock-wise)
-    bearing = common.GPSBearing(gps[lowerScanner].m_latitude, gps[lowerScanner].m_longitude,
+    bearing = GpsMath::Bearing(gps[lowerScanner].m_latitude, gps[lowerScanner].m_longitude,
         gps[upperScanner].m_latitude, gps[upperScanner].m_longitude);
 
     // 4. The position of the upper scanner 
@@ -274,8 +271,6 @@ bool CGeometryCalculator::GetPlumeHeight_Fuzzy(const CGPSData source, const Conf
         @return true if a plume height could be calculated. */
 bool CGeometryCalculator::GetPlumeHeight_Fuzzy(const CGPSData source, const CGPSData gps[2], const double compass[2], const double plumeCentre[2], const double coneAngle[2], const double tilt[2], double& plumeHeight, double& windDirection)
 {
-    Common common;
-
     // 1. To make the calculations easier, we put a changed coordinate system
     //		on the lowest of the two scanners and calculate the position of the 
     //		other scanner in this coordinate system.
@@ -420,7 +415,6 @@ bool CGeometryCalculator::CalculateGeometry(const novac::CString& evalLog1, int 
     FileHandler::CEvaluationLogFileHandler reader[2];
     CGPSData source;
     CPlumeInScanProperty plume[2];
-    Common common;
     CDateTime startTime[2];
     int k; // iterator
 
@@ -455,7 +449,6 @@ bool CGeometryCalculator::CalculateGeometry(const novac::CString& evalLog1, int 
 bool CGeometryCalculator::CalculateGeometry(const CPlumeInScanProperty& plume1, const CDateTime& startTime1, const CPlumeInScanProperty& plume2, const CDateTime& startTime2, const Configuration::CInstrumentLocation locations[2], Geometry::CGeometryResult& result)
 {
     CGPSData source;
-    Common common;
     CDateTime startTime[2];
     double plumeCentre_perturbated[2];
     int k; // iterator
@@ -639,11 +632,10 @@ double CGeometryCalculator::GetWindDirection(const CGPSData source, double plume
 
     // 1c. the intersection-point
     double lat2, lon2;
-    Common common;
-    common.CalculateDestination(scannerPos.m_latitude, scannerPos.m_longitude, intersectionDistance, angle, lat2, lon2);
+    GpsMath::CalculateDestination(scannerPos.m_latitude, scannerPos.m_longitude, intersectionDistance, angle, lat2, lon2);
 
     // 2. the wind-direction
-    double windDirection = common.GPSBearing(lat2, lon2, source.m_latitude, source.m_longitude);
+    double windDirection = GpsMath::Bearing(lat2, lon2, source.m_latitude, source.m_longitude);
 
     return windDirection;
 }
@@ -842,8 +834,8 @@ double CGeometryCalculator::GetPlumeHeight(const CGPSData source, double windDir
 
     // 2. Calculate the location of the source in the coordinate system that has its
     //		origin in the scanner
-    double distanceToSource = Common::GPSDistance(source.m_latitude, source.m_longitude, scannerPos.m_latitude, scannerPos.m_longitude);
-    double directionToSource = Common::GPSBearing(scannerPos.m_latitude, scannerPos.m_longitude, source.m_latitude, source.m_longitude);
+    double distanceToSource = GpsMath::Distance(source.m_latitude, source.m_longitude, scannerPos.m_latitude, scannerPos.m_longitude);
+    double directionToSource = GpsMath::Bearing(scannerPos.m_latitude, scannerPos.m_longitude, source.m_latitude, source.m_longitude);
     double xs = distanceToSource * cos(DEGREETORAD * (compass - directionToSource));
     double ys = distanceToSource * sin(DEGREETORAD * (compass - directionToSource));
 
@@ -893,17 +885,15 @@ double CGeometryCalculator::GetPlumeHeight(const CGPSData source, double windDir
             @return NOT_A_NUMBER if something is wrong. 					*/
 double CGeometryCalculator::GetWindDirection(const CGPSData source, const CGPSData scannerPos, double plumeHeight, double alpha_center_of_mass, double phi_center_of_mass)
 {
-    Common common;
-
     //longitudinal distance between instrument and source:
-    double x_source = common.GPSDistance(scannerPos.m_latitude, source.m_longitude, scannerPos.m_latitude, scannerPos.m_longitude);
+    double x_source = GpsMath::Distance(scannerPos.m_latitude, source.m_longitude, scannerPos.m_latitude, scannerPos.m_longitude);
     if (source.m_longitude < scannerPos.m_longitude)
         x_source = -fabs(x_source);
     else
         x_source = fabs(x_source);
 
     //latitudinal distance between instrument and source:
-    double y_source = common.GPSDistance(source.m_latitude, scannerPos.m_longitude, scannerPos.m_latitude, scannerPos.m_longitude);
+    double y_source = GpsMath::Distance(source.m_latitude, scannerPos.m_longitude, scannerPos.m_latitude, scannerPos.m_longitude);
     if (source.m_latitude < scannerPos.m_latitude)
         y_source = -fabs(y_source);
     else
@@ -924,13 +914,11 @@ double CGeometryCalculator::GetWindDirection(const CGPSData source, const CGPSDa
         with an given assumption of the wind-direction 	*/
 double CGeometryCalculator::GetPlumeHeight_OneInstrument(const CGPSData source, const CGPSData gps, double WindDirection, double alpha_center_of_mass, double phi_center_of_mass)
 {
-    Common common;
-
     //horizontal distance between instrument and source:
-    double distance_to_source = common.GPSDistance(gps.m_latitude, gps.m_longitude, source.m_latitude, source.m_longitude);
+    double distance_to_source = GpsMath::Distance(gps.m_latitude, gps.m_longitude, source.m_latitude, source.m_longitude);
 
     //angle (in rad) pointing from instrument to source (with respect to north, clockwise):
-    double angle_to_source_rad = DEGREETORAD * common.GPSBearing(gps.m_latitude, gps.m_longitude, source.m_latitude, source.m_longitude);
+    double angle_to_source_rad = DEGREETORAD * GpsMath::Bearing(gps.m_latitude, gps.m_longitude, source.m_latitude, source.m_longitude);
 
     //the two angles for the measured center of mass of the plume converted to rad:
     double alpha_cm_rad = DEGREETORAD * alpha_center_of_mass;

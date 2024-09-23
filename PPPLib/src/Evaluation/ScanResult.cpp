@@ -1,9 +1,10 @@
-#include "ScanResult.h"
+#include <PPPLib/Evaluation/ScanResult.h>
 #include <PPPLib/VolcanoInfo.h>
-
-#include "../Geometry/GeometryCalculator.h"
+#include <PPPLib/Geometry/GeometryCalculator.h>
+#include <PPPLib/Logging.h>
+#include <PPPLib/Flux/FluxCalculator.h>
 #include <SpectralEvaluation/Flux/PlumeInScanProperty.h>
-
+#include <SpectralEvaluation/Geometry.h>
 #include <algorithm>
 
 using namespace Evaluation;
@@ -277,7 +278,7 @@ int CScanResult::CalculateFlux(const CMolecule& specie, const Meteorology::CWind
     m_flux.m_instrument.Format(GetSerial());
 
     // Calculate the flux
-    m_flux.m_flux = Common::CalculateFlux(scanAngle.data(), scanAngle2.data(), column.data(), specie.Convert_MolecCm2_to_kgM2(m_plumeProperties.offset), nDataPoints, wind, relativePlumeHeight, compass, m_instrumentType, coneAngle, tilt);
+    m_flux.m_flux = Flux::CFluxCalculator::CalculateFlux(scanAngle.data(), scanAngle2.data(), column.data(), specie.Convert_MolecCm2_to_kgM2(m_plumeProperties.offset), nDataPoints, wind, relativePlumeHeight, compass, m_instrumentType, coneAngle, tilt);
     m_flux.m_windField = wind;
     m_flux.m_plumeHeight = relativePlumeHeight;
     m_flux.m_compass = compass;
@@ -300,10 +301,10 @@ int CScanResult::CalculateFlux(const CMolecule& specie, const Meteorology::CWind
     // 1. the wind field
     modifiedWind = wind;
     modifiedWind.SetWindDirection(wind.GetWindDirection() - wind.GetWindDirectionError(), wind.GetWindDirectionSource());
-    double flux1 = Common::CalculateFlux(scanAngle.data(), scanAngle2.data(), column.data(), specie.Convert_MolecCm2_to_kgM2(m_plumeProperties.offset), nDataPoints, modifiedWind, relativePlumeHeight, compass, m_instrumentType, coneAngle, tilt);
+    double flux1 = Flux::CFluxCalculator::CalculateFlux(scanAngle.data(), scanAngle2.data(), column.data(), specie.Convert_MolecCm2_to_kgM2(m_plumeProperties.offset), nDataPoints, modifiedWind, relativePlumeHeight, compass, m_instrumentType, coneAngle, tilt);
 
     modifiedWind.SetWindDirection(wind.GetWindDirection() + wind.GetWindDirectionError(), wind.GetWindDirectionSource());
-    double flux2 = Common::CalculateFlux(scanAngle.data(), scanAngle2.data(), column.data(), specie.Convert_MolecCm2_to_kgM2(m_plumeProperties.offset), nDataPoints, modifiedWind, relativePlumeHeight, compass, m_instrumentType, coneAngle, tilt);
+    double flux2 = Flux::CFluxCalculator::CalculateFlux(scanAngle.data(), scanAngle2.data(), column.data(), specie.Convert_MolecCm2_to_kgM2(m_plumeProperties.offset), nDataPoints, modifiedWind, relativePlumeHeight, compass, m_instrumentType, coneAngle, tilt);
 
     double fluxErrorDueToWindDirection = std::max(fabs(flux2 - m_flux.m_flux), fabs(flux1 - m_flux.m_flux));
 
@@ -723,8 +724,7 @@ bool CScanResult::IsStratosphereMeasurement() const
     // If the measurement started at a time when the Solar Zenith Angle 
     // was larger than 75 degrees then it is not a wind-speed measurement
     this->GetStartTime(0, startTime);
-    if (RETURN_CODE::SUCCESS != Common::GetSunPosition(startTime, GetLatitude(), GetLongitude(), SZA, SAZ))
-        return false; // error
+    novac::GetSunPosition(startTime, GetLatitude(), GetLongitude(), SZA, SAZ);
 
     // It is here assumed that the measurement is a stratospheric measurment
     // if there are more than 3 repetitions in the zenith positon
@@ -800,8 +800,8 @@ bool CScanResult::IsWindMeasurement_Gothenburg() const
     // If the measurement started at a time when the Solar Zenith Angle 
     // was larger than 85 degrees then it is not a wind-speed measurement
     this->GetStartTime(0, startTime);
-    if (RETURN_CODE::SUCCESS != Common::GetSunPosition(startTime, GetLatitude(), GetLongitude(), SZA, SAZ))
-        return false; // error
+    novac::GetSunPosition(startTime, GetLatitude(), GetLongitude(), SZA, SAZ);
+
     if (fabs(SZA) >= 85.0)
         return false;
 
@@ -854,8 +854,8 @@ bool CScanResult::IsWindMeasurement_Heidelberg() const
     // If the measurement started at a time when the Solar Zenith Angle 
     // was larger than 75 degrees then it is not a wind-speed measurement
     this->GetStartTime(0, startTime);
-    if (RETURN_CODE::SUCCESS != Common::GetSunPosition(startTime, GetLatitude(), GetLongitude(), SZA, SAZ))
-        return false; // error
+    novac::GetSunPosition(startTime, GetLatitude(), GetLongitude(), SZA, SAZ);
+
     if (fabs(SZA) >= 75.0)
         return false;
 

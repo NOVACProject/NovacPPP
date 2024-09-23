@@ -1,7 +1,8 @@
-#include "GeometryResult.h"
+#include <PPPLib/Geometry/GeometryResult.h>
 
 namespace Geometry
 {
+
 CGeometryResult& CGeometryResult::operator=(const CGeometryResult& gr)
 {
     this->m_averageStartTime = gr.m_averageStartTime;

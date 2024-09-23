@@ -1,7 +1,7 @@
 #pragma once
 
-#include "ScanResult.h"
-#include "../Common/Common.h"
+#include <PPPLib/Evaluation/ScanResult.h>
+// #include "../Common/Common.h"
 #include <PPPLib/Configuration/UserConfiguration.h>
 #include <SpectralEvaluation/File/ScanFileHandler.h>
 #include <SpectralEvaluation/Evaluation/ScanEvaluationBase.h>
