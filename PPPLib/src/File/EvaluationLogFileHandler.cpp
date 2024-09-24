@@ -5,6 +5,7 @@
 #include <algorithm>
 #include <PPPLib/File/Filesystem.h>
 #include <PPPLib/MFC/CSingleLock.h>
+#include <cmath>
 
 // This is the settings for how to do the procesing
 #include <PPPLib/Configuration/UserConfiguration.h>

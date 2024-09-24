@@ -17,6 +17,8 @@
 #include <PPPLib/File/EvaluationLogFileHandler.h>
 
 #include <Poco/Path.h>
+#include <cmath>
+
 
 extern CContinuationOfProcessing                g_continuation;  // <-- Information on what has already been done when continuing an old processing round
 

@@ -6,6 +6,7 @@
 #include <SpectralEvaluation/Flux/PlumeInScanProperty.h>
 #include <SpectralEvaluation/Geometry.h>
 #include <algorithm>
+#include <cmath>
 
 using namespace Evaluation;
 using namespace novac;

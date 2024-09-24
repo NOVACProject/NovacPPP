@@ -1,6 +1,5 @@
 #pragma once
 
-//#include "../Common/Common.h"
 #include <SpectralEvaluation/GPSData.h>
 #include <SpectralEvaluation/Flux/PlumeInScanProperty.h>
 #include <PPPLib/Meteorology/WindField.h>
@@ -18,11 +17,6 @@ namespace Geometry
 class CGeometryCalculator
 {
 public:
-    /** Default constructor */
-    CGeometryCalculator(void);
-
-    /** Default denstructor */
-    ~CGeometryCalculator(void);
 
     /** The class 'CGeometryCalculationInfo' is an auxiliary data storage
             to be able to handle the calculation of plume height and plume direction */

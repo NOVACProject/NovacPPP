@@ -8,6 +8,12 @@
 #include <PPPLib/SpectrometerId.h>
 #include <PPPLib/Logging.h>
 
+namespace Configuration
+{
+    class CNovacPPPConfiguration;
+    class CUserConfiguration;
+}
+
 namespace novac
 {
 class CPostCalibrationStatistics;
@@ -19,8 +25,12 @@ class CPostCalibration
 {
 public:
 
-    CPostCalibration(const novac::StandardCrossSectionSetup& standardCrossSections, ILogger& logger)
-        : m_standardCrossSections(standardCrossSections), m_log(logger)
+    CPostCalibration(
+        const novac::StandardCrossSectionSetup& standardCrossSections,
+        const Configuration::CNovacPPPConfiguration& setup,
+        const Configuration::CUserConfiguration& userSettings,
+        ILogger& logger)
+        : m_standardCrossSections(standardCrossSections), m_setup(setup), m_userSettings(userSettings), m_log(logger)
     {
     }
 
@@ -34,6 +44,10 @@ public:
 private:
 
     const novac::StandardCrossSectionSetup m_standardCrossSections;
+
+    const Configuration::CNovacPPPConfiguration& m_setup;
+
+    const Configuration::CUserConfiguration& m_userSettings;
 
     ILogger& m_log;
 

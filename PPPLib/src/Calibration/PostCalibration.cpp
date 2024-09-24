@@ -15,9 +15,6 @@
 #include <algorithm>
 #include <PPPLib/MFC/CFileUtils.h>
 
-extern Configuration::CNovacPPPConfiguration g_setup; // <-- The setup of the instruments
-extern Configuration::CUserConfiguration g_userSettings; // <-- The settings of the user for what to process
-
 using namespace novac;
 
 std::string FormatDateAndTimeOfSpectrum(const novac::CSpectrumInfo& spectrumInformation)
@@ -35,7 +32,7 @@ std::string FormatDateAndTimeOfSpectrum(const novac::CSpectrumInfo& spectrumInfo
     return std::string(dateAndTime);
 }
 
-std::string CreateOutputDirectoryForCalibration(const CSpectrumInfo& calibratedSpectrum)
+std::string CreateOutputDirectoryForCalibration(const CSpectrumInfo& calibratedSpectrum, const Configuration::CUserConfiguration& userSettings)
 {
     CString dateStr;
     dateStr.Format(
@@ -44,7 +41,7 @@ std::string CreateOutputDirectoryForCalibration(const CSpectrumInfo& calibratedS
         calibratedSpectrum.m_startTime.month,
         calibratedSpectrum.m_startTime.day);
 
-    std::string directoryName{ (const char*)g_userSettings.m_outputDirectory };
+    std::string directoryName{ (const char*)userSettings.m_outputDirectory };
 
     if (directoryName.back() != '/' && directoryName.back() != '\\')
     {
@@ -72,14 +69,18 @@ std::string GetCalibrationFileName(const novac::CSpectrumInfo& spectrumInformati
     return "Calibration_" + spectrumInformation.m_device + "_" + FormatDateAndTimeOfSpectrum(spectrumInformation) + ".std";
 }
 
-void RunCalibration(NovacProgramWavelengthCalibrationController& calibrationController, const std::string& scanFile, const Configuration::CInstrumentCalibrationConfiguration& calibrationSettings)
+void RunCalibration(
+    NovacProgramWavelengthCalibrationController& calibrationController,
+    const std::string& scanFile,
+    const Configuration::CUserConfiguration& userSettings,
+    const Configuration::CInstrumentCalibrationConfiguration& calibrationSettings)
 {
     calibrationController.m_inputSpectrumFile = scanFile;
-    calibrationController.m_solarSpectrumFile = g_userSettings.m_highResolutionSolarSpectrumFile;
+    calibrationController.m_solarSpectrumFile = userSettings.m_highResolutionSolarSpectrumFile;
     calibrationController.m_initialCalibrationFile = calibrationSettings.m_initialCalibrationFile;
     calibrationController.m_initialLineShapeFile = calibrationSettings.m_instrumentLineshapeFile;
-    calibrationController.m_instrumentLineShapeFitOption = (WavelengthCalibrationController::InstrumentLineShapeFitOption)g_userSettings.m_calibrationInstrumentLineShapeFitOption;
-    calibrationController.m_instrumentLineShapeFitRegion = g_userSettings.m_calibrationInstrumentLineShapeFitRegion;
+    calibrationController.m_instrumentLineShapeFitOption = (WavelengthCalibrationController::InstrumentLineShapeFitOption)userSettings.m_calibrationInstrumentLineShapeFitOption;
+    calibrationController.m_instrumentLineShapeFitRegion = userSettings.m_calibrationInstrumentLineShapeFitRegion;
 
     // Does the actual calibration. Throws a std::exception if the calibration fails.
     calibrationController.RunCalibration();
@@ -158,30 +159,30 @@ std::vector<novac::CReferenceFile> CreateStandardReferences(
 
 // ----------- PostCalibration class -----------
 
-bool ScanIsMeasuredInConfiguredTimeOfDayForCalibration(const novac::CDateTime& scanStartTime)
+bool ScanIsMeasuredInConfiguredTimeOfDayForCalibration(const novac::CDateTime& scanStartTime, const Configuration::CUserConfiguration& userSettings)
 {
     // Check if the scan lies within the configured interval. Slightly complex logic here since the interval may wrap around midnight UTC.
     // Notice that this logic is shared with the real-time calibration in the NovacProgram.
-    const bool calibrationIntervalWrapsMidnight = g_userSettings.m_calibrationIntervalTimeOfDayLow > g_userSettings.m_calibrationIntervalTimeOfDayHigh;
+    const bool calibrationIntervalWrapsMidnight = userSettings.m_calibrationIntervalTimeOfDayLow > userSettings.m_calibrationIntervalTimeOfDayHigh;
     bool scanTimeLiesWithinCalibrationTimeInterval = false;
     if (calibrationIntervalWrapsMidnight)
     {
         scanTimeLiesWithinCalibrationTimeInterval =
-            scanStartTime.SecondsSinceMidnight() >= g_userSettings.m_calibrationIntervalTimeOfDayLow ||
-            scanStartTime.SecondsSinceMidnight() <= g_userSettings.m_calibrationIntervalTimeOfDayHigh;
+            scanStartTime.SecondsSinceMidnight() >= userSettings.m_calibrationIntervalTimeOfDayLow ||
+            scanStartTime.SecondsSinceMidnight() <= userSettings.m_calibrationIntervalTimeOfDayHigh;
     }
     else
     {
         scanTimeLiesWithinCalibrationTimeInterval =
-            scanStartTime.SecondsSinceMidnight() >= g_userSettings.m_calibrationIntervalTimeOfDayLow &&
-            scanStartTime.SecondsSinceMidnight() <= g_userSettings.m_calibrationIntervalTimeOfDayHigh;
+            scanStartTime.SecondsSinceMidnight() >= userSettings.m_calibrationIntervalTimeOfDayLow &&
+            scanStartTime.SecondsSinceMidnight() <= userSettings.m_calibrationIntervalTimeOfDayHigh;
     }
 
     if (!scanTimeLiesWithinCalibrationTimeInterval)
     {
         std::stringstream message;
         message << "Measurement time (" << scanStartTime.SecondsSinceMidnight() << ") is outside of configured interval [";
-        message << g_userSettings.m_calibrationIntervalTimeOfDayLow << " to " << g_userSettings.m_calibrationIntervalTimeOfDayHigh << "]";
+        message << userSettings.m_calibrationIntervalTimeOfDayLow << " to " << userSettings.m_calibrationIntervalTimeOfDayHigh << "]";
         ShowMessage(message.str());
         return false;
     }
@@ -295,13 +296,13 @@ int CPostCalibration::RunInstrumentCalibration(const std::vector<std::string>& s
                     ShowMessage(message.str());
                 }
 
-                if (!ScanIsMeasuredInConfiguredTimeOfDayForCalibration(basicFileInfo.startTime))
+                if (!ScanIsMeasuredInConfiguredTimeOfDayForCalibration(basicFileInfo.startTime, m_userSettings))
                 {
                     continue;
                 }
 
                 const double secondsSinceLastCalibration = timeOfLastCalibration.year > 0 ? novac::CDateTime::Difference(basicFileInfo.startTime, timeOfLastCalibration) : 1e99;
-                if (secondsSinceLastCalibration < 3600.0 * g_userSettings.m_calibrationIntervalHours)
+                if (secondsSinceLastCalibration < 3600.0 * m_userSettings.m_calibrationIntervalHours)
                 {
                     std::stringstream message;
                     message << "Interval since last performed calibration ( " << (secondsSinceLastCalibration / 3600.0) << " hours) is too small. Skipping scan.";
@@ -354,7 +355,7 @@ bool CPostCalibration::RunInstrumentCalibration(const std::string& scanFile, CPo
             return false;
         }
 
-        const auto* instrument = g_setup.GetInstrument(skySpec.m_info.m_device);
+        const auto* instrument = m_setup.GetInstrument(skySpec.m_info.m_device);
         if (instrument == nullptr)
         {
             std::stringstream message;
@@ -367,10 +368,10 @@ bool CPostCalibration::RunInstrumentCalibration(const std::string& scanFile, CPo
         //  user performs the instrument calibrations using the CCalibratePixelToWavelengthDialog.
         // This makes sure we get the same behavior in the dialog and here.
         NovacProgramWavelengthCalibrationController calibrationController;
-        RunCalibration(calibrationController, scanFile, instrument->m_instrumentCalibration);
+        RunCalibration(calibrationController, scanFile, m_userSettings, instrument->m_instrumentCalibration);
 
         // Save new instrument calibration.
-        std::string directoryName = CreateOutputDirectoryForCalibration(skySpec.m_info);
+        std::string directoryName = CreateOutputDirectoryForCalibration(skySpec.m_info, m_userSettings);
         const std::string calibrationFileName = directoryName + GetCalibrationFileName(calibrationController.m_calibrationDebug.spectrumInfo);
         calibrationController.SaveResultAsStd(calibrationFileName);
 
@@ -409,7 +410,7 @@ void CPostCalibration::CreateEvaluationSettings(const SpectrometerId& spectromet
     *  2. Create new fit-windows with the new references and a splitting up the validity time
     *  3. Save the new .exml file.
     */
-    const Configuration::CInstrumentConfiguration* instrument = g_setup.GetInstrument(spectrometer.serial);
+    const Configuration::CInstrumentConfiguration* instrument = m_setup.GetInstrument(spectrometer.serial);
     if (instrument == nullptr)
     {
         std::stringstream message;
@@ -490,7 +491,7 @@ void CPostCalibration::CreateEvaluationSettings(const SpectrometerId& spectromet
     }
 
     // Write the result to file (together with the other previous settings).
-    std::string directoryName{ (const char*)g_userSettings.m_outputDirectory };
+    std::string directoryName{ (const char*)m_userSettings.m_outputDirectory };
     if (directoryName.back() != '/' && directoryName.back() != '\\')
     {
         directoryName += '/';

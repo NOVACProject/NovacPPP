@@ -5,6 +5,7 @@
 #include <SpectralEvaluation/Definitions.h>
 #include <PPPLib/MFC/CString.h>
 #include <PPPLib/MFC/CArray.h>
+#include <SpectralEvaluation/Definitions.h>
 
 namespace FileHandler
 {

@@ -7,6 +7,7 @@
 #undef max
 
 #include <algorithm>
+#include <cmath>
 #include <sstream>
 #include <functional>
 
@@ -236,7 +237,7 @@ void CPostProcessing::DoPostProcessing_InstrumentCalibration()
 
     ShowMessage("--- Running Calibrations --- ");
 
-    novac::CPostCalibration calibrationController{ standardCrossSections, m_log };
+    novac::CPostCalibration calibrationController{ standardCrossSections, m_setup, m_userSettings, m_log };
     novac::CPostCalibrationStatistics calibrationStatistics;
 
     // Unlike other parts of the NovacPPP, this function is intended to be single threaded. The reason for this is that the
@@ -254,7 +255,7 @@ void CPostProcessing::DoPostProcessing_Strat()
 {
     novac::CList <Evaluation::CExtendedScanResult, Evaluation::CExtendedScanResult&> evalLogFiles;
     novac::CString messageToUser, statFileName;
-    Stratosphere::CStratosphereCalculator strat;
+    Stratosphere::CStratosphereCalculator strat(m_setup, m_userSettings);
 
     // --------------- PREPARING FOR THE PROCESSING -----------
 
@@ -1509,7 +1510,7 @@ void CPostProcessing::CalculateDualBeamWindSpeeds(novac::CList <Evaluation::CExt
     int channel, channel2, nWindMeasFound = 0;
     MEASUREMENT_MODE meas_mode, meas_mode2;
     Configuration::CInstrumentLocation location;
-    WindSpeedMeasurement::CWindSpeedCalculator calculator;
+    WindSpeedMeasurement::CWindSpeedCalculator calculator(m_userSettings);
     Geometry::CPlumeHeight plumeHeight;
     Meteorology::CWindField windField, oldWindField;
 

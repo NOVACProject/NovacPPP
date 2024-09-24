@@ -7,6 +7,11 @@
 #include <PPPLib/Meteorology/WindField.h>
 #include <PPPLib/MFC/CString.h>
 
+namespace Configuration
+{
+class CUserConfiguration;
+}
+
 namespace WindSpeedMeasurement
 {
 
@@ -36,7 +41,7 @@ public:
         long		length;
     };
 
-    CWindSpeedCalculator(void);
+    CWindSpeedCalculator(const Configuration::CUserConfiguration& userSettings);
     ~CWindSpeedCalculator(void);
 
     // ----------------------------------------------------------------------
@@ -86,6 +91,9 @@ private:
     // ----------------------------------------------------------------------
     // ---------------------- PRIVATE DATA ----------------------------------
     // ----------------------------------------------------------------------
+
+    const Configuration::CUserConfiguration& m_userSettings;
+
     /** The calculated values. These will be filled in after a call to 'CalculateDelay'
             Before that they are null and cannot be used. The length of these arrays are 'm_length' */
     double* shift, * corr, * used, * delays;

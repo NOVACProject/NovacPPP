@@ -9,8 +9,6 @@
 // This is the settings for how to do the procesing
 #include <PPPLib/Configuration/UserConfiguration.h>
 
-extern Configuration::CUserConfiguration g_userSettings;// <-- The settings of the user
-
 using namespace WindSpeedMeasurement;
 using namespace novac;
 
@@ -133,7 +131,8 @@ CWindSpeedCalculator::CMeasurementSeries::~CMeasurementSeries()
 }
 
 
-CWindSpeedCalculator::CWindSpeedCalculator(void)
+CWindSpeedCalculator::CWindSpeedCalculator(const Configuration::CUserConfiguration& userSettings)
+    : m_userSettings(userSettings)
 {
     shift = NULL;
     corr = NULL;
@@ -186,7 +185,7 @@ RETURN_CODE CWindSpeedCalculator::CalculateDelay(
 
     // 1d. Calculate the length of the comparison-interval
     //		in data-points instead of in seconds
-    if (g_userSettings.m_fUseMaxTestLength_DualBeam)
+    if (m_userSettings.m_fUseMaxTestLength_DualBeam)
     {
         comparisonLength = modifiedDownWind.length - 2 * maximumShift - 10;
     }
@@ -524,8 +523,8 @@ int CWindSpeedCalculator::CalculateWindSpeed(const novac::CString& evalLog1, con
     // Also set the time for which the measurement is valid.
     CDateTime validFrom = m_startTime;
     CDateTime validTo = m_stopTime;
-    validFrom.Decrement(g_userSettings.m_dualBeam_ValidTime / 2);
-    validTo.Increment(g_userSettings.m_dualBeam_ValidTime / 2);
+    validFrom.Decrement(m_userSettings.m_dualBeam_ValidTime / 2);
+    validTo.Increment(m_userSettings.m_dualBeam_ValidTime / 2);
     windField.SetValidTimeFrame(validFrom, validTo);
 
     return 0;
@@ -540,7 +539,7 @@ RETURN_CODE CWindSpeedCalculator::CalculateCorrelation(const novac::CString& eva
     Meteorology::CWindField wf;
     novac::CString errorMessage;
     WindSpeedMeasurement::CWindSpeedCalculator::CMeasurementSeries* series[2];
-    int scanIndex[2], k;
+    size_t scanIndex[2];
     double delay;
 
     // 1. Read the evaluation-logs
@@ -552,7 +551,7 @@ RETURN_CODE CWindSpeedCalculator::CalculateCorrelation(const novac::CString& eva
         return RETURN_CODE::FAIL;
 
     // 2. Find the wind-speed measurement series in the log-files
-    for (k = 0; k < 2; ++k)
+    for (int k = 0; k < 2; ++k)
     {
         for (scanIndex[k] = 0; scanIndex[k] < reader[k].m_scan.size(); ++scanIndex[k])
             if (reader[k].IsWindSpeedMeasurement(scanIndex[k]))
@@ -576,7 +575,7 @@ RETURN_CODE CWindSpeedCalculator::CalculateCorrelation(const novac::CString& eva
     scan.GetStopTime(scan.GetEvaluatedNum() - 1, m_stopTime);
 
     // 3. Create the wind-speed measurement series
-    for (k = 0; k < 2; ++k)
+    for (int k = 0; k < 2; ++k)
     {
         // 3a. The scan we're looking at
         Evaluation::CScanResult& secondScan = reader[k].m_scan[scanIndex[k]];
@@ -671,7 +670,7 @@ RETURN_CODE CWindSpeedCalculator::CalculateCorrelation_Heidelberg(const novac::C
     WindSpeedMeasurement::CWindSpeedCalculator::CMeasurementSeries* series[2];
     Meteorology::CWindField wf;
     CDateTime time;
-    int scanIndex;
+    size_t scanIndex;
     double delay;
 
     // 1. Read the evaluation-log

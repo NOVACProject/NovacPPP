@@ -13,6 +13,7 @@
 #include <PPPLib/File/Filesystem.h>
 #include <PPPLib/MFC/CFileUtils.h>
 #include <Poco/Path.h>
+#include <cmath>
 
 using namespace Flux;
 
