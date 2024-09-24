@@ -71,14 +71,14 @@ CWindSpeedCalculator::CMeasurementSeries::CMeasurementSeries()
     length = 0;
 }
 
-CWindSpeedCalculator::CMeasurementSeries::CMeasurementSeries(int len)
+CWindSpeedCalculator::CMeasurementSeries::CMeasurementSeries(size_t len)
 {
     column = new double[len];
     time = new double[len];
     length = len;
 }
 
-RETURN_CODE CWindSpeedCalculator::CMeasurementSeries::SetLength(int len)
+RETURN_CODE CWindSpeedCalculator::CMeasurementSeries::SetLength(size_t len)
 {
     if (column != NULL)
     {
@@ -181,13 +181,13 @@ RETURN_CODE CWindSpeedCalculator::CalculateDelay(
     }
 
     // 1c. Calculate the how many pixels that we should shift maximum
-    int		maximumShift = (int)round(settings.shiftMax / sampleInterval);
+    int maximumShift = (int)round(settings.shiftMax / sampleInterval);
 
     // 1d. Calculate the length of the comparison-interval
     //		in data-points instead of in seconds
     if (m_userSettings.m_fUseMaxTestLength_DualBeam)
     {
-        comparisonLength = modifiedDownWind.length - 2 * maximumShift - 10;
+        comparisonLength = static_cast<int>(modifiedDownWind.length) - 2 * maximumShift - 10;
     }
     else
     {
@@ -200,17 +200,17 @@ RETURN_CODE CWindSpeedCalculator::CalculateDelay(
 
     // 2. Allocate some assistance arrays 
     //		(Note that it is the down wind data series that is shifted)
-    m_length = modifiedDownWind.length;
+    m_length = static_cast<int>(modifiedDownWind.length);
     InitializeArrays();
 
     // The number of datapoints skipped because we cannot see the plume.
     int skipped = 0;
 
-    m_arrayLength = m_length - (int)maximumShift - comparisonLength - 1;
+    m_arrayLength = m_length - maximumShift - comparisonLength - 1;
 
     // 3. Iterate over the set of sub-arrays in the down-wind data series
     //		Offset is the starting-point in this sub-array whos length is 'comparisonLength'
-    for (int offset = 0; offset < m_length - (int)maximumShift - comparisonLength; ++offset)
+    for (int offset = 0; offset < m_length - maximumShift - comparisonLength; ++offset)
     {
         double highestCorr;
         int bestShift;
@@ -218,8 +218,8 @@ RETURN_CODE CWindSpeedCalculator::CalculateDelay(
         // 3a. Pick out the sub-vectors
         double* series1 = modifiedUpWind.column + offset;
         double* series2 = modifiedDownWind.column + offset;
-        unsigned int series1Length = modifiedUpWind.length - offset;
-        unsigned int series2Length = comparisonLength;
+        size_t series1Length = modifiedUpWind.length - offset;
+        size_t series2Length = static_cast<size_t>(comparisonLength);
 
         // 3b. The midpoint in the subvector
         int midPoint = (int)round(offset + comparisonLength / 2);
@@ -260,7 +260,7 @@ RETURN_CODE CWindSpeedCalculator::LowPassFilter(const CMeasurementSeries* series
         return RETURN_CODE::FAIL;
 
     // 2. Calculate the old and the new data series lengths
-    int length = series->length;							// <-- the length of the old data series
+    int length = static_cast<int>(series->length);							// <-- the length of the old data series
     int newLength = length - nIterations - 1;		// <-- the length of the new data series
 
     if (newLength <= 0)
@@ -334,8 +334,8 @@ RETURN_CODE CWindSpeedCalculator::LowPassFilter(const CMeasurementSeries* series
 /** Shifts the vector 'shortVector' against the vector 'longVector' and returns the
             shift for which the correlation between the two is highest. */
 RETURN_CODE CWindSpeedCalculator::FindBestCorrelation(
-    const double* longVector, unsigned long longLength,
-    const double* shortVector, unsigned long shortLength,
+    const double* longVector, size_t longLength,
+    const double* shortVector, size_t shortLength,
     unsigned int maximumShift,
     double& highestCorr, int& bestShift)
 {
@@ -374,7 +374,7 @@ RETURN_CODE CWindSpeedCalculator::FindBestCorrelation(
 
 /** Calculates the correlation between the two vectors 'x' and 'y', both of length 'length'
         @return - the correlation between the two vectors. */
-double CWindSpeedCalculator::correlation(const double* x, const double* y, long length)
+double CWindSpeedCalculator::correlation(const double* x, const double* y, size_t length)
 {
     double s_xy = 0; // <-- the dot-product X*Y
     double s_x2 = 0; // <-- the dot-product X*X
@@ -384,10 +384,10 @@ double CWindSpeedCalculator::correlation(const double* x, const double* y, long 
     double c = 0; // <-- the final correlation
     double eps = 1e-5;
 
-    if (length <= 0)
+    if (length == 0)
         return 0;
 
-    for (int k = 0; k < length; ++k)
+    for (size_t k = 0; k < length; ++k)
     {
         s_xy += x[k] * y[k];
         s_x2 += x[k] * x[k];
@@ -554,7 +554,7 @@ RETURN_CODE CWindSpeedCalculator::CalculateCorrelation(const novac::CString& eva
     for (int k = 0; k < 2; ++k)
     {
         for (scanIndex[k] = 0; scanIndex[k] < reader[k].m_scan.size(); ++scanIndex[k])
-            if (reader[k].IsWindSpeedMeasurement(scanIndex[k]))
+            if (reader[k].IsWindSpeedMeasurement(static_cast<int>(scanIndex[k])))
                 break;
         if (scanIndex[k] == reader[k].m_scan.size())
             return RETURN_CODE::FAIL;		// <-- no wind-speed measurement found
@@ -680,7 +680,7 @@ RETURN_CODE CWindSpeedCalculator::CalculateCorrelation_Heidelberg(const novac::C
 
     // 2. Find the wind-speed measurement series in the log-files
     for (scanIndex = 0; scanIndex < reader.m_scan.size(); ++scanIndex)
-        if (reader.IsWindSpeedMeasurement_Heidelberg(scanIndex))
+        if (reader.IsWindSpeedMeasurement_Heidelberg(static_cast<int>(scanIndex)))
             break;
     if (scanIndex == reader.m_scan.size())
         return RETURN_CODE::FAIL; // <-- no wind-speed measurement found

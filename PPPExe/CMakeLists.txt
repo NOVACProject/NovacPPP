@@ -16,15 +16,11 @@ add_subdirectory(WindMeasurement)
 add_executable(NovacPPP
     ${CMAKE_CURRENT_LIST_DIR}/ContinuationOfProcessing.cpp
     ${CMAKE_CURRENT_LIST_DIR}/ContinuationOfProcessing.h
-    ${CMAKE_CURRENT_LIST_DIR}/FileInfo.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/FileInfo.h
     ${CMAKE_CURRENT_LIST_DIR}/NovacPPP.cpp
     ${CMAKE_CURRENT_LIST_DIR}/ObservatoryInfo.cpp
     ${CMAKE_CURRENT_LIST_DIR}/ObservatoryInfo.h
     ${CMAKE_CURRENT_LIST_DIR}/PostProcessing.cpp
     ${CMAKE_CURRENT_LIST_DIR}/PostProcessing.h
-    ${CMAKE_CURRENT_LIST_DIR}/StringTokenizer.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/StringTokenizer.h
 
     ${NPP_COMMON_HEADERS} 
     ${NPP_COMMON_SOURCES}
@@ -49,8 +45,8 @@ target_include_directories(NovacPPP PRIVATE
 target_link_libraries(NovacPPP PRIVATE PPPLib ${Poco_LIBRARIES})
 
 IF(WIN32)
-    # TODO: Also include /WX
-    target_compile_options(NovacPPP PUBLIC /W4 /sdl)
+    # TODO: Enable /w44365 (conversion signed/unsigned) as well here
+    target_compile_options(NovacPPP PUBLIC /W4 /WX /sdl)
     target_compile_definitions(NovacPPP PUBLIC _CRT_SECURE_NO_WARNINGS)
 ELSE()
     target_compile_options(NovacPPP PUBLIC -Wall -std=c++14)

@@ -31,14 +31,14 @@ public:
     {
     public:
         CMeasurementSeries();			// <-- Creates an empty measurement series
-        CMeasurementSeries(int len);	// <-- Creates a measurement series of length 'len'
+        CMeasurementSeries(size_t len);	// <-- Creates a measurement series of length 'len'
         ~CMeasurementSeries();
-        RETURN_CODE SetLength(int len); // <-- changes the length of the measurment series to 'len'
+        RETURN_CODE SetLength(size_t len); // <-- changes the length of the measurment series to 'len'
         double	AverageColumn(int from, int to) const; // <-- calculated the average column value between 'from' and 'to'
         double	SampleInterval();		// <-- calculates and returns the average time between two measurements
         double* column;
         double* time;
-        long		length;
+        size_t length;
     };
 
     CWindSpeedCalculator(const Configuration::CUserConfiguration& userSettings);
@@ -156,14 +156,14 @@ private:
                 shift for which the correlation between the two is highest.
                 The length of the longVector must be larger than the length of the short vector! */
     static RETURN_CODE FindBestCorrelation(
-        const double* longVector, unsigned long longLength,
-        const double* shortVector, unsigned long shortLength,
+        const double* longVector, size_t longLength,
+        const double* shortVector, size_t shortLength,
         unsigned int maximumShift,
         double& highestCorr, int& bestShift);
 
 
     /** Calculates the correlation between the two vectors 'x' and 'y', both of length 'length'
             @return - the correlation between the two vectors. */
-    static double	correlation(const double* x, const double* y, long length);
+    static double	correlation(const double* x, const double* y, size_t length);
 };
 }
