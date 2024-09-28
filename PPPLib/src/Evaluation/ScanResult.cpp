@@ -20,7 +20,7 @@ CScanResult::CScanResult()
     m_geomError = 30.0; // best-case guess, 30%
     m_spectroscopyError = 15.0; // best-case guess, 15%
     m_scatteringError = 30.0; // best-case guess, 30%
-    m_measurementMode = MODE_UNKNOWN;
+    m_measurementMode = MEASUREMENT_MODE::MODE_UNKNOWN;
     m_instrumentType = INSTRUMENT_TYPE::INSTR_GOTHENBURG;
 }
 
@@ -660,23 +660,23 @@ MEASUREMENT_MODE CScanResult::CheckMeasurementMode()
 {
     if (IsStratosphereMeasurement())
     {
-        m_measurementMode = MODE_STRATOSPHERE;
+        m_measurementMode = MEASUREMENT_MODE::MODE_STRATOSPHERE;
     }
     else if (IsWindMeasurement())
     {
-        m_measurementMode = MODE_WINDSPEED;
+        m_measurementMode = MEASUREMENT_MODE::MODE_WINDSPEED;
     }
     else if (this->IsDirectSunMeasurement())
     {
-        m_measurementMode = MODE_DIRECT_SUN;
+        m_measurementMode = MEASUREMENT_MODE::MODE_DIRECT_SUN;
     }
     else if (this->IsCompositionMeasurement())
     {
-        m_measurementMode = MODE_COMPOSITION;
+        m_measurementMode = MEASUREMENT_MODE::MODE_COMPOSITION;
     }
     else
     {
-        m_measurementMode = MODE_FLUX;
+        m_measurementMode = MEASUREMENT_MODE::MODE_FLUX;
     }
 
     return m_measurementMode;
@@ -688,23 +688,23 @@ MEASUREMENT_MODE CScanResult::GetMeasurementMode() const
 {
     if (IsStratosphereMeasurement())
     {
-        return MODE_STRATOSPHERE;
+        return MEASUREMENT_MODE::MODE_STRATOSPHERE;
     }
     else if (IsWindMeasurement())
     {
-        return MODE_WINDSPEED;
+        return MEASUREMENT_MODE::MODE_WINDSPEED;
     }
     else if (this->IsDirectSunMeasurement())
     {
-        return MODE_DIRECT_SUN;
+        return MEASUREMENT_MODE::MODE_DIRECT_SUN;
     }
     else if (this->IsCompositionMeasurement())
     {
-        return MODE_COMPOSITION;
+        return MEASUREMENT_MODE::MODE_COMPOSITION;
     }
     else
     {
-        return MODE_FLUX;
+        return MEASUREMENT_MODE::MODE_FLUX;
     }
 }
 
@@ -719,7 +719,7 @@ bool CScanResult::IsStratosphereMeasurement() const
         return false;
 
     // Check if we've already checked the mode
-    if (m_measurementMode == MODE_STRATOSPHERE)
+    if (m_measurementMode == MEASUREMENT_MODE::MODE_STRATOSPHERE)
         return true;
 
     // If the measurement started at a time when the Solar Zenith Angle 
@@ -759,13 +759,13 @@ bool CScanResult::IsFluxMeasurement()
 {
 
     // Check if we've already checked the mode
-    if (m_measurementMode == MODE_FLUX)
+    if (m_measurementMode == MEASUREMENT_MODE::MODE_FLUX)
         return true;
 
     // Then check the measurement mode
     this->CheckMeasurementMode();
 
-    if (m_measurementMode == MODE_FLUX)
+    if (m_measurementMode == MEASUREMENT_MODE::MODE_FLUX)
     {
         return true;
     }
@@ -795,7 +795,7 @@ bool CScanResult::IsWindMeasurement_Gothenburg() const
         return false;
 
     // Check if we've already checked the mode
-    if (m_measurementMode == MODE_WINDSPEED)
+    if (m_measurementMode == MEASUREMENT_MODE::MODE_WINDSPEED)
         return true;
 
     // If the measurement started at a time when the Solar Zenith Angle 
@@ -845,7 +845,7 @@ bool CScanResult::IsWindMeasurement_Heidelberg() const
         return false;
 
     // Check if we've already checked the mode
-    if (m_measurementMode == MODE_WINDSPEED)
+    if (m_measurementMode == MEASUREMENT_MODE::MODE_WINDSPEED)
         return true;
 
     // Check if the channel-number is equal to 0

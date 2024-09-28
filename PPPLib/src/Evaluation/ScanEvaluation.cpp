@@ -22,20 +22,15 @@ CScanEvaluation::CScanEvaluation(const Configuration::CUserConfiguration& userSe
 
 CScanEvaluation::~CScanEvaluation()
 {
-    if (m_result != nullptr)
-    {
-        delete(m_result);
-        m_result = nullptr;
-    }
 }
 
-long CScanEvaluation::EvaluateScan(
-    novac::CScanFileHandler* scan,
+std::unique_ptr<CScanResult> CScanEvaluation::EvaluateScan(
+    novac::CScanFileHandler& scan,
     const CFitWindow& fitWindow,
     const novac::SpectrometerModel& spectrometerModel,
     const Configuration::CDarkSettings* darkSettings)
 {
-    CEvaluationBase* eval = nullptr; // the evaluator
+    std::unique_ptr<CEvaluationBase> eval; // the evaluator
     CFitWindow adjustedFitWindow = fitWindow; // we may need to make some small adjustments to the fit-window. This is a modified copy
 
     // Adjust the fit-low and fit-high parameters according to the spectra
@@ -44,9 +39,9 @@ long CScanEvaluation::EvaluateScan(
 
     // sometimes the length of the spectra is not what we expect, 
     // we need to be able to handle this.
-    adjustedFitWindow.interlaceStep = scan->GetInterlaceSteps();
-    adjustedFitWindow.specLength = scan->GetSpectrumLength() * adjustedFitWindow.interlaceStep;
-    adjustedFitWindow.startChannel = scan->GetStartChannel();
+    adjustedFitWindow.interlaceStep = scan.GetInterlaceSteps();
+    adjustedFitWindow.specLength = scan.GetSpectrumLength() * adjustedFitWindow.interlaceStep;
+    adjustedFitWindow.startChannel = scan.GetStartChannel();
 
     // Now choose what we should do before the real evaluation. Should we;
     // 1) find the shift & squeeze from the Fraunhofer spectrum
@@ -62,7 +57,7 @@ long CScanEvaluation::EvaluateScan(
 
         // If we have a solar-spectrum that we can use to determine the shift
         // & squeeze then fit that first so that we know the wavelength calibration
-        eval = FindOptimumShiftAndSqueezeFromFraunhoferReference(adjustedFitWindow, *darkSettings, m_userSettings.sky, *scan);
+        eval.reset(FindOptimumShiftAndSqueezeFromFraunhoferReference(adjustedFitWindow, *darkSettings, m_userSettings.sky, scan));
 
         if (m_lastErrorMessage.size() > 1)
         {
@@ -85,62 +80,56 @@ long CScanEvaluation::EvaluateScan(
             window2.ref[k].m_shiftValue = 0.0;
             window2.ref[k].m_squeezeValue = 1.0;
         }
-        eval = new CEvaluationBase(window2);
+        eval.reset(new CEvaluationBase(window2));
 
         // evaluate the scan one time
-        if (-1 == EvaluateOpenedScan(scan, eval, spectrometerModel, darkSettings))
+        std::unique_ptr<CScanResult> result = EvaluateOpenedScan(scan, eval, spectrometerModel, darkSettings);
+        if (result == nullptr)
         {
-            delete eval;
             return 0;
         }
 
         if (m_indexOfMostAbsorbingSpectrum < 0)
         {
-            ShowMessage("Could not determine optimal shift & squeeze. No good spectra in scan. %s", scan->GetFileName());
+            ShowMessage("Could not determine optimal shift & squeeze. No good spectra in scan. %s", scan.GetFileName());
             return 0;
         }
 
         // Make sure that this spectrum was ok and that the column-value is high enough
         int specieNum = 0; // TODO: Is this the correct specie to check for?
-        double columnError = m_result->GetColumnError(m_indexOfMostAbsorbingSpectrum, specieNum); // <-- the column error that corresponds to the highest column-value
-        double highestColumn = m_result->GetColumn(m_indexOfMostAbsorbingSpectrum, specieNum);
+        double columnError = result->GetColumnError(m_indexOfMostAbsorbingSpectrum, specieNum); // <-- the column error that corresponds to the highest column-value
+        double highestColumn = result->GetColumn(m_indexOfMostAbsorbingSpectrum, specieNum);
         if (highestColumn < 2 * columnError)
         {
             ShowMessage("Could not determine optimal shift & squeeze. Maximum column is too low.");
             return 0;
         }
 
-        CEvaluationBase* newEval = FindOptimumShiftAndSqueeze(adjustedFitWindow, m_indexOfMostAbsorbingSpectrum, *scan);
-        if (nullptr == newEval)
-        {
-            return 0;
-        }
-
-        delete eval;
-        eval = newEval;
+        eval.reset(FindOptimumShiftAndSqueeze(adjustedFitWindow, m_indexOfMostAbsorbingSpectrum, scan));
     }
     else
     {
         //  3) do none of the above
-        eval = new CEvaluationBase(adjustedFitWindow);
+        eval.reset(new CEvaluationBase(adjustedFitWindow));
     }
+
+    if (nullptr == eval)
+    {
+        return nullptr;
+    }
+
 
     // Make the real evaluation of the scan
-    int nSpectra = EvaluateOpenedScan(scan, eval, spectrometerModel, darkSettings);
+    auto result = EvaluateOpenedScan(scan, eval, spectrometerModel, darkSettings);
 
-    // Clean up
-    delete eval;
-
-    if (nSpectra == -1)
-    {
-        return 0;
-    }
-
-    // return the number of spectra evaluated
-    return m_result->GetEvaluatedNum();
+    return result;
 }
 
-long CScanEvaluation::EvaluateOpenedScan(novac::CScanFileHandler* scan, CEvaluationBase* eval, const novac::SpectrometerModel& spectrometer, const Configuration::CDarkSettings* darkSettings)
+std::unique_ptr<CScanResult> CScanEvaluation::EvaluateOpenedScan(
+    novac::CScanFileHandler& scan,
+    std::unique_ptr<novac::CEvaluationBase>& eval,
+    const novac::SpectrometerModel& spectrometer,
+    const Configuration::CDarkSettings* darkSettings)
 {
     novac::CString message; // used for ShowMessage messages
     int curSpectrumIndex = 0;  // keeping track of the index of the current spectrum into the .pak-file
@@ -152,9 +141,9 @@ long CScanEvaluation::EvaluateOpenedScan(novac::CScanFileHandler* scan, CEvaluat
     // Get the sky and dark spectra and divide them by the number of 
     //     co-added spectra in it
     CSpectrum sky;
-    if (!GetSky(*scan, m_userSettings.sky, sky))
+    if (!GetSky(scan, m_userSettings.sky, sky))
     {
-        return -1;
+        return nullptr;
     }
     CSpectrum skySpecBeforeDarkCorrection = sky;
 
@@ -163,7 +152,7 @@ long CScanEvaluation::EvaluateOpenedScan(novac::CScanFileHandler* scan, CEvaluat
         // Get the dark-spectrum and remove it from the sky
         if (!GetDark(scan, sky, dark, darkSettings))
         {
-            return -1;
+            return nullptr;
         }
         sky.Sub(dark);
     }
@@ -185,16 +174,12 @@ long CScanEvaluation::EvaluateOpenedScan(novac::CScanFileHandler* scan, CEvaluat
     m_indexOfMostAbsorbingSpectrum = -1; // as far as we know, there's no absorption in any spectrum...
 
     // the data structure to keep track of the evaluation results
-    if (m_result != nullptr)
-    {
-        delete m_result;
-    }
-    m_result = new CScanResult();
-    m_result->SetSkySpecInfo(skySpecBeforeDarkCorrection.m_info);
-    m_result->SetDarkSpecInfo(dark.m_info);
+    std::unique_ptr<CScanResult> result = std::make_unique<CScanResult>();
+    result->SetSkySpecInfo(skySpecBeforeDarkCorrection.m_info);
+    result->SetDarkSpecInfo(dark.m_info);
 
     // Make sure that we'll start with the first spectrum in the scan
-    scan->ResetCounter();
+    scan.ResetCounter();
 
     // Evaluate all the spectra in the scan.
     while (1)
@@ -203,12 +188,12 @@ long CScanEvaluation::EvaluateOpenedScan(novac::CScanFileHandler* scan, CEvaluat
         int spectrumIndex = current.ScanIndex();
 
         // a. Read the next spectrum from the file
-        int ret = scan->GetNextSpectrum(current);
+        int ret = scan.GetNextSpectrum(current);
 
         if (ret == 0)
         {
             // if something went wrong when reading the spectrum
-            if (scan->m_lastError == novac::CSpectrumIO::ERROR_SPECTRUM_NOT_FOUND || scan->m_lastError == novac::CSpectrumIO::ERROR_EOF)
+            if (scan.m_lastError == novac::CSpectrumIO::ERROR_SPECTRUM_NOT_FOUND || scan.m_lastError == novac::CSpectrumIO::ERROR_EOF)
             {
                 // at the end of the file, quit the 'while' loop
                 break;
@@ -216,8 +201,8 @@ long CScanEvaluation::EvaluateOpenedScan(novac::CScanFileHandler* scan, CEvaluat
             else
             {
                 novac::CString errMsg;
-                errMsg.Format("Faulty spectrum found in %s", scan->GetFileName().c_str());
-                switch (scan->m_lastError)
+                errMsg.Format("Faulty spectrum found in %s", scan.GetFileName().c_str());
+                switch (scan.m_lastError)
                 {
                 case  novac::CSpectrumIO::ERROR_CHECKSUM_MISMATCH:
                     errMsg.AppendFormat(", Checksum mismatch. Spectrum ignored"); break;
@@ -228,7 +213,7 @@ long CScanEvaluation::EvaluateOpenedScan(novac::CScanFileHandler* scan, CEvaluat
                 }
                 ShowMessage(errMsg);
                 // remember that this spectrum is corrupted
-                m_result->MarkAsCorrupted(spectrumIndex);
+                result->MarkAsCorrupted(spectrumIndex);
                 continue;
             }
         }
@@ -251,9 +236,7 @@ long CScanEvaluation::EvaluateOpenedScan(novac::CScanFileHandler* scan, CEvaluat
         // b. Get the dark spectrum for this measured spectrum
         if (!GetDark(scan, current, dark, darkSettings))
         {
-            delete scan;
-            delete eval;
-            return 0;
+            return nullptr;
         }
 
         // b. Calculate the intensities, before we divide by the number of spectra
@@ -277,7 +260,7 @@ long CScanEvaluation::EvaluateOpenedScan(novac::CScanFileHandler* scan, CEvaluat
         // e. Check if this spectrum is worth evaluating
         if (Ignore(current, dark, m_fitLow, m_fitHigh))
         {
-            message.Format("  - Ignoring spectrum %d in scan %s.", current.ScanIndex(), scan->GetFileName().c_str());
+            message.Format("  - Ignoring spectrum %d in scan %s.", current.ScanIndex(), scan.GetFileName().c_str());
             ShowMessage(message);
             continue;
         }
@@ -289,31 +272,31 @@ long CScanEvaluation::EvaluateOpenedScan(novac::CScanFileHandler* scan, CEvaluat
         if (eval->Evaluate(current))
         {
             message.Format("Failed to evaluate spectrum %d out of %d in scan %s from spectrometer %s.",
-                current.ScanIndex(), current.SpectraPerScan(), scan->GetFileName().c_str(), current.m_info.m_device.c_str());
+                current.ScanIndex(), current.SpectraPerScan(), scan.GetFileName().c_str(), current.m_info.m_device.c_str());
             ShowMessage(message);
         }
 
         // e. Save the evaluation result
-        m_result->AppendResult(eval->GetEvaluationResult(), current.m_info);
+        result->AppendResult(eval->GetEvaluationResult(), current.m_info);
 
         // f. Check if this was an ok data point (CScanResult)
-        m_result->CheckGoodnessOfFit(current.m_info, &spectrometer);
+        result->CheckGoodnessOfFit(current.m_info, &spectrometer);
 
         // g. If it is ok, then check if the value is higher than any of the previous ones
-        if (m_result->IsOk(m_result->GetEvaluatedNum() - 1) && fabs(m_result->GetColumn(m_result->GetEvaluatedNum() - 1, 0)) > highestColumnInScan)
+        if (result->IsOk(result->GetEvaluatedNum() - 1) && fabs(result->GetColumn(result->GetEvaluatedNum() - 1, 0)) > highestColumnInScan)
         {
-            highestColumnInScan = fabs(m_result->GetColumn(m_result->GetEvaluatedNum() - 1, 0));
+            highestColumnInScan = fabs(result->GetColumn(result->GetEvaluatedNum() - 1, 0));
             m_indexOfMostAbsorbingSpectrum = curSpectrumIndex;
         }
     } // end while(1)
 
-    return m_result->GetEvaluatedNum();
+    return result;
 }
 
-bool CScanEvaluation::GetDark(novac::CScanFileHandler* scan, const CSpectrum& spec, CSpectrum& dark, const Configuration::CDarkSettings* darkSettings)
+bool CScanEvaluation::GetDark(novac::CScanFileHandler& scan, const CSpectrum& spec, CSpectrum& dark, const Configuration::CDarkSettings* darkSettings)
 {
     m_lastErrorMessage = "";
-    const bool successs = ScanEvaluationBase::GetDark(*scan, spec, dark, darkSettings);
+    const bool successs = ScanEvaluationBase::GetDark(scan, spec, dark, darkSettings);
 
     if (m_lastErrorMessage.size() > 0)
     {
@@ -396,7 +379,7 @@ CEvaluationBase* CScanEvaluation::FindOptimumShiftAndSqueeze(const CFitWindow& f
     }
 
     // Get the dark-spectrum
-    if (!GetDark(&scan, sky, dark))
+    if (!GetDark(scan, sky, dark))
     {
         return nullptr;
     }
@@ -424,7 +407,7 @@ CEvaluationBase* CScanEvaluation::FindOptimumShiftAndSqueeze(const CFitWindow& f
     }
 
     // Get the dark-spectrum and remove it
-    GetDark(&scan, spec, dark);
+    GetDark(scan, spec, dark);
     spec.Sub(dark);
 
     // Evaluate

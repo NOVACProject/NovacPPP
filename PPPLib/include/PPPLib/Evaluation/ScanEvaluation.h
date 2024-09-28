@@ -1,7 +1,6 @@
 #pragma once
 
 #include <PPPLib/Evaluation/ScanResult.h>
-// #include "../Common/Common.h"
 #include <PPPLib/Configuration/UserConfiguration.h>
 #include <SpectralEvaluation/File/ScanFileHandler.h>
 #include <SpectralEvaluation/Evaluation/ScanEvaluationBase.h>
@@ -29,12 +28,13 @@ public:
 
     ~CScanEvaluation();
 
-    /** The evaluation results from the last scan evaluated */
-    CScanResult* m_result = nullptr;
-
-    /** Called to evaluate one scan.
-        @return the number of spectra evaluated. */
-    long EvaluateScan(novac::CScanFileHandler* scan, const novac::CFitWindow& fitWindow, const novac::SpectrometerModel& spectrometerModel, const Configuration::CDarkSettings* darkSettings = nullptr);
+    /** Called to evaluate the one scan.
+    *   @param scan an opened scan file, containing one single scan.
+    *   @param fitWindow The settings for the fit to use.
+    *   @param spectrometerModel The model of the spectrometer, needed to verify intensities and device specific settings.
+    *   @param darkSettings An optional set of settings for the dark correction. If null then the default settings will be used.
+        @return the result of the evaluation. This is null if the evaluation failed. */
+    std::unique_ptr<CScanResult> EvaluateScan(novac::CScanFileHandler& scan, const novac::CFitWindow& fitWindow, const novac::SpectrometerModel& spectrometerModel, const Configuration::CDarkSettings* darkSettings = nullptr);
 
 private:
 
@@ -43,9 +43,8 @@ private:
     // ----------------------- PRIVATE METHODS ---------------------------
 
     /** Performs the evaluation using the supplied evaluator
-        @return the number of spectra evaluated
-        @return -1 if something goes wrong */
-    long EvaluateOpenedScan(novac::CScanFileHandler* scan, novac::CEvaluationBase* eval, const novac::SpectrometerModel& spectrometer, const Configuration::CDarkSettings* darkSettings = nullptr);
+        @return the result of the evaluation, or null if something goes wrong */
+    std::unique_ptr<CScanResult> EvaluateOpenedScan(novac::CScanFileHandler& scan, std::unique_ptr<novac::CEvaluationBase>& eval, const novac::SpectrometerModel& spectrometer, const Configuration::CDarkSettings* darkSettings = nullptr);
 
     /** This returns the sky spectrum that is to be used in the fitting.
         Which spectrum to be used is taken from the given settings.
@@ -58,7 +57,7 @@ private:
         @param dark - will on return be filled with the dark spectrum
         @param darkSettings - the settings for how to get the dark spectrum from this spectrometer.
         @return true on success. */
-    bool GetDark(novac::CScanFileHandler* scan, const novac::CSpectrum& spec, novac::CSpectrum& dark, const Configuration::CDarkSettings* darkSettings = NULL);
+    bool GetDark(novac::CScanFileHandler& scan, const novac::CSpectrum& spec, novac::CSpectrum& dark, const Configuration::CDarkSettings* darkSettings = NULL);
 
     /** checks the spectrum to the settings and returns 'true' if the spectrum should not be evaluated.
         The spectra 'spec' and 'dark' should be divided by the number of co-adds before calling this function.

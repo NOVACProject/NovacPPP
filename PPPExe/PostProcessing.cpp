@@ -873,7 +873,7 @@ void CPostProcessing::CalculateGeometries(novac::CList <Evaluation::CExtendedSca
         novac::CFileUtils::GetInfoFromFileName(evalLog1, startTime1, serial1, channel, measMode1);
 
         // If this is not a flux-measurement, then there's no use in trying to use it...
-        if (measMode1 != MODE_FLUX)
+        if (measMode1 != MEASUREMENT_MODE::MODE_FLUX)
         {
             continue;
         }
@@ -911,7 +911,7 @@ void CPostProcessing::CalculateGeometries(novac::CList <Evaluation::CExtendedSca
             }
 
             // If this is not a flux-measurement, then there's no use in trying to use it...
-            if (measMode2 != MODE_FLUX)
+            if (measMode2 != MEASUREMENT_MODE::MODE_FLUX)
             {
                 continue;
             }
@@ -1098,7 +1098,7 @@ void CPostProcessing::CalculateFluxes(novac::CList <Evaluation::CExtendedScanRes
         novac::CFileUtils::GetInfoFromFileName(evalLog, scanStartTime, serial, channel, measMode);
 
         // If this is not a flux-measurement, then there's no point in calculating any flux for it
-        if (measMode != MODE_FLUX)
+        if (measMode != MEASUREMENT_MODE::MODE_FLUX)
             continue;
 
         // Extract a plume height at this time of day
@@ -1535,7 +1535,7 @@ void CPostProcessing::CalculateDualBeamWindSpeeds(novac::CList <Evaluation::CExt
 
             novac::CFileUtils::GetInfoFromFileName(fileName, startTime, serial, channel, meas_mode);
 
-            if (meas_mode == MODE_WINDSPEED)
+            if (meas_mode == MEASUREMENT_MODE::MODE_WINDSPEED)
             {
                 ++nWindMeasFound;
 

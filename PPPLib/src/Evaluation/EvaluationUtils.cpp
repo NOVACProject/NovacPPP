@@ -53,7 +53,7 @@ bool Evaluation::IsGoodEnoughToEvaluate(
 }
 
 
-bool GetArchivingfileName(
+bool Evaluation::GetArchivingfileName(
     novac::CString& pakFile,
     novac::CString& txtFile,
     const novac::CString& fitWindowName,

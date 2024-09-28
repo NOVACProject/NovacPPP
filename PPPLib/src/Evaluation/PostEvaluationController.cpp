@@ -115,21 +115,14 @@ bool CPostEvaluationController::EvaluateScan(
 
     // 6. Evaluate the scan
     CScanEvaluation ev{ m_userSettings };
-    const long spectrumNum = ev.EvaluateScan(&scan, fitWindow, spectrometerModel, &darkSettings);
+    std::unique_ptr<CScanResult> lastResult = ev.EvaluateScan(scan, fitWindow, spectrometerModel, &darkSettings);
 
     // 7. Check the reasonability of the evaluation
-    if (spectrumNum == 0)
+    if (lastResult == nullptr || lastResult->GetEvaluatedNum() == 0)
     {
         errorMessage.Format("Zero spectra evaluated in recieved pak-file %s. Evaluation failed.", (const char*)pakFileName);
         ShowMessage(errorMessage);
         return false;
-    }
-
-    // 8. Get the result from the evaluation
-    std::unique_ptr<CScanResult> lastResult;
-    if (ev.m_result != nullptr)
-    {
-        lastResult.reset(new CScanResult(*ev.m_result));
     }
 
     // TODO: Make use of this really useful index...
