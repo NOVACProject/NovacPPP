@@ -20,15 +20,11 @@
 #include <cmath>
 #include <sstream>
 
-#if defined(linux) || defined(__linux) || defined(__linux__)
-#define MAX_PATH 512
-#endif
-
 using namespace Evaluation;
 using namespace FileHandler;
 using namespace novac;
 
-int CPostEvaluationController::EvaluateScan(
+bool CPostEvaluationController::EvaluateScan(
     const novac::CString& pakFileName,
     const novac::CString& fitWindowName,
     novac::CString* txtFileName,
@@ -71,6 +67,7 @@ int CPostEvaluationController::EvaluateScan(
     auto fitWindow = m_setup.GetFitWindow(scan.GetDeviceSerial(), scan.m_channel, scan.GetScanStartTime(), &fitWindowName);
     auto darkSettings = m_setup.GetDarkCorrection(scan.m_device, scan.m_startTime);
 
+    // TODO: Should the model name be required?
     const SpectrometerModel spectrometerModel = CSpectrometerDatabase::GetInstance().GetModel(instrLocation.m_spectrometerModel);
 
     // Check if we have already evaluated this scan. Only if this is a re-run of
@@ -80,28 +77,27 @@ int CPostEvaluationController::EvaluateScan(
         if (this->m_continuation.IsPreviouslyIgnored(pakFileNameStr))
         {
             errorMessage.Format(" Scan %s has already been evaluated and was ignored. Will proceed to the next scan", pakFileNameStr.c_str());
-            ShowMessage(errorMessage);
-
-            return 0;
+            m_log.Information(errorMessage.std_str());
+            return true;
         }
         else
         {
             novac::CString archivePakFileName, archiveTxtFileName;
 
             // loop through all possible measurement modes and see if the evaluation log file already exists
-            MEASUREMENT_MODE modes[] = { MODE_FLUX, MODE_WINDSPEED, MODE_STRATOSPHERE, MODE_DIRECT_SUN,
-                                        MODE_COMPOSITION, MODE_LUNAR, MODE_TROPOSPHERE, MODE_MAXDOAS };
+            MEASUREMENT_MODE modes[] = { MEASUREMENT_MODE::MODE_FLUX, MEASUREMENT_MODE::MODE_WINDSPEED, MEASUREMENT_MODE::MODE_STRATOSPHERE, MEASUREMENT_MODE::MODE_DIRECT_SUN,
+                                        MEASUREMENT_MODE::MODE_COMPOSITION, MEASUREMENT_MODE::MODE_LUNAR, MEASUREMENT_MODE::MODE_TROPOSPHERE, MEASUREMENT_MODE::MODE_MAXDOAS };
             for (int k = 0; k < 8; ++k)
             {
-                GetArchivingfileName(archivePakFileName, archiveTxtFileName, fitWindowName, pakFileName, modes[k]);
+                GetArchivingfileName(archivePakFileName, archiveTxtFileName, fitWindowName, pakFileName, m_userSettings.m_outputDirectory.std_str(), modes[k]);
                 if (Filesystem::IsExistingFile(archiveTxtFileName))
                 {
                     errorMessage.Format(" Scan %s has already been evaluated. Will proceed to the next scan", (const char*)pakFileName);
-                    ShowMessage(errorMessage);
+                    m_log.Information(errorMessage.std_str());
 
                     txtFileName->Format(archiveTxtFileName);
 
-                    return 0;
+                    return true;
                 }
             }
         }
@@ -112,15 +108,10 @@ int CPostEvaluationController::EvaluateScan(
     std::string errorMessageStr;
     if (!IsGoodEnoughToEvaluate(scan, fitWindow, spectrometerModel, instrLocation, m_userSettings, rejectionReason, errorMessageStr))
     {
-        // update the statistics
         m_processingStats.InsertRejection(scan.m_device, rejectionReason);
         m_log.Information("Scan quality not good enough to evaluate (" + errorMessageStr + "), skipping pak file : " + pakFileNameStr);
-        return 5;
+        return false;
     }
-
-    // Guess the spectrometer model, this is not written into the scan files themselves and must be guessed.
-    // TODO: This may conflict with the value above!!!
-    // const novac::SpectrometerModel spectrometerModel = CSpectrometerDatabase::GetInstance().GuessModelFromSerial(scan.GetDeviceSerial());
 
     // 6. Evaluate the scan
     CScanEvaluation ev{ m_userSettings };
@@ -131,7 +122,7 @@ int CPostEvaluationController::EvaluateScan(
     {
         errorMessage.Format("Zero spectra evaluated in recieved pak-file %s. Evaluation failed.", (const char*)pakFileName);
         ShowMessage(errorMessage);
-        return 6;
+        return false;
     }
 
     // 8. Get the result from the evaluation
@@ -166,8 +157,8 @@ int CPostEvaluationController::EvaluateScan(
         if (0 == CheckQualityOfFluxMeasurement(lastResult, pakFileName))
         {
             errorMessage.Format("Could not calculate flux from pak-file %s.", (const char*)pakFileName);
-            ShowMessage(errorMessage);
-            return 6;
+            m_log.Information(errorMessage.std_str());
+            return false;
         }
     }
 
@@ -179,7 +170,7 @@ int CPostEvaluationController::EvaluateScan(
 
     CreatePlumespectrumFile(lastResult, fitWindowName, scan, spectrometerModel, plumeProperties, specieIndex);
 
-    return 0;
+    return true;
 }
 
 void CPostEvaluationController::CreatePlumespectrumFile(
@@ -278,7 +269,7 @@ RETURN_CODE CPostEvaluationController::WriteEvaluationResult(const std::unique_p
     CDateTime dateTime;
 
     // get the file-name that we want to have 
-    GetArchivingfileName(pakFile, txtFile, window->name, scan->GetFileName(), result->GetMeasurementMode());
+    GetArchivingfileName(pakFile, txtFile, window->name, scan->GetFileName(), m_userSettings.m_outputDirectory.std_str(), result->GetMeasurementMode());
     if (txtFileName != nullptr)
     {
         txtFileName->Format(txtFile);
@@ -627,107 +618,12 @@ RETURN_CODE CPostEvaluationController::AppendToPakFileSummaryFile(const std::uni
     return RETURN_CODE::SUCCESS;
 }
 
-RETURN_CODE CPostEvaluationController::GetArchivingfileName(novac::CString& pakFile, novac::CString& txtFile, const novac::CString& fitWindowName, const novac::CString& temporaryScanFile, MEASUREMENT_MODE mode)
-{
-    CSpectrumIO reader;
-    CSpectrum tmpSpec;
-    novac::CString serialNumber, dateStr, timeStr, dateStr2, modeStr, userMessage;
-
-    // 0. Make an initial assumption of the file-names
-    int i = 0;
-    while (1)
-    {
-        pakFile.Format("%s%cUnknownScans%c%d.pak", (const char*)m_userSettings.m_outputDirectory, Poco::Path::separator(), Poco::Path::separator(), ++i);
-        if (!Filesystem::IsExistingFile(pakFile))
-        {
-            break;
-        }
-    }
-    txtFile.Format("%s%cUnknownScans%c%d.txt", (const char*)m_userSettings.m_outputDirectory, Poco::Path::separator(), Poco::Path::separator(), i);
-
-    // 1. Read the first spectrum in the scan
-    const std::string temporaryScanFileStr((const char*)temporaryScanFile);
-    if (!reader.ReadSpectrum(temporaryScanFileStr, 0, tmpSpec))
-    {
-        return RETURN_CODE::FAIL;
-    }
-    CSpectrumInfo& info = tmpSpec.m_info;
-    int channel = info.m_channel;
-
-    // 1a. If the GPS had no connection with the satelites when collecting the sky-spectrum,
-    //   then try to find a spectrum in the file for which it had connection...
-    i = 1;
-    while (info.m_startTime.year == 2004 && info.m_startTime.month == 3 && info.m_startTime.second == 22)
-    {
-        if (!reader.ReadSpectrum(temporaryScanFileStr, i++, tmpSpec))
-        {
-            break;
-        }
-        info = tmpSpec.m_info;
-    }
-
-    // 2. Get the serialNumber of the spectrometer
-    serialNumber.Format("%s", info.m_device.c_str());
-
-    // 3. Get the time and date when the scan started
-    dateStr.Format("%02d%02d%02d", info.m_startTime.year % 1000, info.m_startTime.month, info.m_startTime.day);
-    dateStr2.Format("%04d.%02d.%02d", info.m_startTime.year, info.m_startTime.month, info.m_startTime.day);
-    timeStr.Format("%02d%02d", info.m_startTime.hour, info.m_startTime.minute);
-
-
-    // 4. Write the archiving name of the spectrum file
-
-    // 4a. Write the folder name
-    pakFile.Format("%s%s%c%s%c%s%c", (const char*)m_userSettings.m_outputDirectory, (const char*)fitWindowName, Poco::Path::separator(),
-        (const char*)dateStr2, Poco::Path::separator(), (const char*)serialNumber, Poco::Path::separator());
-    txtFile.Format("%s", (const char*)pakFile);
-
-    // 4b. Make sure that the folder exists
-    int ret = Filesystem::CreateDirectoryStructure(pakFile);
-    if (ret)
-    {
-        userMessage.Format("Could not create directory for archiving .pak-file: %s", (const char*)pakFile);
-        ShowMessage(userMessage);
-        return RETURN_CODE::FAIL;
-    }
-
-    // 4c. Write the code for the measurement mode
-    switch (mode)
-    {
-    case MODE_FLUX:   modeStr.Format("flux"); break;
-    case MODE_WINDSPEED: modeStr.Format("wind"); break;
-    case MODE_STRATOSPHERE: modeStr.Format("stra"); break;
-    case MODE_DIRECT_SUN: modeStr.Format("dsun"); break;
-    case MODE_COMPOSITION:  modeStr.Format("comp"); break;
-    case MODE_LUNAR:  modeStr.Format("luna"); break;
-    case MODE_TROPOSPHERE:  modeStr.Format("trop"); break;
-    case MODE_MAXDOAS:  modeStr.Format("maxd"); break;
-    default:    modeStr.Format("unkn"); break;
-    }
-
-    // 4c. Write the name of the archiving file itself
-    if (channel < 128 && channel > MAX_CHANNEL_NUM)
-    {
-        channel = channel % 16;
-    }
-
-    pakFile.AppendFormat("%s_%s_%s_%1d_%4s.pak", (const char*)serialNumber, (const char*)dateStr, (const char*)timeStr, channel, (const char*)modeStr);
-    txtFile.AppendFormat("%s_%s_%s_%1d_%4s.txt", (const char*)serialNumber, (const char*)dateStr, (const char*)timeStr, channel, (const char*)modeStr);
-
-    if (strlen(pakFile) > MAX_PATH - 2)
-    {
-        return RETURN_CODE::FAIL;
-    }
-
-    return RETURN_CODE::SUCCESS;
-}
-
 int CPostEvaluationController::CheckQualityOfFluxMeasurement(std::unique_ptr<CScanResult>& result, const novac::CString& pakFileName) const
 {
     novac::CString errorMessage;
 
     // Check if this is a flux measurement at all
-    if (MODE_FLUX != result->GetMeasurementMode())
+    if (MEASUREMENT_MODE::MODE_FLUX != result->GetMeasurementMode())
     {
         return -1;
     }

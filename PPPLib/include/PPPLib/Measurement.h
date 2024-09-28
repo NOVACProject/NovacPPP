@@ -2,7 +2,7 @@
 #define NOVAC_PPPLIB_MEASUREMENT_H
 
 // The various kinds of measurement modes that we have
-enum MEASUREMENT_MODE
+enum class MEASUREMENT_MODE
 {
     MODE_UNKNOWN,
     MODE_FLUX,

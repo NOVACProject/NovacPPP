@@ -50,12 +50,8 @@ public:
             results
         @param plumeProperties - if not NULL then this will on return be filled
             with the properties of the evaluated scan.
-        @return 0 on success, else non-zero value
-        @return 5 if the scan was rejected due to quality problems
-        @return 6 if the scan was rejected because it does not see the plume or
-                    sees a too small portion of the plume
-      */
-    int EvaluateScan(const novac::CString& pakFileName, const novac::CString& fitWindowName, novac::CString* txtFileName = NULL, novac::CPlumeInScanProperty* plumeProperties = NULL);
+        @return true on success */
+    bool EvaluateScan(const novac::CString& pakFileName, const novac::CString& fitWindowName, novac::CString* txtFileName = NULL, novac::CPlumeInScanProperty* plumeProperties = NULL);
 
 
 private:
@@ -108,10 +104,6 @@ private:
         @param scanningInstrument - information about the scanning instrument that generated the scan.
         @return SUCCESS if operation completed sucessfully. */
     RETURN_CODE AppendToPakFileSummaryFile(const std::unique_ptr<CScanResult>& result, const novac::CScanFileHandler* scan, const Configuration::CInstrumentLocation* instrLocation, const novac::CFitWindow* window, Meteorology::CWindField& windField);
-
-    /** Gets the filename under which the scan-file should be stored.
-        @return SUCCESS if a filename is found. */
-    RETURN_CODE GetArchivingfileName(novac::CString& pakFile, novac::CString& txtFile, const novac::CString& fitWindowName, const novac::CString& temporaryScanFile, MEASUREMENT_MODE mode);
 
     /** This function takes as input parameter an eval-log containing the result of a flux - measurement
         and checks the quality of the measurement.
