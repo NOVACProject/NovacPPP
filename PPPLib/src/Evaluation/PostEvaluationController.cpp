@@ -1,5 +1,5 @@
 #include <cstring>
-#include "PostEvaluationController.h"
+#include <PPPLib/Evaluation/PostEvaluationController.h>
 #include <PPPLib/Evaluation/ScanEvaluation.h>
 #include <SpectralEvaluation/File/SpectrumIO.h>
 #include <SpectralEvaluation/Configuration/DarkSettings.h>
@@ -11,16 +11,13 @@
 #include <SpectralEvaluation/Spectra/SpectrometerModel.h>
 
 // This is the information we need to continue an old processing
-#include "../ContinuationOfProcessing.h"
+#include <PPPLib/ContinuationOfProcessing.h>
 
 // ... support for handling the evaluation-log files...
 #include <PPPLib/File/EvaluationLogFileHandler.h>
 
 #include <Poco/Path.h>
 #include <cmath>
-
-
-extern CContinuationOfProcessing                g_continuation;  // <-- Information on what has already been done when continuing an old processing round
 
 
 #if defined(linux) || defined(__linux) || defined(__linux__)
@@ -74,7 +71,7 @@ int CPostEvaluationController::EvaluateScan(
     // an old processing...
     if (m_userSettings.m_fIsContinuation)
     {
-        if (g_continuation.IsPreviouslyIgnored(pakFileName))
+        if (this->m_continuation.IsPreviouslyIgnored(pakFileName))
         {
             errorMessage.Format(" Scan %s has already been evaluated and was ignored. Will proceed to the next scan", (const char*)pakFileName);
             ShowMessage(errorMessage);

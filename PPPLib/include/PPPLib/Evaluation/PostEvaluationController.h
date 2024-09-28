@@ -6,6 +6,7 @@
 #include <SpectralEvaluation/Evaluation/Ratio.h>
 #include <PPPLib/Configuration/NovacPPPConfiguration.h>
 #include <PPPLib/Configuration/UserConfiguration.h>
+#include <PPPLib/ContinuationOfProcessing.h>
 #include <PPPLib/PostProcessingStatistics.h>
 
 namespace Evaluation
@@ -23,8 +24,12 @@ namespace Evaluation
 class CPostEvaluationController
 {
 public:
-    CPostEvaluationController(const Configuration::CNovacPPPConfiguration& setup, const Configuration::CUserConfiguration& userSettings, CPostProcessingStatistics& processingStats)
-        : m_setup(setup), m_userSettings(userSettings), m_processingStats(processingStats)
+    CPostEvaluationController(
+        const Configuration::CNovacPPPConfiguration& setup,
+        const Configuration::CUserConfiguration& userSettings,
+        const CContinuationOfProcessing& continuation,
+        CPostProcessingStatistics& processingStats)
+        : m_setup(setup), m_userSettings(userSettings), m_continuation(continuation), m_processingStats(processingStats)
     {
     }
 
@@ -66,6 +71,8 @@ private:
     Configuration::CNovacPPPConfiguration m_setup;
 
     Configuration::CUserConfiguration m_userSettings;
+
+    const CContinuationOfProcessing& m_continuation;
 
     CPostProcessingStatistics& m_processingStats;
 

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../Evaluation/ExtendedScanResult.h"
+#include <PPPLib/Evaluation/ExtendedScanResult.h>
 #include <SpectralEvaluation/GPSData.h>
 #include <SpectralEvaluation/DateTime.h>
 

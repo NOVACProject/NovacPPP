@@ -1,6 +1,6 @@
 #pragma once
 
-#include "WindSpeedMeasSettings.h"
+#include <PPPLib/WindMeasurement/WindSpeedMeasSettings.h>
 #include <PPPLib/PPPLib.h>
 #include <PPPLib/Configuration/NovacPPPConfiguration.h>
 #include <PPPLib/Geometry/PlumeHeight.h>

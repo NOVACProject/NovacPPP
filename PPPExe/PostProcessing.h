@@ -1,6 +1,7 @@
 #pragma once
 
 #include <SpectralEvaluation/DateTime.h>
+#include <PPPLib/ContinuationOfProcessing.h>
 #include <PPPLib/Geometry/GeometryCalculator.h>
 #include <PPPLib/Meteorology/WindDataBase.h>
 #include <PPPLib/Configuration/NovacPPPConfiguration.h>
@@ -10,7 +11,7 @@
 
 #include <PPPLib/Geometry/PlumeDataBase.h>
 #include <PPPLib/Flux/FluxResult.h>
-#include "Evaluation/ExtendedScanResult.h"
+#include <PPPLib/Evaluation/ExtendedScanResult.h>
 #include <PPPLib/MFC/CList.h>
 #include <PPPLib/MFC/CString.h>
 
@@ -28,7 +29,11 @@ class CReferenceFile;
 class CPostProcessing
 {
 public:
-    CPostProcessing(ILogger& logger, Configuration::CNovacPPPConfiguration setup, Configuration::CUserConfiguration userSettings);
+    CPostProcessing(
+        ILogger& logger,
+        Configuration::CNovacPPPConfiguration setup,
+        Configuration::CUserConfiguration userSettings,
+        const CContinuationOfProcessing& continuation);
 
     // ----------------------------------------------------------------------
     // ---------------------- PUBLIC DATA -----------------------------------
@@ -72,6 +77,8 @@ protected:
     Configuration::CNovacPPPConfiguration m_setup;
 
     Configuration::CUserConfiguration m_userSettings;
+
+    CContinuationOfProcessing m_continuation;
 
     // The statistics of the processing itself (number of successfully processed scans, vs number of rejected etc)
     CPostProcessingStatistics m_processingStats;

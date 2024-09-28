@@ -12,7 +12,7 @@
 #include <functional>
 
 // the PostEvaluationController takes care of the DOAS evaluations
-#include "Evaluation/PostEvaluationController.h"
+#include <PPPLib/Evaluation/PostEvaluationController.h>
 
 // The PostCalibration takes care of the instrument calibrations.
 #include <PPPLib/Calibration/PostCalibration.h>
@@ -30,7 +30,7 @@
 // We also need to read the evaluation-log files
 #include <PPPLib/File/EvaluationLogFileHandler.h>
 
-#include "WindMeasurement/WindSpeedCalculator.h"
+#include <PPPLib/WindMeasurement/WindSpeedCalculator.h>
 
 #include <PPPLib/Meteorology/XMLWindFileReader.h>
 #include <PPPLib/File/Filesystem.h>
@@ -55,15 +55,15 @@ using namespace novac;
 
 
 // this is the working-thread that takes care of evaluating a portion of the scans
-void EvaluateScansThread(const Configuration::CNovacPPPConfiguration& setup, const Configuration::CUserConfiguration& userSettings, CPostProcessingStatistics& processingStats);
+void EvaluateScansThread(const Configuration::CNovacPPPConfiguration& setup, const Configuration::CUserConfiguration& userSettings, const CContinuationOfProcessing& continuation, CPostProcessingStatistics& processingStats);
 
 // this takes care of adding the evaluated log-files to the list in an synchronized way
 //  the parameter passed in a reference to an array of strings holding the names of the 
 //  eval-log files generated
 void AddResultToList(const novac::CString& pakFileName, const novac::CString(&evalLog)[MAX_FIT_WINDOWS], const CPlumeInScanProperty& scanProperties, const Configuration::CUserConfiguration& userSettings, CPostProcessingStatistics& processingStats);
 
-CPostProcessing::CPostProcessing(ILogger& logger, Configuration::CNovacPPPConfiguration setup, Configuration::CUserConfiguration userSettings)
-    : m_log(logger), m_setup(setup), m_userSettings(userSettings)
+CPostProcessing::CPostProcessing(ILogger& logger, Configuration::CNovacPPPConfiguration setup, Configuration::CUserConfiguration userSettings, const CContinuationOfProcessing& continuation)
+    : m_log(logger), m_setup(setup), m_userSettings(userSettings), m_continuation(continuation)
 {
 }
 
@@ -360,7 +360,7 @@ void CPostProcessing::EvaluateScans(
     std::vector<std::thread> evalThreads(m_userSettings.m_maxThreadNum);
     for (unsigned int threadIdx = 0; threadIdx < m_userSettings.m_maxThreadNum; ++threadIdx)
     {
-        std::thread t( EvaluateScansThread, std::cref(m_setup), std::cref(m_userSettings), std::ref(m_processingStats) );
+        std::thread t( EvaluateScansThread, std::cref(m_setup), std::cref(m_userSettings), std::cref(m_continuation), std::ref(m_processingStats) );
         evalThreads[threadIdx] = std::move(t);
     }
 
@@ -377,12 +377,16 @@ void CPostProcessing::EvaluateScans(
     ShowMessage(messageToUser);
 }
 
-void EvaluateScansThread(const Configuration::CNovacPPPConfiguration& setup, const Configuration::CUserConfiguration& userSettings, CPostProcessingStatistics& processingStats)
+void EvaluateScansThread(
+    const Configuration::CNovacPPPConfiguration& setup,
+    const Configuration::CUserConfiguration& userSettings,
+    const CContinuationOfProcessing& continuation,
+    CPostProcessingStatistics& processingStats)
 {
     std::string fileName;
 
     // create a new CPostEvaluationController
-    Evaluation::CPostEvaluationController eval{ setup, userSettings, processingStats };
+    Evaluation::CPostEvaluationController eval{ setup, userSettings, continuation, processingStats };
 
     // while there are more .pak-files
     while (s_pakFilesRemaining.PopFront(fileName))

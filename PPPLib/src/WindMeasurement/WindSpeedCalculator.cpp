@@ -1,4 +1,4 @@
-#include "WindSpeedCalculator.h"
+#include <PPPLib/WindMeasurement/WindSpeedCalculator.h>
 #include <PPPLib/File/EvaluationLogFileHandler.h>
 #include <PPPLib/Meteorology/WindField.h>
 #include <PPPLib/File/Filesystem.h>
