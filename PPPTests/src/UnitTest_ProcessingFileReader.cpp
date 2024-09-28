@@ -24,11 +24,9 @@ TEST_CASE("ReadProcessingFile gives expected configuration", "[ProcessingFileRea
     Configuration::CUserConfiguration resultingConfiguration;
     FileHandler::CProcessingFileReader sut{ logger };
 
-    RETURN_CODE returnCode = sut.ReadProcessingFile(
+    sut.ReadProcessingFile(
         GetProcessingConfigurationFile(),
         resultingConfiguration);
-
-    REQUIRE(returnCode == RETURN_CODE::SUCCESS);
 
     // Expected settings
     {
@@ -64,5 +62,14 @@ TEST_CASE("ReadProcessingFile gives expected configuration", "[ProcessingFileRea
         REQUIRE(Configuration::SKY_OPTION::USER_SUPPLIED == resultingConfiguration.sky.skyOption);
         REQUIRE("C:/Temp/Some_sky_spectrum.std" == resultingConfiguration.sky.skySpectrumFile);
     }
+}
+
+TEST_CASE("ReadProcessingFile ReadProcessingFile with invalid file path throws exception", "[ProcessingFileReader][File]")
+{
+    StdOutLogger logger;
+    Configuration::CUserConfiguration resultingConfiguration;
+    FileHandler::CProcessingFileReader sut{ logger };
+
+    REQUIRE_THROWS(sut.ReadProcessingFile("./some-not-existing-file.txtk", resultingConfiguration));
 }
 }

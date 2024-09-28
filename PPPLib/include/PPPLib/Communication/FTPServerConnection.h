@@ -1,5 +1,4 @@
-#ifndef FTPSERVER_DATADOWNLOAD_H
-#define FTPSERVER_DATADOWNLOAD_H
+#pragma once
 
 #include <vector>
 #include <PPPLib/MFC/CList.h>
@@ -57,5 +56,3 @@ private:
 
 };
 }
-
-#endif

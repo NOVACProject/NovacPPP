@@ -115,7 +115,7 @@ protected:
     int PreparePlumeHeights();
 
     /** Scans through the FTP-server (using the IP,username and password
-        found in g_userSettings) in search for .pak-files
+        found in userSettings) in search for .pak-files
         The files will be downloaded to the local computer (to the
         temporary directory) and the returned path's will be pointing
         there.

@@ -1,9 +1,10 @@
 #pragma once
 
-#include <PPPLib/Evaluation/ScanResult.h>
-
 #include <SpectralEvaluation/File/ScanFileHandler.h>
 #include <SpectralEvaluation/Evaluation/Ratio.h>
+
+#include <PPPLib/Logging.h>
+#include <PPPLib/Evaluation/ScanResult.h>
 #include <PPPLib/Configuration/NovacPPPConfiguration.h>
 #include <PPPLib/Configuration/UserConfiguration.h>
 #include <PPPLib/ContinuationOfProcessing.h>
@@ -25,21 +26,14 @@ class CPostEvaluationController
 {
 public:
     CPostEvaluationController(
+        ILogger& log,
         const Configuration::CNovacPPPConfiguration& setup,
         const Configuration::CUserConfiguration& userSettings,
         const CContinuationOfProcessing& continuation,
         CPostProcessingStatistics& processingStats)
-        : m_setup(setup), m_userSettings(userSettings), m_continuation(continuation), m_processingStats(processingStats)
+        : m_log(log), m_setup(setup), m_userSettings(userSettings), m_continuation(continuation), m_processingStats(processingStats)
     {
     }
-
-    // ----------------------------------------------------------------------
-    // ---------------------- PUBLIC DATA -----------------------------------
-    // ----------------------------------------------------------------------
-
-    /** A scan-result, for sharing evaluated data with the rest of the
-        program. This is updated after every evaluation of a full scan. */
-    CScanResult* m_lastResult = nullptr;
 
     // ----------------------------------------------------------------------
     // --------------------- PUBLIC METHODS ---------------------------------
@@ -63,10 +57,13 @@ public:
       */
     int EvaluateScan(const novac::CString& pakFileName, const novac::CString& fitWindowName, novac::CString* txtFileName = NULL, novac::CPlumeInScanProperty* plumeProperties = NULL);
 
+
 private:
     // ----------------------------------------------------------------------
     // ---------------------- PRIVATE DATA ----------------------------------
     // ----------------------------------------------------------------------
+
+    ILogger& m_log;
 
     Configuration::CNovacPPPConfiguration m_setup;
 
@@ -80,10 +77,6 @@ private:
     // --------------------- PRIVATE METHODS --------------------------------
     // ----------------------------------------------------------------------
 
-    /** Checks the supplied scan if it's good enough to bother evaluating.
-        @returns false if the scan is too bad and should be ignored. Else return true. */
-    bool IsGoodEnoughToEvaluate(const novac::CScanFileHandler* scan, const novac::CFitWindow& window, Configuration::CInstrumentLocation& instrLocation);
-
     /** Writes the evaluation result to the appropriate log file.
         @param result - a CScanResult holding information about the result
         @param scan - the scan itself, also containing information about the evaluation and the flux.
@@ -91,7 +84,7 @@ private:
         @param txtFileName - if not null, this will on successful writing of the file be filled
             with the full path and filename of the txt - file generated
         @return SUCCESS if operation completed sucessfully. */
-    RETURN_CODE WriteEvaluationResult(const CScanResult* result, const novac::CScanFileHandler* scan, const Configuration::CInstrumentLocation* instrLocation, const novac::CFitWindow* window, Meteorology::CWindField& windField, novac::CString* txtFileName = nullptr);
+    RETURN_CODE WriteEvaluationResult(const std::unique_ptr<CScanResult>& result, const novac::CScanFileHandler* scan, const Configuration::CInstrumentLocation* instrLocation, const novac::CFitWindow* window, Meteorology::CWindField& windField, novac::CString* txtFileName = nullptr);
 
     /** Writes the evaluation result of one ratio calculation to the appropriate log file.
         @param result - a vector of calculated ratios.
@@ -107,14 +100,14 @@ private:
         @param scan - the scan itself
         @param scanningInstrument - information about the scanning instrument that generated the scan.
         @return SUCCESS if operation completed sucessfully. */
-    RETURN_CODE AppendToEvaluationSummaryFile(const CScanResult* result, const novac::CScanFileHandler* scan, const Configuration::CInstrumentLocation* instrLocation, const novac::CFitWindow* window, Meteorology::CWindField& windField);
+    RETURN_CODE AppendToEvaluationSummaryFile(const std::unique_ptr<CScanResult>& result, const novac::CScanFileHandler* scan, const Configuration::CInstrumentLocation* instrLocation, const novac::CFitWindow* window, Meteorology::CWindField& windField);
 
     /** Appends the evaluation result to the pak-file summary log file.
         @param result - a CScanResult holding information about the result
         @param scan - the scan itself
         @param scanningInstrument - information about the scanning instrument that generated the scan.
         @return SUCCESS if operation completed sucessfully. */
-    RETURN_CODE AppendToPakFileSummaryFile(const CScanResult* result, const novac::CScanFileHandler* scan, const Configuration::CInstrumentLocation* instrLocation, const novac::CFitWindow* window, Meteorology::CWindField& windField);
+    RETURN_CODE AppendToPakFileSummaryFile(const std::unique_ptr<CScanResult>& result, const novac::CScanFileHandler* scan, const Configuration::CInstrumentLocation* instrLocation, const novac::CFitWindow* window, Meteorology::CWindField& windField);
 
     /** Gets the filename under which the scan-file should be stored.
         @return SUCCESS if a filename is found. */
@@ -126,11 +119,11 @@ private:
         @return 0 - if the measurement should be rejected.
         @return -1 - if the measurement is not a flux measurement.
         */
-    int CheckQualityOfFluxMeasurement(CScanResult* result, const novac::CString& pakFileName) const;
+    int CheckQualityOfFluxMeasurement(std::unique_ptr<CScanResult>& result, const novac::CString& pakFileName) const;
 
     /** Creates the 'pluem spectrum file' which is a text file containing a list of which spectra are judged to be _in_ the plume
         and which spectra are judged to be _out_ of the plume. Useful for determining plume composition at a later stage */
-    void CreatePlumespectrumFile(const novac::CString& fitWindowName, novac::CScanFileHandler& scan, const novac::SpectrometerModel& spectrometerModel, novac::CPlumeInScanProperty* plumeProperties, int specieIndex);
+    void CreatePlumespectrumFile(const std::unique_ptr<CScanResult>& result, const novac::CString& fitWindowName, novac::CScanFileHandler& scan, const novac::SpectrometerModel& spectrometerModel, novac::CPlumeInScanProperty* plumeProperties, int specieIndex);
 
 };
 }

@@ -186,10 +186,7 @@ void ReadProcessingXml(const novac::CString& workDir, Configuration::CUserConfig
     novac::CString processingPath;
     processingPath.Format("%sconfiguration%cprocessing.xml", (const char*)workDir, Poco::Path::separator());
     FileHandler::CProcessingFileReader processing_reader{ g_logger };
-    if (RETURN_CODE::SUCCESS != processing_reader.ReadProcessingFile(processingPath, userSettings))
-    {
-        throw std::logic_error("Could not read processing.xml. Setup not complete. Please fix and try again");
-    }
+    processing_reader.ReadProcessingFile(processingPath, userSettings);
 }
 
 void ReadSetupXml(const novac::CString& workDir, Configuration::CNovacPPPConfiguration& configuration)
@@ -198,10 +195,8 @@ void ReadSetupXml(const novac::CString& workDir, Configuration::CNovacPPPConfigu
     setupPath.Format("%sconfiguration%csetup.xml", (const char*)workDir, Poco::Path::separator());
 
     FileHandler::CSetupFileReader reader{ g_logger };
-    if (RETURN_CODE::SUCCESS != reader.ReadSetupFile(setupPath, configuration))
-    {
-        throw std::logic_error("Could not read setup.xml. Setup not complete. Please fix and try again");
-    }
+    reader.ReadSetupFile(setupPath, configuration);
+
     ShowMessage(novac::CString::FormatString(" Parsed %s, %d instruments found.", setupPath.c_str(), configuration.NumberOfInstruments()));
 }
 

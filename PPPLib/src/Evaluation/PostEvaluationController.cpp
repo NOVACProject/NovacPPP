@@ -5,9 +5,9 @@
 #include <SpectralEvaluation/Configuration/DarkSettings.h>
 #include <SpectralEvaluation/Evaluation/RatioEvaluation.h>
 #include <SpectralEvaluation/Evaluation/PlumeSpectrumSelector.h>
-#include <PPPLib/Logging.h>
 #include <PPPLib/File/Filesystem.h>
 #include <PPPLib/Meteorology/WindField.h>
+#include <PPPLib/Evaluation/EvaluationUtils.h>
 #include <SpectralEvaluation/Spectra/SpectrometerModel.h>
 
 // This is the information we need to continue an old processing
@@ -18,7 +18,7 @@
 
 #include <Poco/Path.h>
 #include <cmath>
-
+#include <sstream>
 
 #if defined(linux) || defined(__linux) || defined(__linux__)
 #define MAX_PATH 512
@@ -34,7 +34,7 @@ int CPostEvaluationController::EvaluateScan(
     novac::CString* txtFileName,
     CPlumeInScanProperty* plumeProperties)
 {
-    novac::CString errorMessage, message, serialNumber;
+    novac::CString errorMessage, serialNumber;
     Meteorology::CWindField windField;
     CDateTime startTime;
     novac::CSpectrumIO reader;
@@ -51,9 +51,13 @@ int CPostEvaluationController::EvaluateScan(
     const std::string pakFileNameStr((const char*)pakFileName);
     if (!scan.CheckScanFile(pakFileNameStr))
     {
-        errorMessage.Format("Could not read recieved pak-file %s. Will not evaluate.", (const char*)pakFileName);
-        ShowMessage(errorMessage);
-        return 2;
+        std::stringstream message;
+        message << "Could not read received pak file: '" << pakFileNameStr << "'";
+        if (scan.m_lastErrorMessage.size() > 0)
+        {
+            message << " (" << scan.m_lastErrorMessage << ")";
+        }
+        throw PPPLib::FileIoException(message.str());
     }
 
     // ---------- Get the information we need about the instrument ----------
@@ -67,13 +71,15 @@ int CPostEvaluationController::EvaluateScan(
     auto fitWindow = m_setup.GetFitWindow(scan.GetDeviceSerial(), scan.m_channel, scan.GetScanStartTime(), &fitWindowName);
     auto darkSettings = m_setup.GetDarkCorrection(scan.m_device, scan.m_startTime);
 
+    const SpectrometerModel spectrometerModel = CSpectrometerDatabase::GetInstance().GetModel(instrLocation.m_spectrometerModel);
+
     // Check if we have already evaluated this scan. Only if this is a re-run of
     // an old processing...
     if (m_userSettings.m_fIsContinuation)
     {
-        if (this->m_continuation.IsPreviouslyIgnored(pakFileName))
+        if (this->m_continuation.IsPreviouslyIgnored(pakFileNameStr))
         {
-            errorMessage.Format(" Scan %s has already been evaluated and was ignored. Will proceed to the next scan", (const char*)pakFileName);
+            errorMessage.Format(" Scan %s has already been evaluated and was ignored. Will proceed to the next scan", pakFileNameStr.c_str());
             ShowMessage(errorMessage);
 
             return 0;
@@ -102,15 +108,19 @@ int CPostEvaluationController::EvaluateScan(
     }
 
     // ------------- Check that the measurement is good enough to evaluate -----------
-    if (!IsGoodEnoughToEvaluate(&scan, fitWindow, instrLocation))
+    ReasonForScanRejection rejectionReason;
+    std::string errorMessageStr;
+    if (!IsGoodEnoughToEvaluate(scan, fitWindow, spectrometerModel, instrLocation, m_userSettings, rejectionReason, errorMessageStr))
     {
-        errorMessage.Format("Pak-file %s is not good enough qulity to evaluate. Will not evaulate.", (const char*)pakFileName);
-        ShowMessage(errorMessage);
+        // update the statistics
+        m_processingStats.InsertRejection(scan.m_device, rejectionReason);
+        m_log.Information("Scan quality not good enough to evaluate (" + errorMessageStr + "), skipping pak file : " + pakFileNameStr);
         return 5;
     }
 
     // Guess the spectrometer model, this is not written into the scan files themselves and must be guessed.
-    const novac::SpectrometerModel spectrometerModel = CSpectrometerDatabase::GetInstance().GuessModelFromSerial(scan.GetDeviceSerial());
+    // TODO: This may conflict with the value above!!!
+    // const novac::SpectrometerModel spectrometerModel = CSpectrometerDatabase::GetInstance().GuessModelFromSerial(scan.GetDeviceSerial());
 
     // 6. Evaluate the scan
     CScanEvaluation ev{ m_userSettings };
@@ -125,24 +135,25 @@ int CPostEvaluationController::EvaluateScan(
     }
 
     // 8. Get the result from the evaluation
+    std::unique_ptr<CScanResult> lastResult;
     if (ev.m_result != nullptr)
     {
-        m_lastResult = new CScanResult(*ev.m_result);
+        lastResult.reset(new CScanResult(*ev.m_result));
     }
 
     // TODO: Make use of this really useful index...
-    const int specieIndex = m_lastResult->GetSpecieIndex(CMolecule(m_userSettings.m_molecule).m_name);
+    const int specieIndex = lastResult->GetSpecieIndex(CMolecule(m_userSettings.m_molecule).m_name);
 
     // 9. Get the mode of the evaluation
-    m_lastResult->CheckMeasurementMode();
-    m_lastResult->GetStartTime(0, startTime);
+    lastResult->CheckMeasurementMode();
+    lastResult->GetStartTime(0, startTime);
 
     // 10. Append the results to the evaluation-summary log
-    AppendToEvaluationSummaryFile(m_lastResult, &scan, &instrLocation, &fitWindow, windField);
-    AppendToPakFileSummaryFile(m_lastResult, &scan, &instrLocation, &fitWindow, windField);
+    AppendToEvaluationSummaryFile(lastResult, &scan, &instrLocation, &fitWindow, windField);
+    AppendToPakFileSummaryFile(lastResult, &scan, &instrLocation, &fitWindow, windField);
 
     // 10. Append the result to the log file of the corresponding scanningInstrument
-    if (RETURN_CODE::SUCCESS != WriteEvaluationResult(m_lastResult, &scan, &instrLocation, &fitWindow, windField, txtFileName))
+    if (RETURN_CODE::SUCCESS != WriteEvaluationResult(lastResult, &scan, &instrLocation, &fitWindow, windField, txtFileName))
     {
         errorMessage.Format("Failed to write evaluation log file %s. No result produced", txtFileName);
         ShowMessage(errorMessage);
@@ -152,11 +163,10 @@ int CPostEvaluationController::EvaluateScan(
     //  this check should only be performed on the main fit window.
     if (Equals(fitWindow.name, m_userSettings.m_fitWindowsToUse[m_userSettings.m_mainFitWindow]))
     {
-        if (0 == CheckQualityOfFluxMeasurement(m_lastResult, pakFileName))
+        if (0 == CheckQualityOfFluxMeasurement(lastResult, pakFileName))
         {
             errorMessage.Format("Could not calculate flux from pak-file %s.", (const char*)pakFileName);
             ShowMessage(errorMessage);
-            delete m_lastResult; m_lastResult = nullptr;
             return 6;
         }
     }
@@ -164,19 +174,16 @@ int CPostEvaluationController::EvaluateScan(
     // 12. Return the properties of the scan
     if (plumeProperties != nullptr)
     {
-        m_lastResult->GetCalculatedPlumeProperties(*plumeProperties);
+        lastResult->GetCalculatedPlumeProperties(*plumeProperties);
     }
 
-    CreatePlumespectrumFile(fitWindowName, scan, spectrometerModel, plumeProperties, specieIndex);
-
-    // 13. Clean up
-    delete m_lastResult;
-    m_lastResult = nullptr;
+    CreatePlumespectrumFile(lastResult, fitWindowName, scan, spectrometerModel, plumeProperties, specieIndex);
 
     return 0;
 }
 
 void CPostEvaluationController::CreatePlumespectrumFile(
+    const std::unique_ptr<CScanResult>& result,
     const novac::CString& fitWindowName,
     novac::CScanFileHandler& scan,
     const novac::SpectrometerModel& spectrometerModel,
@@ -187,7 +194,7 @@ void CPostEvaluationController::CreatePlumespectrumFile(
         std::string(m_userSettings.m_outputDirectory) +
         "/" + std::string(fitWindowName) +
         "/PlumeSpectra/" +
-        m_lastResult->GetSerial().std_str();
+        result->GetSerial().std_str();
 
     int ret = Filesystem::CreateDirectoryStructure(outputDirectoryStr);
     if (ret)
@@ -203,7 +210,7 @@ void CPostEvaluationController::CreatePlumespectrumFile(
         PlumeSpectrumSelector spectrumSelector;
         spectrumSelector.CreatePlumeSpectrumFile(
             scan,
-            *m_lastResult,
+            *result,
             *plumeProperties,
             plumeCalculationSettings,
             spectrometerModel,
@@ -262,7 +269,7 @@ RETURN_CODE CPostEvaluationController::WriteRatioResult(const std::vector<Ratio>
     return RETURN_CODE::SUCCESS;
 }
 
-RETURN_CODE CPostEvaluationController::WriteEvaluationResult(const CScanResult* result, const novac::CScanFileHandler* scan, const Configuration::CInstrumentLocation* instrLocation, const novac::CFitWindow* window, Meteorology::CWindField& windField, novac::CString* txtFileName)
+RETURN_CODE CPostEvaluationController::WriteEvaluationResult(const std::unique_ptr<CScanResult>& result, const novac::CScanFileHandler* scan, const Configuration::CInstrumentLocation* instrLocation, const novac::CFitWindow* window, Meteorology::CWindField& windField, novac::CString* txtFileName)
 {
     novac::CString string, string1, string2, string3, string4;
     long itSpectrum, itSpecie; // iterators
@@ -509,7 +516,7 @@ RETURN_CODE CPostEvaluationController::WriteEvaluationResult(const CScanResult* 
     return RETURN_CODE::SUCCESS;
 }
 
-RETURN_CODE CPostEvaluationController::AppendToEvaluationSummaryFile(const CScanResult* result, const novac::CScanFileHandler* scan, const Configuration::CInstrumentLocation* /*instrLocation*/, const novac::CFitWindow* window, Meteorology::CWindField& /*windField*/)
+RETURN_CODE CPostEvaluationController::AppendToEvaluationSummaryFile(const std::unique_ptr<CScanResult>& result, const novac::CScanFileHandler* scan, const Configuration::CInstrumentLocation* /*instrLocation*/, const novac::CFitWindow* window, Meteorology::CWindField& /*windField*/)
 {
     novac::CString evalSummaryLog;
     bool fWriteHeaderLine = false;
@@ -565,7 +572,7 @@ RETURN_CODE CPostEvaluationController::AppendToEvaluationSummaryFile(const CScan
     return RETURN_CODE::SUCCESS;
 }
 
-RETURN_CODE CPostEvaluationController::AppendToPakFileSummaryFile(const CScanResult* result, const novac::CScanFileHandler* scan, const Configuration::CInstrumentLocation* /*instrLocation*/, const novac::CFitWindow* /*window*/, Meteorology::CWindField& /*windField*/)
+RETURN_CODE CPostEvaluationController::AppendToPakFileSummaryFile(const std::unique_ptr<CScanResult>& result, const novac::CScanFileHandler* scan, const Configuration::CInstrumentLocation* /*instrLocation*/, const novac::CFitWindow* /*window*/, Meteorology::CWindField& /*windField*/)
 {
     novac::CString pakSummaryLog;
     bool fWriteHeaderLine = false;
@@ -715,7 +722,7 @@ RETURN_CODE CPostEvaluationController::GetArchivingfileName(novac::CString& pakF
     return RETURN_CODE::SUCCESS;
 }
 
-int CPostEvaluationController::CheckQualityOfFluxMeasurement(CScanResult* result, const novac::CString& pakFileName) const
+int CPostEvaluationController::CheckQualityOfFluxMeasurement(std::unique_ptr<CScanResult>& result, const novac::CString& pakFileName) const
 {
     novac::CString errorMessage;
 
@@ -737,51 +744,6 @@ int CPostEvaluationController::CheckQualityOfFluxMeasurement(CScanResult* result
     return 1;
 }
 
-bool CPostEvaluationController::IsGoodEnoughToEvaluate(const novac::CScanFileHandler* scan, const novac::CFitWindow& fitWindow, Configuration::CInstrumentLocation& instrLocation)
-{
-    CSpectrum skySpectrum;
-    novac::CString errorMessage;
 
-    // Check that the sky-spectrum is ok
-    scan->GetSky(skySpectrum);
-    if (skySpectrum.IsDark())
-    {
-        errorMessage.Format(" - Sky spectrum in scan %s is dark. Will not evaluate scan", scan->GetFileName().c_str());
-        ShowMessage(errorMessage);
-
-        // update the statistics
-        m_processingStats.InsertRejection(scan->m_device, CPostProcessingStatistics::SKY_SPEC_DARK);
-
-        return false;
-    }
-
-    if ((instrLocation.m_instrumentType == INSTRUMENT_TYPE::INSTR_GOTHENBURG && skySpectrum.ExposureTime() > m_userSettings.m_maxExposureTime_got) ||
-        (instrLocation.m_instrumentType == INSTRUMENT_TYPE::INSTR_HEIDELBERG && skySpectrum.ExposureTime() > m_userSettings.m_maxExposureTime_hei))
-    {
-        errorMessage.Format(" - Sky spectrum in scan %s has too long exposure time (%ld ms). Will not evaluate scan", scan->GetFileName().c_str(), skySpectrum.ExposureTime());
-        ShowMessage(errorMessage);
-
-        // update the statistics
-        m_processingStats.InsertRejection(scan->m_device, CPostProcessingStatistics::SKY_SPEC_TOO_LONG_EXPTIME);
-
-        return false;
-    }
-
-    const SpectrometerModel spectrometerModel = CSpectrometerDatabase::GetInstance().GetModel(instrLocation.m_spectrometerModel);
-    const double dynamicRange = skySpectrum.NumSpectra() * spectrometerModel.maximumIntensityForSingleReadout;
-
-    if (skySpectrum.MaxValue(fitWindow.fitLow, fitWindow.fitHigh) >= dynamicRange)
-    {
-        errorMessage.Format(" - Sky spectrum in scan %s is saturated in fit region. Will not evaluate scan", scan->GetFileName().c_str());
-        ShowMessage(errorMessage);
-
-        // update the statistics
-        m_processingStats.InsertRejection(scan->m_device, CPostProcessingStatistics::SKY_SPEC_SATURATION);
-
-        return false;
-    }
-
-    return true;
-}
 
 

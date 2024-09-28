@@ -55,7 +55,7 @@ using namespace novac;
 
 
 // this is the working-thread that takes care of evaluating a portion of the scans
-void EvaluateScansThread(const Configuration::CNovacPPPConfiguration& setup, const Configuration::CUserConfiguration& userSettings, const CContinuationOfProcessing& continuation, CPostProcessingStatistics& processingStats);
+void EvaluateScansThread(ILogger& log, const Configuration::CNovacPPPConfiguration& setup, const Configuration::CUserConfiguration& userSettings, const CContinuationOfProcessing& continuation, CPostProcessingStatistics& processingStats);
 
 // this takes care of adding the evaluated log-files to the list in an synchronized way
 //  the parameter passed in a reference to an array of strings holding the names of the 
@@ -360,7 +360,7 @@ void CPostProcessing::EvaluateScans(
     std::vector<std::thread> evalThreads(m_userSettings.m_maxThreadNum);
     for (unsigned int threadIdx = 0; threadIdx < m_userSettings.m_maxThreadNum; ++threadIdx)
     {
-        std::thread t( EvaluateScansThread, std::cref(m_setup), std::cref(m_userSettings), std::cref(m_continuation), std::ref(m_processingStats) );
+        std::thread t( EvaluateScansThread, std::ref(m_log), std::cref(m_setup), std::cref(m_userSettings), std::cref(m_continuation), std::ref(m_processingStats) );
         evalThreads[threadIdx] = std::move(t);
     }
 
@@ -378,6 +378,7 @@ void CPostProcessing::EvaluateScans(
 }
 
 void EvaluateScansThread(
+    ILogger& log,
     const Configuration::CNovacPPPConfiguration& setup,
     const Configuration::CUserConfiguration& userSettings,
     const CContinuationOfProcessing& continuation,
@@ -386,7 +387,7 @@ void EvaluateScansThread(
     std::string fileName;
 
     // create a new CPostEvaluationController
-    Evaluation::CPostEvaluationController eval{ setup, userSettings, continuation, processingStats };
+    Evaluation::CPostEvaluationController eval{ log, setup, userSettings, continuation, processingStats };
 
     // while there are more .pak-files
     while (s_pakFilesRemaining.PopFront(fileName))

@@ -3,6 +3,7 @@
 cmake_minimum_required (VERSION 3.6)
 
 set(NPPLIB_EVALUATION_HEADERS
+    ${PppLib_INCLUDE_DIRS}/PPPLib/Evaluation/EvaluationUtils.h
     ${PppLib_INCLUDE_DIRS}/PPPLib/Evaluation/ExtendedScanResult.h
     ${PppLib_INCLUDE_DIRS}/PPPLib/Evaluation/PostEvaluationController.h
     ${PppLib_INCLUDE_DIRS}/PPPLib/Evaluation/ScanEvaluation.h
@@ -11,6 +12,7 @@ set(NPPLIB_EVALUATION_HEADERS
     
     
 set(NPPLIB_EVALUATION_SOURCES
+    ${CMAKE_CURRENT_LIST_DIR}/EvaluationUtils.cpp
     ${CMAKE_CURRENT_LIST_DIR}/PostEvaluationController.cpp
     ${CMAKE_CURRENT_LIST_DIR}/ScanEvaluation.cpp
     ${CMAKE_CURRENT_LIST_DIR}/ScanResult.cpp

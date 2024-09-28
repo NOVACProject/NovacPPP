@@ -41,14 +41,14 @@ void CContinuationOfProcessing::ScanStatusLogFileForOldScans(const Configuration
             // if this line corresponds to an ignored scan
             pt[0] = '\0';
             fileName.Format("%s", buffer + 8);
-            m_previouslyIgnoredFiles.push_back(fileName);
+            m_previouslyIgnoredFiles.push_back(fileName.std_str());
             continue;
         }
     }
     fclose(f);
 }
 
-bool CContinuationOfProcessing::IsPreviouslyIgnored(const novac::CString& pakFileName) const
+bool CContinuationOfProcessing::IsPreviouslyIgnored(const std::string& pakFileName) const
 {
     for each (const novac::CString & fileName in this->m_previouslyIgnoredFiles)
     {

@@ -22,9 +22,8 @@ public:
             in the correct format!
         @param settings - will on successful parsing of the file contain the processing-information
             found in the file.
-        @return SUCCESS - if successful.
-    */
-    RETURN_CODE ReadProcessingFile(const novac::CString& fileName, Configuration::CUserConfiguration& settings);
+        @throws FileIoException if the file could not be read */
+    void ReadProcessingFile(const novac::CString& fileName, Configuration::CUserConfiguration& settings);
 
     /** This takes care of writing the contents of a settings data-structure to file
         Only the part regarding the processing of the data will be written to the file */

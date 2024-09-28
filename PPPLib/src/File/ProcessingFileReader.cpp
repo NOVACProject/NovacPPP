@@ -1,5 +1,6 @@
 #include <PPPLib/File/ProcessingFileReader.h>
 #include <PPPLib/VolcanoInfo.h>
+#include <PPPLib/Exceptions.h>
 #include <cstring>
 #include <algorithm>
 
@@ -16,13 +17,14 @@ CProcessingFileReader::CProcessingFileReader(ILogger& logger)
 {
 }
 
-RETURN_CODE CProcessingFileReader::ReadProcessingFile(const novac::CString& filename, Configuration::CUserConfiguration& settings) {
-
+void CProcessingFileReader::ReadProcessingFile(const novac::CString& filename, Configuration::CUserConfiguration& settings)
+{
     // 1. Open the file
     if (!Open(filename))
     {
-        m_log.Error("Cannot open file: " + filename.std_str());
-        return RETURN_CODE::FAIL;
+        std::string message = "Cannot open file: " + filename.std_str();
+        m_log.Error(message);
+        throw PPPLib::FileIoException(message);
     }
 
     // parse the file, one line at a time.
@@ -36,19 +38,22 @@ RETURN_CODE CProcessingFileReader::ReadProcessingFile(const novac::CString& file
             continue;
 
         // If we've found the output directory
-        if (Equals(szToken, str_outputDirectory, strlen(str_outputDirectory))) {
+        if (Equals(szToken, str_outputDirectory, strlen(str_outputDirectory)))
+        {
             Parse_PathItem(ENDTAG(str_outputDirectory), settings.m_outputDirectory);
             continue;
         }
 
         // If we've found the temporary directory
-        if (Equals(szToken, str_tempDirectory, strlen(str_tempDirectory))) {
+        if (Equals(szToken, str_tempDirectory, strlen(str_tempDirectory)))
+        {
             Parse_PathItem(ENDTAG(str_tempDirectory), settings.m_tempDirectory);
             continue;
         }
 
         // If we've found the maximum number of allowed threads
-        if (Equals(szToken, str_maxThreadNum, strlen(str_maxThreadNum))) {
+        if (Equals(szToken, str_maxThreadNum, strlen(str_maxThreadNum)))
+        {
             int number = 1;
             Parse_IntItem(ENDTAG(str_maxThreadNum), number);
             settings.m_maxThreadNum = (unsigned long)std::max(1, number);
@@ -56,162 +61,190 @@ RETURN_CODE CProcessingFileReader::ReadProcessingFile(const novac::CString& file
         }
 
         // If we've found the beginning date
-        if (Equals(szToken, str_fromDate, strlen(str_fromDate))) {
+        if (Equals(szToken, str_fromDate, strlen(str_fromDate)))
+        {
             Parse_Date(ENDTAG(str_fromDate), settings.m_fromDate);
             continue;
         }
 
         // If we've found the end date
-        if (Equals(szToken, str_toDate, strlen(str_toDate))) {
+        if (Equals(szToken, str_toDate, strlen(str_toDate)))
+        {
             Parse_Date(ENDTAG(str_toDate), settings.m_toDate);
             continue;
         }
 
 
         // Look for the volcano to parse
-        if (Equals(szToken, str_volcano, strlen(str_volcano))) {
+        if (Equals(szToken, str_volcano, strlen(str_volcano)))
+        {
             novac::CString code;
             Parse_StringItem(ENDTAG(str_volcano), code);
             settings.m_volcano = g_volcanoes.GetVolcanoIndex(code);
         }
 
         //* Look for the xml tag 'instrument' and use Parse_Instrument and Parse_Location to read serial number and location to object 'settings' */
-        if (Equals(szToken, "FitWindows", 10)) {
+        if (Equals(szToken, "FitWindows", 10))
+        {
             Parse_FitWindow(settings);
             continue;
         }
 
-        if (Equals(szToken, "Calibration", strlen("Calibration"))) {
+        if (Equals(szToken, "Calibration", strlen("Calibration")))
+        {
             Parse_CalibrationSetting(settings);
             continue;
         }
 
         // If we've found the mode
-        if (Equals(szToken, str_processingMode, strlen(str_processingMode))) {
+        if (Equals(szToken, str_processingMode, strlen(str_processingMode)))
+        {
             novac::CString modeStr;
             Parse_StringItem(ENDTAG(str_processingMode), modeStr);
-            if (Equals(modeStr, "composition")) {
+            if (Equals(modeStr, "composition"))
+            {
                 settings.m_processingMode = PROCESSING_MODE::PROCESSING_MODE_COMPOSITION;
             }
-            else if (Equals(modeStr, "stratosphere")) {
+            else if (Equals(modeStr, "stratosphere"))
+            {
                 settings.m_processingMode = PROCESSING_MODE::PROCESSING_MODE_STRATOSPHERE;
             }
-            else if (Equals(modeStr, "calibration")) {
+            else if (Equals(modeStr, "calibration"))
+            {
                 settings.m_processingMode = PROCESSING_MODE::PROCESSING_MODE_INSTRUMENT_CALIBRATION;
             }
-            else {
+            else
+            {
                 settings.m_processingMode = PROCESSING_MODE::PROCESSING_MODE_FLUX;
             }
             continue;
         }
 
-        if (Equals(szToken, str_doEvaluations, strlen(str_doEvaluations))) {
+        if (Equals(szToken, str_doEvaluations, strlen(str_doEvaluations)))
+        {
             novac::CString boolStr;
             Parse_StringItem(ENDTAG(str_doEvaluations), boolStr);
             settings.m_doEvaluations = !Equals(boolStr, "false"); // this is better than 'Equals(boolStr, "true") since any other string the user may have entered (wrongly) is ignored
         }
 
         // If we've found the main gas
-        if (Equals(szToken, str_molecule, strlen(str_molecule))) {
+        if (Equals(szToken, str_molecule, strlen(str_molecule)))
+        {
             novac::CString molecStr;
             Parse_StringItem(ENDTAG(str_molecule), molecStr);
-            if (Equals(molecStr, "BrO")) {
+            if (Equals(molecStr, "BrO"))
+            {
                 settings.m_molecule = MOLEC_BRO;
             }
-            else if (Equals(molecStr, "NO2")) {
+            else if (Equals(molecStr, "NO2"))
+            {
                 settings.m_molecule = MOLEC_NO2;
             }
-            else if (Equals(molecStr, "O3")) {
+            else if (Equals(molecStr, "O3"))
+            {
                 settings.m_molecule = MOLEC_O3;
             }
-            else {
+            else
+            {
                 settings.m_molecule = MOLEC_SO2;
             }
             continue;
         }
 
         // If we've found the wind field file to use
-        if (Equals(szToken, str_windFieldFile, strlen(str_windFieldFile))) {
+        if (Equals(szToken, str_windFieldFile, strlen(str_windFieldFile)))
+        {
             Parse_PathItem(ENDTAG(str_windFieldFile), settings.m_windFieldFile);
             continue;
         }
-        if (Equals(szToken, str_windFieldFileOption, strlen(str_windFieldFileOption))) {
+        if (Equals(szToken, str_windFieldFileOption, strlen(str_windFieldFileOption)))
+        {
             Parse_IntItem(ENDTAG(str_windFieldFileOption), settings.m_windFieldFileOption);
             continue;
         }
 
         // If we've found the local directory where to search for data
-        if (Equals(szToken, str_LocalDirectory, strlen(str_LocalDirectory))) {
+        if (Equals(szToken, str_LocalDirectory, strlen(str_LocalDirectory)))
+        {
             Parse_PathItem(ENDTAG(str_LocalDirectory), settings.m_LocalDirectory);
             continue;
         }
 
         // If we've found the local directory where to search for data
-        if (Equals(szToken, str_includeSubDirectories_Local, strlen(str_includeSubDirectories_Local))) {
+        if (Equals(szToken, str_includeSubDirectories_Local, strlen(str_includeSubDirectories_Local)))
+        {
             Parse_IntItem(ENDTAG(str_includeSubDirectories_Local), settings.m_includeSubDirectories_Local);
             continue;
         }
 
         // If we've found the FTP directory where to search for data
-        if (Equals(szToken, str_FTPDirectory, strlen(str_FTPDirectory))) {
+        if (Equals(szToken, str_FTPDirectory, strlen(str_FTPDirectory)))
+        {
             Parse_StringItem(ENDTAG(str_FTPDirectory), settings.m_FTPDirectory);
             continue;
         }
 
         // If we've found the FTP username
-        if (Equals(szToken, str_FTPUsername, strlen(str_FTPUsername))) {
+        if (Equals(szToken, str_FTPUsername, strlen(str_FTPUsername)))
+        {
             Parse_StringItem(ENDTAG(str_FTPUsername), settings.m_FTPUsername);
             continue;
         }
 
         // If we've found the FTP password
-        if (Equals(szToken, str_FTPPassword, strlen(str_FTPPassword))) {
+        if (Equals(szToken, str_FTPPassword, strlen(str_FTPPassword)))
+        {
             Parse_StringItem(ENDTAG(str_FTPPassword), settings.m_FTPPassword);
             continue;
         }
 
         // If we've found the FTP password
-        if (Equals(szToken, str_includeSubDirectories_FTP, strlen(str_includeSubDirectories_FTP))) {
+        if (Equals(szToken, str_includeSubDirectories_FTP, strlen(str_includeSubDirectories_FTP)))
+        {
             Parse_IntItem(ENDTAG(str_includeSubDirectories_FTP), settings.m_includeSubDirectories_FTP);
             continue;
         }
 
         // If we should upload the results to the NovacFTP server at the end...
-        if (Equals(szToken, str_uploadResults, strlen(str_uploadResults))) {
+        if (Equals(szToken, str_uploadResults, strlen(str_uploadResults)))
+        {
             Parse_IntItem(ENDTAG(str_uploadResults), settings.m_uploadResults);
             continue;
         }
 
         // If we've found the settings for the geometry calculations
-        if (Equals(szToken, "GeometryCalc", 12)) {
+        if (Equals(szToken, "GeometryCalc", 12))
+        {
             this->Parse_GeometryCalc(settings);
             continue;
         }
 
-        if (Equals(szToken, "SkySpectrum", 11)) {
+        if (Equals(szToken, "SkySpectrum", 11))
+        {
             this->Parse_SkySpectrum(settings);
             continue;
         }
 
         // If we've found the settings for the dual-beam calculations
-        if (Equals(szToken, "DualBeam", 12)) {
+        if (Equals(szToken, "DualBeam", 12))
+        {
             this->Parse_DualBeam(settings);
             continue;
         }
 
         // If we've found the settings for when to discard spectra
-        if (Equals(szToken, "Discarding", 10)) {
+        if (Equals(szToken, "Discarding", 10))
+        {
             this->Parse_DiscardSettings(settings);
             continue;
         }
 
     }//end while
     Close();
-
-    return RETURN_CODE::SUCCESS;
 }
 
-void CProcessingFileReader::Parse_FitWindow(Configuration::CUserConfiguration& settings) {
+void CProcessingFileReader::Parse_FitWindow(Configuration::CUserConfiguration& settings)
+{
     novac::CString fitWindowName, mainFitWindowName;
     int nFitWindowsFound = 0;
 
@@ -225,13 +258,17 @@ void CProcessingFileReader::Parse_FitWindow(Configuration::CUserConfiguration& s
         if (szToken == nullptr || strlen(szToken) < 3)
             continue;
 
-        if (Equals(szToken, "/FitWindows", 11)) {
+        if (Equals(szToken, "/FitWindows", 11))
+        {
 
             // set the index of the most important fit-window
             settings.m_mainFitWindow = 0;
-            if (mainFitWindowName.GetLength() > 0) {
-                for (int k = 0; k < settings.m_nFitWindowsToUse; ++k) {
-                    if (Equals(settings.m_fitWindowsToUse[k], mainFitWindowName)) {
+            if (mainFitWindowName.GetLength() > 0)
+            {
+                for (int k = 0; k < settings.m_nFitWindowsToUse; ++k)
+                {
+                    if (Equals(settings.m_fitWindowsToUse[k], mainFitWindowName))
+                    {
                         settings.m_mainFitWindow = k;
                         break;
                     }
@@ -244,24 +281,28 @@ void CProcessingFileReader::Parse_FitWindow(Configuration::CUserConfiguration& s
             return;
         }
 
-        if (Equals(szToken, "item", 6)) {
+        if (Equals(szToken, "item", 6))
+        {
             // we've found another fit-window to use
             Parse_StringItem("/item", fitWindowName);
-            if (settings.m_nFitWindowsToUse < MAX_FIT_WINDOWS) {
+            if (settings.m_nFitWindowsToUse < MAX_FIT_WINDOWS)
+            {
                 settings.m_fitWindowsToUse[nFitWindowsFound].Format(fitWindowName);
                 ++nFitWindowsFound;
             }
 
             continue;
         }
-        if (Equals(szToken, str_mainFitWindow, strlen(str_mainFitWindow))) {
+        if (Equals(szToken, str_mainFitWindow, strlen(str_mainFitWindow)))
+        {
             Parse_StringItem(ENDTAG(str_mainFitWindow), mainFitWindowName);
             continue;
         }
     }
 }
 
-void CProcessingFileReader::Parse_CalibrationSetting(Configuration::CUserConfiguration& settings) {
+void CProcessingFileReader::Parse_CalibrationSetting(Configuration::CUserConfiguration& settings)
+{
     novac::CString fitWindowName, mainFitWindowName;
 
     // parse the file, one line at a time.
@@ -274,55 +315,65 @@ void CProcessingFileReader::Parse_CalibrationSetting(Configuration::CUserConfigu
         if (szToken == nullptr || strlen(szToken) < 3)
             continue;
 
-        if (Equals(szToken, "/Calibration", strlen("/Calibration"))) {
+        if (Equals(szToken, "/Calibration", strlen("/Calibration")))
+        {
             return;
         }
 
-        if (Equals(szToken, m_str_generateEvaluationSettings, strlen(m_str_generateEvaluationSettings))) {
+        if (Equals(szToken, m_str_generateEvaluationSettings, strlen(m_str_generateEvaluationSettings)))
+        {
             int tmpInt = 0;
             Parse_IntItem(ENDTAG(m_str_generateEvaluationSettings), tmpInt);
             settings.m_generateEvaluationSetting = (tmpInt != 0);
             continue;
         }
 
-        if (Equals(szToken, m_str_calibrationIntervalHours, strlen(m_str_calibrationIntervalHours))) {
+        if (Equals(szToken, m_str_calibrationIntervalHours, strlen(m_str_calibrationIntervalHours)))
+        {
             Parse_FloatItem(ENDTAG(m_str_calibrationIntervalHours), settings.m_calibrationIntervalHours);
             continue;
         }
 
-        if (Equals(szToken, m_str_calibrationIntervalTimeOfDayLow, strlen(m_str_calibrationIntervalTimeOfDayLow))) {
+        if (Equals(szToken, m_str_calibrationIntervalTimeOfDayLow, strlen(m_str_calibrationIntervalTimeOfDayLow)))
+        {
             Parse_IntItem(ENDTAG(m_str_calibrationIntervalTimeOfDayLow), settings.m_calibrationIntervalTimeOfDayLow);
             continue;
         }
 
-        if (Equals(szToken, m_str_calibrationIntervalTimeOfDayHigh, strlen(m_str_calibrationIntervalTimeOfDayHigh))) {
+        if (Equals(szToken, m_str_calibrationIntervalTimeOfDayHigh, strlen(m_str_calibrationIntervalTimeOfDayHigh)))
+        {
             Parse_IntItem(ENDTAG(m_str_calibrationIntervalTimeOfDayHigh), settings.m_calibrationIntervalTimeOfDayHigh);
             continue;
         }
 
-        if (Equals(szToken, m_str_highResolutionSolarSpectrumFile, strlen(m_str_highResolutionSolarSpectrumFile))) {
+        if (Equals(szToken, m_str_highResolutionSolarSpectrumFile, strlen(m_str_highResolutionSolarSpectrumFile)))
+        {
             Parse_StringItem(ENDTAG(m_str_highResolutionSolarSpectrumFile), settings.m_highResolutionSolarSpectrumFile);
             continue;
         }
 
-        if (Equals(szToken, m_str_calibrationInstrumentLineShapeFitOption, strlen(m_str_calibrationInstrumentLineShapeFitOption))) {
+        if (Equals(szToken, m_str_calibrationInstrumentLineShapeFitOption, strlen(m_str_calibrationInstrumentLineShapeFitOption)))
+        {
             Parse_IntItem(ENDTAG(m_str_calibrationInstrumentLineShapeFitOption), settings.m_calibrationInstrumentLineShapeFitOption);
             continue;
         }
 
-        if (Equals(szToken, m_str_calibrationInstrumentLineShapeFitRegionLow, strlen(m_str_calibrationInstrumentLineShapeFitRegionLow))) {
+        if (Equals(szToken, m_str_calibrationInstrumentLineShapeFitRegionLow, strlen(m_str_calibrationInstrumentLineShapeFitRegionLow)))
+        {
             Parse_FloatItem(ENDTAG(m_str_calibrationInstrumentLineShapeFitRegionLow), settings.m_calibrationInstrumentLineShapeFitRegion.low);
             continue;
         }
 
-        if (Equals(szToken, m_str_calibrationInstrumentLineShapeFitRegionHigh, strlen(m_str_calibrationInstrumentLineShapeFitRegionHigh))) {
+        if (Equals(szToken, m_str_calibrationInstrumentLineShapeFitRegionHigh, strlen(m_str_calibrationInstrumentLineShapeFitRegionHigh)))
+        {
             Parse_FloatItem(ENDTAG(m_str_calibrationInstrumentLineShapeFitRegionHigh), settings.m_calibrationInstrumentLineShapeFitRegion.high);
             continue;
         }
     }
 }
 
-void CProcessingFileReader::Parse_SkySpectrum(Configuration::CUserConfiguration& settings) {
+void CProcessingFileReader::Parse_SkySpectrum(Configuration::CUserConfiguration& settings)
+{
     novac::CString option = novac::CString("option");
     novac::CString value = novac::CString("value");
     novac::CString parsedValueStr;
@@ -338,11 +389,14 @@ void CProcessingFileReader::Parse_SkySpectrum(Configuration::CUserConfiguration&
         if (szToken == nullptr || strlen(szToken) < 3)
             continue;
 
-        if (Equals(szToken, "/SkySpectrum", 12)) {
-            if (settings.sky.skyOption == Configuration::SKY_OPTION::SPECTRUM_INDEX_IN_SCAN) {
+        if (Equals(szToken, "/SkySpectrum", 12))
+        {
+            if (settings.sky.skyOption == Configuration::SKY_OPTION::SPECTRUM_INDEX_IN_SCAN)
+            {
                 settings.sky.indexInScan = atoi(parsedValueStr);
             }
-            else if (settings.sky.skyOption == Configuration::SKY_OPTION::USER_SUPPLIED) {
+            else if (settings.sky.skyOption == Configuration::SKY_OPTION::USER_SUPPLIED)
+            {
                 settings.sky.skySpectrumFile = parsedValueStr.std_str();
             }
 
@@ -351,21 +405,27 @@ void CProcessingFileReader::Parse_SkySpectrum(Configuration::CUserConfiguration&
 
         // we've found the minimum distance between two instruments that can be used to calculate
         //	a plume height
-        if (Equals(szToken, option, option.GetLength())) {
+        if (Equals(szToken, option, option.GetLength()))
+        {
             this->Parse_StringItem("/" + option, tmpString);
-            if (Equals(tmpString, "SCAN")) {
+            if (Equals(tmpString, "SCAN"))
+            {
                 settings.sky.skyOption = Configuration::SKY_OPTION::MEASURED_IN_SCAN;
             }
-            else if (Equals(tmpString, "AverageOfGood")) {
+            else if (Equals(tmpString, "AverageOfGood"))
+            {
                 settings.sky.skyOption = Configuration::SKY_OPTION::AVERAGE_OF_GOOD_SPECTRA_IN_SCAN;
             }
-            else if (Equals(tmpString, "Index")) {
+            else if (Equals(tmpString, "Index"))
+            {
                 settings.sky.skyOption = Configuration::SKY_OPTION::SPECTRUM_INDEX_IN_SCAN;
             }
-            else if (Equals(tmpString, "User")) {
+            else if (Equals(tmpString, "User"))
+            {
                 settings.sky.skyOption = Configuration::SKY_OPTION::USER_SUPPLIED;
             }
-            else {
+            else
+            {
                 settings.sky.skyOption = Configuration::SKY_OPTION::MEASURED_IN_SCAN;
             }
             continue;
@@ -373,14 +433,16 @@ void CProcessingFileReader::Parse_SkySpectrum(Configuration::CUserConfiguration&
 
         // we've found the maximum distance between two instruments that can be used to calculate
         //	a plume height
-        if (Equals(szToken, value, value.GetLength())) {
+        if (Equals(szToken, value, value.GetLength()))
+        {
             this->Parse_StringItem("/" + value, parsedValueStr);
             continue;
         }
     }
 }
 
-void CProcessingFileReader::Parse_GeometryCalc(Configuration::CUserConfiguration& settings) {
+void CProcessingFileReader::Parse_GeometryCalc(Configuration::CUserConfiguration& settings)
+{
 
     // parse the file, one line at a time.
     szToken = "start";
@@ -392,51 +454,59 @@ void CProcessingFileReader::Parse_GeometryCalc(Configuration::CUserConfiguration
         if (szToken == nullptr || strlen(szToken) < 3)
             continue;
 
-        if (Equals(szToken, "/GeometryCalc", 13)) {
+        if (Equals(szToken, "/GeometryCalc", 13))
+        {
             return;
         }
 
         // we've found the completeness limit for the scans that can be used to calculate
         //	a plume height
-        if (Equals(szToken, str_calcGeometry_CompletenessLimit, strlen(str_calcGeometry_CompletenessLimit))) {
+        if (Equals(szToken, str_calcGeometry_CompletenessLimit, strlen(str_calcGeometry_CompletenessLimit)))
+        {
             this->Parse_FloatItem(ENDTAG(str_calcGeometry_CompletenessLimit), settings.m_calcGeometry_CompletenessLimit);
             continue;
         }
 
         // we've found the time each geometry-calculation is valid for (in seconds)
-        if (Equals(szToken, str_calcGeometryValidTime, strlen(str_calcGeometryValidTime))) {
+        if (Equals(szToken, str_calcGeometryValidTime, strlen(str_calcGeometryValidTime)))
+        {
             this->Parse_IntItem(ENDTAG(str_calcGeometryValidTime), settings.m_calcGeometryValidTime);
             continue;
         }
 
         // we've found the maximum difference in start-time between any two scans that can be combined
-        if (Equals(szToken, str_calcGeometry_MaxTimeDifference, strlen(str_calcGeometry_MaxTimeDifference))) {
+        if (Equals(szToken, str_calcGeometry_MaxTimeDifference, strlen(str_calcGeometry_MaxTimeDifference)))
+        {
             this->Parse_IntItem(ENDTAG(str_calcGeometry_MaxTimeDifference), settings.m_calcGeometry_MaxTimeDifference);
             continue;
         }
 
         // we've found the minimum distance between two instruments that can be used to calculate
         //	a plume height
-        if (Equals(szToken, str_calcGeometry_MaxDistance, strlen(str_calcGeometry_MaxDistance))) {
+        if (Equals(szToken, str_calcGeometry_MaxDistance, strlen(str_calcGeometry_MaxDistance)))
+        {
             this->Parse_IntItem(ENDTAG(str_calcGeometry_MaxDistance), settings.m_calcGeometry_MaxDistance);
             continue;
         }
 
         // we've found the minimum distance between two instruments that can be used to calculate
         //	a plume height
-        if (Equals(szToken, str_calcGeometry_MinDistance, strlen(str_calcGeometry_MinDistance))) {
+        if (Equals(szToken, str_calcGeometry_MinDistance, strlen(str_calcGeometry_MinDistance)))
+        {
             this->Parse_IntItem(ENDTAG(str_calcGeometry_MinDistance), settings.m_calcGeometry_MinDistance);
             continue;
         }
 
         // we've found the maximum tolerable error in the calculated plume altitude
-        if (Equals(szToken, str_calcGeometry_MaxPlumeAltError, strlen(str_calcGeometry_MaxPlumeAltError))) {
+        if (Equals(szToken, str_calcGeometry_MaxPlumeAltError, strlen(str_calcGeometry_MaxPlumeAltError)))
+        {
             this->Parse_FloatItem(ENDTAG(str_calcGeometry_MaxPlumeAltError), settings.m_calcGeometry_MaxPlumeAltError);
             continue;
         }
 
         // we've found the maximum tolerable error in the calculated plume altitude
-        if (Equals(szToken, str_calcGeometry_MaxWindDirectionError, strlen(str_calcGeometry_MaxWindDirectionError))) {
+        if (Equals(szToken, str_calcGeometry_MaxWindDirectionError, strlen(str_calcGeometry_MaxWindDirectionError)))
+        {
             this->Parse_FloatItem(ENDTAG(str_calcGeometry_MaxWindDirectionError), settings.m_calcGeometry_MaxWindDirectionError);
             continue;
         }
@@ -444,7 +514,8 @@ void CProcessingFileReader::Parse_GeometryCalc(Configuration::CUserConfiguration
 }
 
 /** Parses an individual dual-beam section */
-void CProcessingFileReader::Parse_DualBeam(Configuration::CUserConfiguration& settings) {
+void CProcessingFileReader::Parse_DualBeam(Configuration::CUserConfiguration& settings)
+{
 
     // parse the file, one line at a time.
     szToken = "start";
@@ -456,18 +527,21 @@ void CProcessingFileReader::Parse_DualBeam(Configuration::CUserConfiguration& se
         if (szToken == nullptr || strlen(szToken) < 3)
             continue;
 
-        if (Equals(szToken, "/DualBeam", 13)) {
+        if (Equals(szToken, "/DualBeam", 13))
+        {
             return;
         }
 
         // we've found the time each dual-beam is valid for (in seconds)
-        if (Equals(szToken, str_dualBeam_ValidTime, strlen(str_dualBeam_ValidTime))) {
+        if (Equals(szToken, str_dualBeam_ValidTime, strlen(str_dualBeam_ValidTime)))
+        {
             this->Parse_IntItem(ENDTAG(str_dualBeam_ValidTime), settings.m_dualBeam_ValidTime);
             continue;
         }
 
         // we've found the flag whether we should use the maximum test-length possible (or not)
-        if (Equals(szToken, str_fUseMaxTestLength_DualBeam, strlen(str_fUseMaxTestLength_DualBeam))) {
+        if (Equals(szToken, str_fUseMaxTestLength_DualBeam, strlen(str_fUseMaxTestLength_DualBeam)))
+        {
             int tmpInt;
             this->Parse_IntItem(ENDTAG(str_fUseMaxTestLength_DualBeam), tmpInt);
             if (tmpInt)
@@ -478,14 +552,16 @@ void CProcessingFileReader::Parse_DualBeam(Configuration::CUserConfiguration& se
         }
 
         // we've found the maximum tolerable error in the calculated wind-speed
-        if (Equals(szToken, str_dualBeam_MaxWindSpeedError, strlen(str_dualBeam_MaxWindSpeedError))) {
+        if (Equals(szToken, str_dualBeam_MaxWindSpeedError, strlen(str_dualBeam_MaxWindSpeedError)))
+        {
             this->Parse_FloatItem(ENDTAG(str_dualBeam_MaxWindSpeedError), settings.m_dualBeam_MaxWindSpeedError);
             continue;
         }
     }
 }
 
-void CProcessingFileReader::Parse_DiscardSettings(Configuration::CUserConfiguration& settings) {
+void CProcessingFileReader::Parse_DiscardSettings(Configuration::CUserConfiguration& settings)
+{
 
     // parse the file, one line at a time.
     szToken = "start";
@@ -497,40 +573,47 @@ void CProcessingFileReader::Parse_DiscardSettings(Configuration::CUserConfigurat
         if (szToken == nullptr || strlen(szToken) < 3)
             continue;
 
-        if (Equals(szToken, "/Discarding", 11)) {
+        if (Equals(szToken, "/Discarding", 11))
+        {
             return;
         }
 
         // we've found the limit for the completeness of each scan
-        if (Equals(szToken, str_completenessLimitFlux, strlen(str_completenessLimitFlux))) {
+        if (Equals(szToken, str_completenessLimitFlux, strlen(str_completenessLimitFlux)))
+        {
             this->Parse_FloatItem(ENDTAG(str_completenessLimitFlux), settings.m_completenessLimitFlux);
             continue;
         }
 
         // we've found the minimum saturation ratio that we can have in the fit-region and
         //	still consider the spectrum worth evaluating
-        if (Equals(szToken, str_minimumSaturationInFitRegion, strlen(str_minimumSaturationInFitRegion))) {
+        if (Equals(szToken, str_minimumSaturationInFitRegion, strlen(str_minimumSaturationInFitRegion)))
+        {
             this->Parse_FloatItem(ENDTAG(str_minimumSaturationInFitRegion), settings.m_minimumSaturationInFitRegion);
             continue;
         }
 
         // we've found the maximum exposure time that we can have of the spectrum and
         //	still consider the spectrum worth evaluating
-        if (Equals(szToken, str_maxExposureTime_got, strlen(str_maxExposureTime_got))) {
+        if (Equals(szToken, str_maxExposureTime_got, strlen(str_maxExposureTime_got)))
+        {
             this->Parse_IntItem(ENDTAG(str_maxExposureTime_got), settings.m_maxExposureTime_got);
         }
-        if (Equals(szToken, str_maxExposureTime_hei, strlen(str_maxExposureTime_hei))) {
+        if (Equals(szToken, str_maxExposureTime_hei, strlen(str_maxExposureTime_hei)))
+        {
             this->Parse_IntItem(ENDTAG(str_maxExposureTime_hei), settings.m_maxExposureTime_hei);
         }
 
     }
 }
 
-RETURN_CODE CProcessingFileReader::WriteProcessingFile(const novac::CString& fileName, const Configuration::CUserConfiguration& settings) {
+RETURN_CODE CProcessingFileReader::WriteProcessingFile(const novac::CString& fileName, const Configuration::CUserConfiguration& settings)
+{
 
     // try to open the file
     FILE* f = fopen(fileName, "w");
-    if (f == NULL) {
+    if (f == NULL)
+    {
         return RETURN_CODE::FAIL;
     }
 
@@ -546,7 +629,8 @@ RETURN_CODE CProcessingFileReader::WriteProcessingFile(const novac::CString& fil
     PrintParameter(f, 1, str_tempDirectory, settings.m_tempDirectory);
 
     // the mode
-    switch (settings.m_processingMode) {
+    switch (settings.m_processingMode)
+    {
     case PROCESSING_MODE::PROCESSING_MODE_FLUX:			PrintParameter(f, 1, str_processingMode, "Flux"); break;
     case PROCESSING_MODE::PROCESSING_MODE_COMPOSITION:	PrintParameter(f, 1, str_processingMode, "Composition"); break;
     case PROCESSING_MODE::PROCESSING_MODE_STRATOSPHERE:	PrintParameter(f, 1, str_processingMode, "Stratosphere"); break;
@@ -555,7 +639,8 @@ RETURN_CODE CProcessingFileReader::WriteProcessingFile(const novac::CString& fil
     }
 
     // the most important molecule
-    switch (settings.m_molecule) {
+    switch (settings.m_molecule)
+    {
     case MOLEC_SO2:		fprintf(f, "\t<molecule>SO2</molecule>\n"); break;
     case MOLEC_O3:		fprintf(f, "\t<molecule>O3</molecule>\n"); break;
     case MOLEC_BRO:		fprintf(f, "\t<molecule>BRO</molecule>\n"); break;
@@ -606,7 +691,8 @@ RETURN_CODE CProcessingFileReader::WriteProcessingFile(const novac::CString& fil
 
     // the fit fit windows to use
     fprintf(f, "\t<FitWindows>\n");
-    for (int k = 0; k < settings.m_nFitWindowsToUse; ++k) {
+    for (int k = 0; k < settings.m_nFitWindowsToUse; ++k)
+    {
         fprintf(f, "\t\t<item>%s</item>\n", (const char*)settings.m_fitWindowsToUse[k]);
     }
     fprintf(f, "\t\t<main>%s</main>\n", (const char*)settings.m_fitWindowsToUse[settings.m_mainFitWindow]);
@@ -614,17 +700,21 @@ RETURN_CODE CProcessingFileReader::WriteProcessingFile(const novac::CString& fil
 
     // the sky-spectrum to use
     fprintf(f, "\t<SkySpectrum>\n");
-    if (settings.sky.skyOption == Configuration::SKY_OPTION::MEASURED_IN_SCAN) {
+    if (settings.sky.skyOption == Configuration::SKY_OPTION::MEASURED_IN_SCAN)
+    {
         fprintf(f, "\t\t<option>SCAN</option>\n");
     }
-    else if (settings.sky.skyOption == Configuration::SKY_OPTION::AVERAGE_OF_GOOD_SPECTRA_IN_SCAN) {
+    else if (settings.sky.skyOption == Configuration::SKY_OPTION::AVERAGE_OF_GOOD_SPECTRA_IN_SCAN)
+    {
         fprintf(f, "\t\t<option>AverageOfGood</option>\n");
     }
-    else if (settings.sky.skyOption == Configuration::SKY_OPTION::SPECTRUM_INDEX_IN_SCAN) {
+    else if (settings.sky.skyOption == Configuration::SKY_OPTION::SPECTRUM_INDEX_IN_SCAN)
+    {
         fprintf(f, "\t\t<option>Index</option>\n");
         fprintf(f, "\t\t<value>%d</value>\n", settings.sky.indexInScan);
     }
-    else if (settings.sky.skyOption == Configuration::SKY_OPTION::USER_SUPPLIED) {
+    else if (settings.sky.skyOption == Configuration::SKY_OPTION::USER_SUPPLIED)
+    {
         fprintf(f, "\t\t<option>User</option>\n");
         fprintf(f, "\t\t<value>%s</value>\n", settings.sky.skySpectrumFile.c_str());
     }
@@ -648,47 +738,58 @@ RETURN_CODE CProcessingFileReader::WriteProcessingFile(const novac::CString& fil
     return RETURN_CODE::SUCCESS;
 }
 
-inline void PrintTabs(FILE* f, int nTabs) {
+inline void PrintTabs(FILE* f, int nTabs)
+{
     // print the starting tabs
-    if (nTabs == 1) {
+    if (nTabs == 1)
+    {
         fprintf(f, "\t");
     }
-    else if (nTabs == 2) {
+    else if (nTabs == 2)
+    {
         fprintf(f, "\t\t");
     }
-    else {
-        for (int k = 0; k < nTabs; ++k) {
+    else
+    {
+        for (int k = 0; k < nTabs; ++k)
+        {
             fprintf(f, "\t");
         }
     }
 }
 
-void CProcessingFileReader::PrintParameter(FILE* f, int nTabs, const novac::CString& tag, const novac::CString& value) {
+void CProcessingFileReader::PrintParameter(FILE* f, int nTabs, const novac::CString& tag, const novac::CString& value)
+{
     PrintTabs(f, nTabs);
     fprintf(f, "<%s>%s</%s>\n", (const char*)tag, (const char*)value, (const char*)tag);
     return;
 }
-void CProcessingFileReader::PrintParameter(FILE* f, int nTabs, const novac::CString& tag, const int& value) {
+void CProcessingFileReader::PrintParameter(FILE* f, int nTabs, const novac::CString& tag, const int& value)
+{
     PrintTabs(f, nTabs);
     fprintf(f, "<%s>%d</%s>\n", (const char*)tag, value, (const char*)tag);
     return;
 }
-void CProcessingFileReader::PrintParameter(FILE* f, int nTabs, const novac::CString& tag, const unsigned int& value) {
+void CProcessingFileReader::PrintParameter(FILE* f, int nTabs, const novac::CString& tag, const unsigned int& value)
+{
     PrintTabs(f, nTabs);
     fprintf(f, "<%s>%u</%s>\n", (const char*)tag, value, (const char*)tag);
     return;
 }
-void CProcessingFileReader::PrintParameter(FILE* f, int nTabs, const novac::CString& tag, const unsigned long& value) {
+void CProcessingFileReader::PrintParameter(FILE* f, int nTabs, const novac::CString& tag, const unsigned long& value)
+{
     PrintTabs(f, nTabs);
     fprintf(f, "<%s>%lu</%s>\n", (const char*)tag, value, (const char*)tag);
     return;
 }
-void CProcessingFileReader::PrintParameter(FILE* f, int nTabs, const novac::CString& tag, const double& value) {
+void CProcessingFileReader::PrintParameter(FILE* f, int nTabs, const novac::CString& tag, const double& value)
+{
     PrintTabs(f, nTabs);
     fprintf(f, "<%s>%.2lf</%s>\n", (const char*)tag, value, (const char*)tag);
     return;
 }
-void CProcessingFileReader::PrintParameter(FILE* f, int nTabs, const novac::CString& tag, const CDateTime& value) {
+void CProcessingFileReader::PrintParameter(FILE* f, int nTabs, const novac::CString& tag, const CDateTime& value)
+{
     PrintTabs(f, nTabs);
     fprintf(f, "<%s>%04d.%02d.%02d</%s>\n", (const char*)tag, value.year, value.month, value.day, (const char*)tag);
     return;

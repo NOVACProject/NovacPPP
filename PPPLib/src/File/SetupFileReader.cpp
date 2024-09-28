@@ -1,28 +1,19 @@
 #include <PPPLib/File/SetupFileReader.h>
-#include <PPPLib/MFC/CStdioFile.h>
+#include <PPPLib/Exceptions.h>
 #include <PPPLib/Logging.h>
 #include <cstring>
 
 using namespace FileHandler;
 using namespace novac;
 
-CSetupFileReader::CSetupFileReader(ILogger& logger)
-    : CXMLFileReader(logger)
+void CSetupFileReader::ReadSetupFile(const novac::CString& filename, Configuration::CNovacPPPConfiguration& setup)
 {
-}
-
-CSetupFileReader::~CSetupFileReader(void)
-{
-}
-
-RETURN_CODE CSetupFileReader::ReadSetupFile(const novac::CString& filename, Configuration::CNovacPPPConfiguration& setup)
-{
-
     // 1. Open the file
     if (!Open(filename))
     {
-        m_log.Error(std::string("Failed to open setup file for reading: '") + filename.std_str() + std::string("'"));
-        return RETURN_CODE::FAIL;
+        std::string message = std::string("Failed to open setup file for reading: '") + filename.std_str() + std::string("'");
+        m_log.Error(message);
+        throw PPPLib::FileIoException(message);
     }
 
     // parse the file, one line at a time.
@@ -48,8 +39,6 @@ RETURN_CODE CSetupFileReader::ReadSetupFile(const novac::CString& filename, Conf
     }//end while
 
     Close();
-
-    return RETURN_CODE::SUCCESS;
 }
 
 void CSetupFileReader::Parse_Instrument(Configuration::CInstrumentConfiguration& instr)

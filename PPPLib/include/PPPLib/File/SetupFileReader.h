@@ -18,17 +18,14 @@ namespace FileHandler
 class CSetupFileReader : public CXMLFileReader
 {
 public:
-    CSetupFileReader(ILogger& logger);
-    ~CSetupFileReader(void);
+    CSetupFileReader(ILogger& logger) : CXMLFileReader(logger) {}
+    ~CSetupFileReader(void) {}
 
     /** This reads in the contents of a setup-file into the supplied data-structure.
-        @param fileName - the name of the file to read from. This must be a .txt file
-            in the correct format!
-        @param setup - will on successful parsing of the file contain the setup-information
-            found in the file.
-        @return SUCCESS - if successful.
-    */
-    RETURN_CODE ReadSetupFile(const novac::CString& fileName, Configuration::CNovacPPPConfiguration& setup);
+        @param fileName - the name of the file to read from. This must be a .txt file in the correct format.
+        @param setup - will on successful parsing of the file contain the setup-information found in the file.
+        @throws FileIoException if the file could not be read */
+    void ReadSetupFile(const novac::CString& fileName, Configuration::CNovacPPPConfiguration& setup);
 
     /** This takes care of writing the contents of a setup data-structure to file
         Only the part regarding the instrument's location will be written to the file */
