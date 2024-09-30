@@ -10,7 +10,7 @@
 using namespace FileHandler;
 using namespace novac;
 
-CXMLFileReader::CXMLFileReader(ILogger& logger)
+CXMLFileReader::CXMLFileReader(novac::ILogger& logger)
     : m_log(logger)
 {
 }

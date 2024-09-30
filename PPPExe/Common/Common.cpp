@@ -68,6 +68,12 @@ void ShowError(const char message[])
     ShowError(msg);
 }
 
+void PocoLogger::Debug(const std::string& message)
+{
+    Poco::Logger& log = Poco::Logger::get("NovacPPP");
+    log.debug(message);
+}
+
 void PocoLogger::Information(const std::string& message)
 {
     Poco::Logger& log = Poco::Logger::get("NovacPPP");

@@ -1,7 +1,6 @@
 #include <PPPLib/Configuration/CommandLineParser.h>
 #include <PPPLib/Configuration/UserConfiguration.h>
 #include <PPPLib/VolcanoInfo.h>
-#include "StdOutLogger.h"
 #include "catch.hpp"
 
 namespace Configuration
@@ -13,7 +12,7 @@ TEST_CASE("FromDate overrides set from date", "[CommandLineParser][Configuration
     std::vector<std::string>arguments = { "--FromDate=2024.05.31" };
     Configuration::CUserConfiguration userSettings;
     novac::CVolcanoInfo volcanoes;
-    StdOutLogger logger;
+    novac::ConsoleLog logger;
 
     // Act
     CommandLineParser::ParseCommandLineOptions(arguments, userSettings, volcanoes, setExePath, logger);
@@ -29,7 +28,7 @@ TEST_CASE("ToDate overrides set to date", "[CommandLineParser][Configuration]")
     std::vector<std::string>arguments = { "--ToDate=2024.05.31" };
     Configuration::CUserConfiguration userSettings;
     novac::CVolcanoInfo volcanoes;
-    StdOutLogger logger;
+    novac::ConsoleLog logger;
 
     // Act
     CommandLineParser::ParseCommandLineOptions(arguments, userSettings, volcanoes, setExePath, logger);
@@ -46,7 +45,7 @@ TEST_CASE("Volcano overrides set volcano - common name", "[CommandLineParser][Co
     std::vector<std::string>arguments = { "--Volcano=masaya" };
     Configuration::CUserConfiguration userSettings;
     novac::CVolcanoInfo volcanoes;
-    StdOutLogger logger;
+    novac::ConsoleLog logger;
 
     // Act
     CommandLineParser::ParseCommandLineOptions(arguments, userSettings, volcanoes, setExePath, logger);
@@ -66,7 +65,7 @@ TEST_CASE("Volcano overrides set volcano - simple name", "[CommandLineParser][Co
     std::vector<std::string>arguments = { "--Volcano=nevado_del_ruiz" };
     Configuration::CUserConfiguration userSettings;
     novac::CVolcanoInfo volcanoes;
-    StdOutLogger logger;
+    novac::ConsoleLog logger;
 
     // Act
     CommandLineParser::ParseCommandLineOptions(arguments, userSettings, volcanoes, setExePath, logger);
@@ -86,7 +85,7 @@ TEST_CASE("Volcano overrides set volcano - volcano number", "[CommandLineParser]
     std::vector<std::string>arguments = { "--Volcano=0101-04=" };
     Configuration::CUserConfiguration userSettings;
     novac::CVolcanoInfo volcanoes;
-    StdOutLogger logger;
+    novac::ConsoleLog logger;
 
     // Act
     CommandLineParser::ParseCommandLineOptions(arguments, userSettings, volcanoes, setExePath, logger);
@@ -106,7 +105,7 @@ TEST_CASE("Workdir overrides set workdir", "[CommandLineParser][Configuration]")
     std::vector<std::string>arguments = { "--Workdir=/home/novacuser/novacppp" };
     Configuration::CUserConfiguration userSettings;
     novac::CVolcanoInfo volcanoes;
-    StdOutLogger logger;
+    novac::ConsoleLog logger;
 
     // Act
     CommandLineParser::ParseCommandLineOptions(arguments, userSettings, volcanoes, setExePath, logger);
@@ -122,7 +121,7 @@ TEST_CASE("outputdirectory overrides set default", "[CommandLineParser][Configur
     std::vector<std::string>arguments = { "--outputdirectory=/home/novacuser/novacppp/output/" };
     Configuration::CUserConfiguration userSettings;
     novac::CVolcanoInfo volcanoes;
-    StdOutLogger logger;
+    novac::ConsoleLog logger;
 
     // Act
     CommandLineParser::ParseCommandLineOptions(arguments, userSettings, volcanoes, setExePath, logger);
@@ -138,7 +137,7 @@ TEST_CASE("tempdirectory overrides set default", "[CommandLineParser][Configurat
     std::vector<std::string>arguments = { "--tempdirectory=/home/novacuser/novacppp/temp/" };
     Configuration::CUserConfiguration userSettings;
     novac::CVolcanoInfo volcanoes;
-    StdOutLogger logger;
+    novac::ConsoleLog logger;
 
     // Act
     CommandLineParser::ParseCommandLineOptions(arguments, userSettings, volcanoes, setExePath, logger);
@@ -155,7 +154,7 @@ TEST_CASE("WindFieldFile overrides set default", "[CommandLineParser][Configurat
     Configuration::CUserConfiguration userSettings;
     REQUIRE(userSettings.m_windFieldFile == ""); // check assumption here
     novac::CVolcanoInfo volcanoes;
-    StdOutLogger logger;
+    novac::ConsoleLog logger;
 
     // Act
     CommandLineParser::ParseCommandLineOptions(arguments, userSettings, volcanoes, setExePath, logger);
@@ -171,7 +170,7 @@ TEST_CASE("MaxThreadNum overrides default", "[CommandLineParser][Configuration]"
     std::vector<std::string>arguments = { "--MaxThreadNum=73" };
     Configuration::CUserConfiguration userSettings;
     novac::CVolcanoInfo volcanoes;
-    StdOutLogger logger;
+    novac::ConsoleLog logger;
 
     // Act
     CommandLineParser::ParseCommandLineOptions(arguments, userSettings, volcanoes, setExePath, logger);
@@ -188,7 +187,7 @@ TEST_CASE("IncludeSubDirs_Local overrides default", "[CommandLineParser][Configu
     Configuration::CUserConfiguration userSettings;
     REQUIRE(userSettings.m_includeSubDirectories_Local == 1); // check assumption here
     novac::CVolcanoInfo volcanoes;
-    StdOutLogger logger;
+    novac::ConsoleLog logger;
 
     // Act
     CommandLineParser::ParseCommandLineOptions(arguments, userSettings, volcanoes, setExePath, logger);
@@ -205,7 +204,7 @@ TEST_CASE("IncludeSubDirs_FTP overrides default", "[CommandLineParser][Configura
     Configuration::CUserConfiguration userSettings;
     REQUIRE(userSettings.m_includeSubDirectories_FTP == 1); // check assumption here
     novac::CVolcanoInfo volcanoes;
-    StdOutLogger logger;
+    novac::ConsoleLog logger;
 
     // Act
     CommandLineParser::ParseCommandLineOptions(arguments, userSettings, volcanoes, setExePath, logger);
@@ -222,7 +221,7 @@ TEST_CASE("FTPDirectory overrides default", "[CommandLineParser][Configuration]"
     Configuration::CUserConfiguration userSettings;
     REQUIRE(userSettings.m_FTPDirectory == ""); // check assumption here
     novac::CVolcanoInfo volcanoes;
-    StdOutLogger logger;
+    novac::ConsoleLog logger;
 
     // Act
     CommandLineParser::ParseCommandLineOptions(arguments, userSettings, volcanoes, setExePath, logger);
@@ -239,7 +238,7 @@ TEST_CASE("FTPUsername overrides default", "[CommandLineParser][Configuration]")
     Configuration::CUserConfiguration userSettings;
     REQUIRE(userSettings.m_FTPUsername == ""); // check assumption here
     novac::CVolcanoInfo volcanoes;
-    StdOutLogger logger;
+    novac::ConsoleLog logger;
 
     // Act
     CommandLineParser::ParseCommandLineOptions(arguments, userSettings, volcanoes, setExePath, logger);
@@ -256,7 +255,7 @@ TEST_CASE("FTPPassword overrides default", "[CommandLineParser][Configuration]")
     Configuration::CUserConfiguration userSettings;
     REQUIRE(userSettings.m_FTPPassword == ""); // check assumption here
     novac::CVolcanoInfo volcanoes;
-    StdOutLogger logger;
+    novac::ConsoleLog logger;
 
     // Act
     CommandLineParser::ParseCommandLineOptions(arguments, userSettings, volcanoes, setExePath, logger);
@@ -273,7 +272,7 @@ TEST_CASE("UploadResults overrides default", "[CommandLineParser][Configuration]
     Configuration::CUserConfiguration userSettings;
     REQUIRE(userSettings.m_uploadResults == 0); // check assumption here
     novac::CVolcanoInfo volcanoes;
-    StdOutLogger logger;
+    novac::ConsoleLog logger;
 
     // Act
     CommandLineParser::ParseCommandLineOptions(arguments, userSettings, volcanoes, setExePath, logger);
@@ -290,7 +289,7 @@ TEST_CASE("mode overrides default", "[CommandLineParser][Configuration]")
     Configuration::CUserConfiguration userSettings;
     REQUIRE(userSettings.m_processingMode == PROCESSING_MODE::PROCESSING_MODE_FLUX); // check assumption here
     novac::CVolcanoInfo volcanoes;
-    StdOutLogger logger;
+    novac::ConsoleLog logger;
 
     // Act
     CommandLineParser::ParseCommandLineOptions(arguments, userSettings, volcanoes, setExePath, logger);
@@ -307,7 +306,7 @@ TEST_CASE("molecule O3 overrides default", "[CommandLineParser][Configuration]")
     Configuration::CUserConfiguration userSettings;
     REQUIRE(userSettings.m_molecule == STANDARD_MOLECULE::MOLEC_SO2); // check assumption here
     novac::CVolcanoInfo volcanoes;
-    StdOutLogger logger;
+    novac::ConsoleLog logger;
 
     // Act
     CommandLineParser::ParseCommandLineOptions(arguments, userSettings, volcanoes, setExePath, logger);

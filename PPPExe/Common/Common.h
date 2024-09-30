@@ -9,13 +9,13 @@
 // --------------------------- LOGGING ---------------------------
 // ---------------------------------------------------------------
 
-class PocoLogger : public ILogger
+class PocoLogger : public novac::ILogger
 {
 public:
-    /** Logs an informative message to the log */
+    virtual void Debug(const std::string& message) override;
+
     virtual void Information(const std::string& message) override;
 
-    /** Logs an error message to the log */
     virtual void Error(const std::string& message) override;
 };
 

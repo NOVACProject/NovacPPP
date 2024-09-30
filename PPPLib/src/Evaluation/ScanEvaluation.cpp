@@ -15,8 +15,8 @@
 using namespace Evaluation;
 using namespace novac;
 
-CScanEvaluation::CScanEvaluation(const Configuration::CUserConfiguration& userSettings)
-    : ScanEvaluationBase(), m_userSettings(userSettings)
+CScanEvaluation::CScanEvaluation(const Configuration::CUserConfiguration& userSettings, novac::ILogger& log)
+    : ScanEvaluationBase(), m_userSettings(userSettings), m_log(log)
 {
 }
 
@@ -30,6 +30,8 @@ std::unique_ptr<CScanResult> CScanEvaluation::EvaluateScan(
     const novac::SpectrometerModel& spectrometerModel,
     const Configuration::CDarkSettings* darkSettings)
 {
+    ValidateSetup(fitWindow); // Verify that the setup of the fit window is ok. Throws exception if it isn't
+
     std::unique_ptr<CEvaluationBase> eval; // the evaluator
     CFitWindow adjustedFitWindow = fitWindow; // we may need to make some small adjustments to the fit-window. This is a modified copy
 
@@ -50,10 +52,14 @@ std::unique_ptr<CScanResult> CScanEvaluation::EvaluateScan(
 
     if (adjustedFitWindow.fraunhoferRef.m_path.size() > 4)
     {
-        ShowMessage("  Determining shift from FraunhoferReference");
+        m_log.Information("Determining shift from FraunhoferReference");
         this->m_lastErrorMessage.clear();
 
-        adjustedFitWindow.fraunhoferRef.ReadCrossSectionDataFromFile();
+        int result = adjustedFitWindow.fraunhoferRef.ReadCrossSectionDataFromFile();
+        if (result != 0)
+        {
+            throw InvalidReferenceException("Failed to read reference spectrum");
+        }
 
         // If we have a solar-spectrum that we can use to determine the shift
         // & squeeze then fit that first so that we know the wavelength calibration
@@ -61,7 +67,7 @@ std::unique_ptr<CScanResult> CScanEvaluation::EvaluateScan(
 
         if (m_lastErrorMessage.size() > 1)
         {
-            ShowMessage(m_lastErrorMessage);
+            m_log.Error(m_lastErrorMessage);
         }
 
         if (nullptr == eval)
@@ -91,7 +97,9 @@ std::unique_ptr<CScanResult> CScanEvaluation::EvaluateScan(
 
         if (m_indexOfMostAbsorbingSpectrum < 0)
         {
-            ShowMessage("Could not determine optimal shift & squeeze. No good spectra in scan. %s", scan.GetFileName());
+            CString message;
+            message.Format("Could not determine optimal shift & squeeze. No good spectra in scan. %s", scan.GetFileName().c_str());
+            m_log.Information(message.std_str());
             return 0;
         }
 
@@ -101,7 +109,7 @@ std::unique_ptr<CScanResult> CScanEvaluation::EvaluateScan(
         double highestColumn = result->GetColumn(m_indexOfMostAbsorbingSpectrum, specieNum);
         if (highestColumn < 2 * columnError)
         {
-            ShowMessage("Could not determine optimal shift & squeeze. Maximum column is too low.");
+            m_log.Information("Could not determine optimal shift & squeeze. Maximum column is too low.");
             return 0;
         }
 
@@ -261,7 +269,7 @@ std::unique_ptr<CScanResult> CScanEvaluation::EvaluateOpenedScan(
         if (Ignore(current, dark, m_fitLow, m_fitHigh))
         {
             message.Format("  - Ignoring spectrum %d in scan %s.", current.ScanIndex(), scan.GetFileName().c_str());
-            ShowMessage(message);
+            m_log.Information(message.std_str());
             continue;
         }
 
@@ -273,7 +281,13 @@ std::unique_ptr<CScanResult> CScanEvaluation::EvaluateOpenedScan(
         {
             message.Format("Failed to evaluate spectrum %d out of %d in scan %s from spectrometer %s.",
                 current.ScanIndex(), current.SpectraPerScan(), scan.GetFileName().c_str(), current.m_info.m_device.c_str());
-            ShowMessage(message);
+            if (eval->m_lastError.size() > 0)
+            {
+                message.AppendFormat("(%s)", eval->m_lastError.c_str());
+            }
+
+            m_log.Information(message.std_str());
+            continue;
         }
 
         // e. Save the evaluation result
@@ -300,9 +314,7 @@ bool CScanEvaluation::GetDark(novac::CScanFileHandler& scan, const CSpectrum& sp
 
     if (m_lastErrorMessage.size() > 0)
     {
-        novac::CString message;
-        message.Format("%s", m_lastErrorMessage.c_str());
-        ShowMessage(message);
+        m_log.Error(m_lastErrorMessage);
     }
 
     return successs;
@@ -315,9 +327,7 @@ bool CScanEvaluation::GetSky(novac::CScanFileHandler& scan, const Configuration:
 
     if (m_lastErrorMessage.size() > 0)
     {
-        novac::CString message;
-        message.Format("%s", m_lastErrorMessage.c_str());
-        ShowMessage(message);
+        m_log.Error(m_lastErrorMessage);
     }
 
     return successs;
@@ -348,7 +358,7 @@ CEvaluationBase* CScanEvaluation::FindOptimumShiftAndSqueeze(const CFitWindow& f
     // Tell the user
     novac::CString message;
     message.Format("ReEvaluating spectrum number %d to determine optimum shift and squeeze", indexOfMostAbsorbingSpectrum);
-    ShowMessage(message);
+    m_log.Information(message.std_str());
 
     // Evaluate this spectrum again with free (and linked) shift
     CFitWindow fitWindow2 = fitWindow;
@@ -438,7 +448,40 @@ CEvaluationBase* CScanEvaluation::FindOptimumShiftAndSqueeze(const CFitWindow& f
 
     // 6. We're done!
     message.Format("Optimum shift set to : %.2lf. Optimum squeeze set to: %.2lf ", optimumShift, optimumSqueeze);
-    ShowMessage(message);
+    m_log.Information(message.std_str());
 
     return newEvaluator;
+}
+
+void CScanEvaluation::ValidateSetup(const novac::CFitWindow& window)
+{
+    if (window.fitHigh <= window.fitLow)
+    {
+        throw std::invalid_argument("The given fit window has an empty (fitLow, fitHigh) range");
+    }
+    if (window.nRef == 0)
+    {
+        throw std::invalid_argument("The given fit window has no references defined");
+    }
+
+    std::vector<std::string> paths;
+    for (int refIdx = 0; refIdx < window.nRef; ++refIdx)
+    {
+        if (window.ref[refIdx].m_data == nullptr)
+        {
+            throw std::invalid_argument("At least one of the references of the fit window has no data (not read from disk?).");
+        }
+
+        for each (const std::string & path in paths)
+        {
+            if (novac::Equals(path, window.ref[refIdx].m_path))
+            {
+                throw std::invalid_argument("The given fit window has one reference defined multiple times (" + path + ")");
+            }
+        }
+
+        window.ref[refIdx].VerifyReferenceValues(window.fitLow, window.fitHigh);
+
+        paths.push_back(window.ref[refIdx].m_path);
+    }
 }

@@ -1,6 +1,5 @@
 #include <PPPLib/File/EvaluationConfigurationParser.h>
 #include "catch.hpp"
-#include "StdOutLogger.h"
 
 namespace novac
 {
@@ -73,7 +72,7 @@ static Configuration::CInstrumentCalibrationConfiguration CreateInstrumentCalibr
 
 TEST_CASE("ReadConfigurationFile gives expected configuration", "[EvaluationConfigurationParser][File]")
 {
-    StdOutLogger logger;
+    novac::ConsoleLog logger;
     Configuration::CEvaluationConfiguration resultingEvaluationSettings;
     Configuration::CDarkCorrectionConfiguration resultingDarkSettings;
     Configuration::CInstrumentCalibrationConfiguration resultingCalibrationSettings;
@@ -167,7 +166,7 @@ TEST_CASE("ReadConfigurationFile gives expected configuration", "[EvaluationConf
 
 TEST_CASE("WriteConfigurationFile gives a file which can be read back in again", "[EvaluationConfigurationParser][File]")
 {
-    StdOutLogger logger;
+    novac::ConsoleLog logger;
     FileHandler::CEvaluationConfigurationParser sut{ logger };
     const std::string temporaryEvaluationFileName = GetTestDataDirectory() + "Temporary_evaluationSettings.exml";
 

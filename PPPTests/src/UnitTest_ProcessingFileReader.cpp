@@ -1,6 +1,5 @@
 #include <PPPLib/File/ProcessingFileReader.h>
 #include "catch.hpp"
-#include "StdOutLogger.h"
 
 namespace novac
 {
@@ -20,7 +19,7 @@ static std::string GetProcessingConfigurationFile()
 
 TEST_CASE("ReadProcessingFile gives expected configuration", "[ProcessingFileReader][File]")
 {
-    StdOutLogger logger;
+    novac::ConsoleLog logger;
     Configuration::CUserConfiguration resultingConfiguration;
     FileHandler::CProcessingFileReader sut{ logger };
 
@@ -66,7 +65,7 @@ TEST_CASE("ReadProcessingFile gives expected configuration", "[ProcessingFileRea
 
 TEST_CASE("ReadProcessingFile ReadProcessingFile with invalid file path throws exception", "[ProcessingFileReader][File]")
 {
-    StdOutLogger logger;
+    novac::ConsoleLog logger;
     Configuration::CUserConfiguration resultingConfiguration;
     FileHandler::CProcessingFileReader sut{ logger };
 

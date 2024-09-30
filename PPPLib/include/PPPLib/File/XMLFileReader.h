@@ -10,7 +10,7 @@ namespace FileHandler
 class CXMLFileReader
 {
 public:
-    CXMLFileReader(ILogger& logger);
+    CXMLFileReader(novac::ILogger& log);
     virtual ~CXMLFileReader();
 
     // Non copyable object, since we are managing a file pointer
@@ -51,7 +51,7 @@ public:
     int Parse_Date(const novac::CString& label, novac::CDateTime& datum);
 
 protected:
-    ILogger& m_log;
+    novac::ILogger& m_log;
 
     /** The tokenizer */
     char* szToken = nullptr;

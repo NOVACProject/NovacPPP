@@ -20,7 +20,7 @@ namespace FileHandler
 class CXMLWindFileReader : public CXMLFileReader
 {
 public:
-    CXMLWindFileReader(ILogger& logger, const Configuration::CUserConfiguration& userSettings);
+    CXMLWindFileReader(novac::ILogger& logger, const Configuration::CUserConfiguration& userSettings);
     ~CXMLWindFileReader(void);
 
     /** Reads in an wind-field file.

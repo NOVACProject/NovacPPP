@@ -15,7 +15,7 @@ namespace FileHandler
 class CProcessingFileReader : public CXMLFileReader
 {
 public:
-    CProcessingFileReader(ILogger& logger);
+    CProcessingFileReader(novac::ILogger& logger);
 
     /** This reads in the contents of a processing.xml-file into the supplied data-structure.
         @param fileName - the name of the file to read from. This must be a .xml file

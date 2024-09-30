@@ -26,7 +26,7 @@ class CPostEvaluationController
 {
 public:
     CPostEvaluationController(
-        ILogger& log,
+        novac::ILogger& log,
         const Configuration::CNovacPPPConfiguration& setup,
         const Configuration::CUserConfiguration& userSettings,
         const CContinuationOfProcessing& continuation,
@@ -59,7 +59,7 @@ private:
     // ---------------------- PRIVATE DATA ----------------------------------
     // ----------------------------------------------------------------------
 
-    ILogger& m_log;
+    novac::ILogger& m_log;
 
     Configuration::CNovacPPPConfiguration m_setup;
 

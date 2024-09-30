@@ -14,7 +14,7 @@ void CommandLineParser::ParseCommandLineOptions(
     Configuration::CUserConfiguration& userSettings,
     novac::CVolcanoInfo& volcanoes,
     std::string& exePath,
-    ILogger& log)
+    novac::ILogger& log)
 {
     char seps[] = " \t";
     std::vector<char> buffer(16384, 0);

@@ -43,10 +43,10 @@ TEST_CASE("GetInfoFromFileName behaves as expected", "[CFileUtils]")
     SECTION("Finds correct mode")
     {
         CFileUtils::GetInfoFromFileName("D2J2134_170129_0317_1.pak", start, serial, channel, mode);
-        REQUIRE(mode == MODE_FLUX); // default
+        REQUIRE(mode == MEASUREMENT_MODE::MODE_FLUX); // default
 
         CFileUtils::GetInfoFromFileName("D2J2134_170129_0317_1_wind.pak", start, serial, channel, mode);
-        REQUIRE(mode == MODE_WINDSPEED);
+        REQUIRE(mode == MEASUREMENT_MODE::MODE_WINDSPEED);
     }
 }
 }

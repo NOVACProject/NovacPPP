@@ -30,7 +30,7 @@ class CPostProcessing
 {
 public:
     CPostProcessing(
-        ILogger& logger,
+        novac::ILogger& logger,
         Configuration::CNovacPPPConfiguration setup,
         Configuration::CUserConfiguration userSettings,
         const CContinuationOfProcessing& continuation);
@@ -72,7 +72,7 @@ protected:
     /** The database of plume-heights to use for the flux calculations */
     Geometry::CPlumeDataBase m_plumeDataBase;
 
-    ILogger& m_log;
+    novac::ILogger& m_log;
 
     Configuration::CNovacPPPConfiguration m_setup;
 

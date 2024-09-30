@@ -1,6 +1,5 @@
 #include <PPPLib/File/SetupFileReader.h>
 #include "catch.hpp"
-#include "StdOutLogger.h"
 
 #ifdef _MSC_VER
 #pragma warning(push)
@@ -25,7 +24,7 @@ static std::string GetProcessingConfigurationFile()
 
 TEST_CASE("SetupFileReader ReadSetupFile gives expected configuration", "[SetupFileReader][File]")
 {
-    StdOutLogger logger;
+    novac::ConsoleLog logger;
     Configuration::CNovacPPPConfiguration resultingConfiguration;
     FileHandler::CSetupFileReader sut{ logger };
 
@@ -66,7 +65,7 @@ TEST_CASE("SetupFileReader ReadSetupFile gives expected configuration", "[SetupF
 
 TEST_CASE("SetupFileReader ReadSetupFile with invalid file path throws exception", "[SetupFileReader][File]")
 {
-    StdOutLogger logger;
+    novac::ConsoleLog logger;
     Configuration::CNovacPPPConfiguration resultingConfiguration;
     FileHandler::CSetupFileReader sut{ logger };
 

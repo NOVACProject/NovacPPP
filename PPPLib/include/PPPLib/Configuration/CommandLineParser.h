@@ -28,6 +28,6 @@ public:
         Configuration::CUserConfiguration& userSettings,
         novac::CVolcanoInfo& volcanoes,
         std::string& exePath,
-        ILogger& log);
+        novac::ILogger& log);
 };
 }

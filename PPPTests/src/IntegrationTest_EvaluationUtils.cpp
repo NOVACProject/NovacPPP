@@ -1,6 +1,5 @@
 #include <PPPLib/Evaluation/EvaluationUtils.h>
 #include "catch.hpp"
-#include "StdOutLogger.h"
 
 static std::string GetTestDataDirectory()
 {

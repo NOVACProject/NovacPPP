@@ -114,7 +114,7 @@ bool CPostEvaluationController::EvaluateScan(
     }
 
     // 6. Evaluate the scan
-    CScanEvaluation ev{ m_userSettings };
+    CScanEvaluation ev{ m_userSettings, m_log };
     std::unique_ptr<CScanResult> lastResult = ev.EvaluateScan(scan, fitWindow, spectrometerModel, &darkSettings);
 
     // 7. Check the reasonability of the evaluation

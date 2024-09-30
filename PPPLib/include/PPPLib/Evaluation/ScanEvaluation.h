@@ -4,6 +4,7 @@
 #include <PPPLib/Configuration/UserConfiguration.h>
 #include <SpectralEvaluation/File/ScanFileHandler.h>
 #include <SpectralEvaluation/Evaluation/ScanEvaluationBase.h>
+#include <SpectralEvaluation/Log.h>
 
 namespace novac
 {
@@ -24,7 +25,7 @@ class CScanEvaluation : public novac::ScanEvaluationBase
 {
 
 public:
-    CScanEvaluation(const Configuration::CUserConfiguration& userSettings);
+    CScanEvaluation(const Configuration::CUserConfiguration& userSettings, novac::ILogger& log);
 
     ~CScanEvaluation();
 
@@ -33,12 +34,15 @@ public:
     *   @param fitWindow The settings for the fit to use.
     *   @param spectrometerModel The model of the spectrometer, needed to verify intensities and device specific settings.
     *   @param darkSettings An optional set of settings for the dark correction. If null then the default settings will be used.
-        @return the result of the evaluation. This is null if the evaluation failed. */
+        @return the result of the evaluation. This is null if the evaluation failed.
+        @throws std::exception (or subclass of this) if the given fit window is not ok */
     std::unique_ptr<CScanResult> EvaluateScan(novac::CScanFileHandler& scan, const novac::CFitWindow& fitWindow, const novac::SpectrometerModel& spectrometerModel, const Configuration::CDarkSettings* darkSettings = nullptr);
 
 private:
 
     const Configuration::CUserConfiguration& m_userSettings;
+
+    novac::ILogger& m_log;
 
     // ----------------------- PRIVATE METHODS ---------------------------
 
@@ -80,5 +84,9 @@ private:
     /** Remember the index of the spectrum with the highest absorption, to be able to
         adjust the shift and squeeze with it later */
     int m_indexOfMostAbsorbingSpectrum = -1;
+
+    /** Performs a basic validation on the setup of the given fit window. 
+        @throws std::exception (or subclass of this) if the window is not ok */
+    static void ValidateSetup(const novac::CFitWindow& window);
 };
 }
