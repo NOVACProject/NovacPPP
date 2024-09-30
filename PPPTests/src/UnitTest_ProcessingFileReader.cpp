@@ -1,6 +1,5 @@
 #include <PPPLib/File/ProcessingFileReader.h>
 #include "catch.hpp"
-#include "StdOutLogger.h"
 
 namespace novac
 {
@@ -20,15 +19,13 @@ static std::string GetProcessingConfigurationFile()
 
 TEST_CASE("ReadProcessingFile gives expected configuration", "[ProcessingFileReader][File]")
 {
-    StdOutLogger logger;
+    novac::ConsoleLog logger;
     Configuration::CUserConfiguration resultingConfiguration;
     FileHandler::CProcessingFileReader sut{ logger };
 
-    RETURN_CODE returnCode = sut.ReadProcessingFile(
+    sut.ReadProcessingFile(
         GetProcessingConfigurationFile(),
         resultingConfiguration);
-
-    REQUIRE(returnCode == RETURN_CODE::SUCCESS);
 
     // Expected settings
     {
@@ -45,7 +42,7 @@ TEST_CASE("ReadProcessingFile gives expected configuration", "[ProcessingFileRea
         REQUIRE(novac::CDateTime(2017, 1, 29, 12, 50, 51) == resultingConfiguration.m_fromDate);
         REQUIRE(novac::CDateTime(2017, 3, 01, 23, 50, 51) == resultingConfiguration.m_toDate);
 
-        REQUIRE("C:\\Temp\\" == resultingConfiguration.m_LocalDirectory.std_str());
+        REQUIRE("C:/Temp/" == resultingConfiguration.m_LocalDirectory.std_str());
         REQUIRE(1 == resultingConfiguration.m_includeSubDirectories_Local);
 
         REQUIRE("ftp://129.16.35.206/piton_de_la_fournaise/" == resultingConfiguration.m_FTPDirectory.std_str());
@@ -64,5 +61,14 @@ TEST_CASE("ReadProcessingFile gives expected configuration", "[ProcessingFileRea
         REQUIRE(Configuration::SKY_OPTION::USER_SUPPLIED == resultingConfiguration.sky.skyOption);
         REQUIRE("C:/Temp/Some_sky_spectrum.std" == resultingConfiguration.sky.skySpectrumFile);
     }
+}
+
+TEST_CASE("ReadProcessingFile ReadProcessingFile with invalid file path throws exception", "[ProcessingFileReader][File]")
+{
+    novac::ConsoleLog logger;
+    Configuration::CUserConfiguration resultingConfiguration;
+    FileHandler::CProcessingFileReader sut{ logger };
+
+    REQUIRE_THROWS(sut.ReadProcessingFile("./some-not-existing-file.txtk", resultingConfiguration));
 }
 }

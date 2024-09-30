@@ -22,6 +22,7 @@
 #include <Poco/SplitterChannel.h>
 #include <Poco/ConsoleChannel.h>
 #include <Poco/Util/Application.h>
+#include "Common/Common.h"
 
 extern Configuration::CNovacPPPConfiguration        g_setup;	   // <-- The settings
 extern Configuration::CUserConfiguration            g_userSettings;// <-- The settings of the user
@@ -50,7 +51,7 @@ void ReadProcessingXml(const novac::CString& workDir, Configuration::CUserConfig
 void ReadSetupXml(const novac::CString& workDir, Configuration::CNovacPPPConfiguration& configuration);
 
 void StartProcessing();
-void CalculateAllFluxes();
+void CalculateAllFluxes(CContinuationOfProcessing continuation);
 
 using namespace novac;
 
@@ -185,10 +186,7 @@ void ReadProcessingXml(const novac::CString& workDir, Configuration::CUserConfig
     novac::CString processingPath;
     processingPath.Format("%sconfiguration%cprocessing.xml", (const char*)workDir, Poco::Path::separator());
     FileHandler::CProcessingFileReader processing_reader{ g_logger };
-    if (RETURN_CODE::SUCCESS != processing_reader.ReadProcessingFile(processingPath, userSettings))
-    {
-        throw std::logic_error("Could not read processing.xml. Setup not complete. Please fix and try again");
-    }
+    processing_reader.ReadProcessingFile(processingPath, userSettings);
 }
 
 void ReadSetupXml(const novac::CString& workDir, Configuration::CNovacPPPConfiguration& configuration)
@@ -197,10 +195,8 @@ void ReadSetupXml(const novac::CString& workDir, Configuration::CNovacPPPConfigu
     setupPath.Format("%sconfiguration%csetup.xml", (const char*)workDir, Poco::Path::separator());
 
     FileHandler::CSetupFileReader reader{ g_logger };
-    if (RETURN_CODE::SUCCESS != reader.ReadSetupFile(setupPath, configuration))
-    {
-        throw std::logic_error("Could not read setup.xml. Setup not complete. Please fix and try again");
-    }
+    reader.ReadSetupFile(setupPath, configuration);
+
     ShowMessage(novac::CString::FormatString(" Parsed %s, %d instruments found.", setupPath.c_str(), configuration.NumberOfInstruments()));
 }
 
@@ -215,12 +211,14 @@ void StartProcessing()
         }
     }
 
+    CContinuationOfProcessing continuation(g_userSettings);
+
     // Run
 #ifdef _MFC_VER 
     CWinThread* postProcessingthread = AfxBeginThread(CalculateAllFluxes, NULL, THREAD_PRIORITY_NORMAL, 0, 0, NULL);
     Common::SetThreadName(postProcessingthread->m_nThreadID, "PostProcessing");
 #else
-    std::thread postProcessingThread(CalculateAllFluxes);
+    std::thread postProcessingThread(CalculateAllFluxes, continuation);
     postProcessingThread.join();
 #endif  // _MFC_VER 
 }
@@ -237,14 +235,14 @@ void ArchiveSettingsFiles(const Configuration::CUserConfiguration& userSettings)
     {
         novac::CString userMessage;
         userMessage.Format("Could not create output directory: %s", (const char*)userSettings.m_outputDirectory);
-        throw std::exception(userMessage.c_str());
+        throw PPPLib::FileIoException(userMessage.c_str());
     }
 
     if (Filesystem::CreateDirectoryStructure(confCopyDir))
     {
         novac::CString userMessage;
         userMessage.Format("Could not create directory for copied configuration: %s", (const char*)confCopyDir);
-        throw std::exception(userMessage.c_str());
+        throw PPPLib::FileIoException(userMessage.c_str());
     }
     // we want to copy the setup and processing files to the confCopyDir
     novac::CString processingOutputFile, setupOutputFile;
@@ -268,13 +266,13 @@ void ArchiveSettingsFiles(const Configuration::CUserConfiguration& userSettings)
 }
 
 // This is the starting point for all the processing modes.
-void CalculateAllFluxes()
+void CalculateAllFluxes(CContinuationOfProcessing continuation)
 {
     try
     {
         Common common;
 
-        CPostProcessing post{ g_logger, g_setup, g_userSettings };
+        CPostProcessing post{ g_logger, g_setup, g_userSettings, continuation };
         post.m_exePath = std::string((const char*)common.m_exePath);
 
         // Copy the settings that we have read in from the 'configuration' directory

@@ -5,7 +5,7 @@
 
 novac::CCriticalSection g_processingStatCritSect; // synchronization access to the processing statistics
 
-void CPostProcessingStatistics::InsertRejection(const novac::CString& serial, const REASON_FOR_REJECTION& reason)
+void CPostProcessingStatistics::InsertRejection(const novac::CString& serial, ReasonForScanRejection reason)
 {
     novac::CSingleLock singleLock(&g_processingStatCritSect);
     singleLock.Lock();
@@ -23,11 +23,11 @@ void CPostProcessingStatistics::InsertRejection(const novac::CString& serial, co
             {
                 switch (reason)
                 {
-                case SKY_SPEC_SATURATION:       ++stat.saturatedSkySpecNum; return;
-                case SKY_SPEC_DARK:             ++stat.darkSkySpecNum; return;
-                case SKY_SPEC_TOO_LONG_EXPTIME: ++stat.tooLongExpTime; return;
-                case COMPLETENESS_LOW:          ++stat.lowCompletenessNum; return;
-                case NO_PLUME:                  ++stat.noPlumeNum; return;
+                case ReasonForScanRejection::SkySpectrumSaturated:       ++stat.saturatedSkySpecNum; return;
+                case ReasonForScanRejection::SkySpectrumDark:             ++stat.darkSkySpecNum; return;
+                case ReasonForScanRejection::SkySpectrumTooLongExposureTime: ++stat.tooLongExpTime; return;
+                case ReasonForScanRejection::CompletenessLow:          ++stat.lowCompletenessNum; return;
+                case ReasonForScanRejection::NoPlume:                  ++stat.noPlumeNum; return;
                 };
             }
         }
@@ -37,11 +37,11 @@ void CPostProcessingStatistics::InsertRejection(const novac::CString& serial, co
         stat.serial.Format(serial);
         switch (reason)
         {
-        case SKY_SPEC_SATURATION:       ++stat.saturatedSkySpecNum; break;
-        case SKY_SPEC_DARK:             ++stat.darkSkySpecNum; break;
-        case SKY_SPEC_TOO_LONG_EXPTIME: ++stat.tooLongExpTime; break;
-        case COMPLETENESS_LOW:          ++stat.lowCompletenessNum; break;
-        case NO_PLUME:                  ++stat.noPlumeNum; break;
+        case ReasonForScanRejection::SkySpectrumSaturated:       ++stat.saturatedSkySpecNum; break;
+        case ReasonForScanRejection::SkySpectrumDark:             ++stat.darkSkySpecNum; break;
+        case ReasonForScanRejection::SkySpectrumTooLongExposureTime: ++stat.tooLongExpTime; break;
+        case ReasonForScanRejection::CompletenessLow:          ++stat.lowCompletenessNum; break;
+        case ReasonForScanRejection::NoPlume:                  ++stat.noPlumeNum; break;
         };
         m_instrumentStats.push_back(stat);
     }
@@ -82,7 +82,7 @@ void CPostProcessingStatistics::InsertAcception(const novac::CString& serial)
     singleLock.Unlock();
 }
 
-unsigned long CPostProcessingStatistics::GetRejectionNum(const novac::CString& serial, const REASON_FOR_REJECTION& reason)
+unsigned long CPostProcessingStatistics::GetRejectionNum(const novac::CString& serial, ReasonForScanRejection reason)
 {
     // look for the correct instrument
     std::list<CInstrumentStats>::const_iterator pos = m_instrumentStats.begin();
@@ -95,11 +95,11 @@ unsigned long CPostProcessingStatistics::GetRejectionNum(const novac::CString& s
         {
             switch (reason)
             {
-            case SKY_SPEC_SATURATION:       return stat.saturatedSkySpecNum;
-            case SKY_SPEC_DARK:             return stat.darkSkySpecNum;
-            case SKY_SPEC_TOO_LONG_EXPTIME: return stat.tooLongExpTime;
-            case COMPLETENESS_LOW:          return stat.lowCompletenessNum;
-            case NO_PLUME:                  return stat.noPlumeNum;
+            case ReasonForScanRejection::SkySpectrumSaturated:       return stat.saturatedSkySpecNum;
+            case ReasonForScanRejection::SkySpectrumDark:             return stat.darkSkySpecNum;
+            case ReasonForScanRejection::SkySpectrumTooLongExposureTime: return stat.tooLongExpTime;
+            case ReasonForScanRejection::CompletenessLow:          return stat.lowCompletenessNum;
+            case ReasonForScanRejection::NoPlume:                  return stat.noPlumeNum;
             };
         }
     }

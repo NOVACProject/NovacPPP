@@ -20,7 +20,7 @@ namespace FileHandler
 class CXMLWindFileReader : public CXMLFileReader
 {
 public:
-    CXMLWindFileReader(ILogger& logger, const Configuration::CUserConfiguration& userSettings);
+    CXMLWindFileReader(novac::ILogger& logger, const Configuration::CUserConfiguration& userSettings);
     ~CXMLWindFileReader(void);
 
     /** Reads in an wind-field file.
@@ -29,7 +29,7 @@ public:
         @param filename - the full path to the wind field file
         @param dataBase - this will on successfull return be filled with the wind
             information found in the wind field files.
-        @throws std::exception if the file could not be downloaded or the directory structure could not be created.
+        @throws std::FileIoException if the file could not be downloaded or the directory structure could not be created.
         @throws std::invalid_argument if the file could not be found (or downloaded). */
     void ReadWindFile(const novac::CString& fileName, Meteorology::CWindDataBase& dataBase);
 

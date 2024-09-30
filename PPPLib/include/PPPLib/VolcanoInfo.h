@@ -55,19 +55,19 @@ public:
     int GetVolcanoIndex(const novac::CString& name);
 
     /** Retrieves the volcano position from the given index */
-    double GetPeakLatitude(unsigned int index);
+    double GetPeakLatitude(int index);
     double GetPeakLatitude(const novac::CString& name) { return GetPeakLatitude(GetVolcanoIndex(name)); }
-    double GetPeakLongitude(unsigned int index);
+    double GetPeakLongitude(int index);
     double GetPeakLongitude(const novac::CString& name) { return GetPeakLongitude(GetVolcanoIndex(name)); }
-    double GetPeakAltitude(unsigned int index);
+    double GetPeakAltitude(int index);
     double GetPeakAltitude(const novac::CString& name) { return GetPeakAltitude(GetVolcanoIndex(name)); }
 
     /** Retrieves the time-zone this volcano is in */
-    double GetHoursToGMT(unsigned int index);
+    double GetHoursToGMT(int index);
     double GetHoursToGMT(const novac::CString& name) { return GetHoursToGMT(GetVolcanoIndex(name)); }
 
     /** Retrieves the observatory that monitors this volcano */
-    int GetObservatoryIndex(unsigned int index);
+    int GetObservatoryIndex(int index);
     int GetObservatoryIndex(const novac::CString& name) { return GetObservatoryIndex(GetVolcanoIndex(name)); }
 
 private:

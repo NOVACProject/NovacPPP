@@ -3,6 +3,18 @@
 #include <list>
 #include <PPPLib/MFC/CString.h>
 
+/// <summary>
+/// Listing of the possible reasons for not inluding a scan in the final flux calculation.
+/// </summary>
+enum class ReasonForScanRejection
+{
+    SkySpectrumSaturated,
+    SkySpectrumDark,
+    SkySpectrumTooLongExposureTime,
+    CompletenessLow,
+    NoPlume,
+};
+
 /** The class <b>CPostProcessingStatistics</b> is used to keep
     track of the statistics of the processing. E.g. how many
     scans from a certain instrument are rejected due to different
@@ -15,28 +27,19 @@ public:
     // ---------------------- PUBLIC DATA -----------------------------------
     // ----------------------------------------------------------------------
 
-    enum REASON_FOR_REJECTION
-    {
-        SKY_SPEC_SATURATION,
-        SKY_SPEC_DARK,
-        SKY_SPEC_TOO_LONG_EXPTIME,
-        COMPLETENESS_LOW,
-        NO_PLUME
-    };
-
     // ----------------------------------------------------------------------
     // --------------------- PUBLIC METHODS ---------------------------------
     // ----------------------------------------------------------------------
 
     /** Inserts information on a rejected scan from a certain instrument
         into the database. */
-    void InsertRejection(const novac::CString& serial, const REASON_FOR_REJECTION& reason);
+    void InsertRejection(const novac::CString& serial, ReasonForScanRejection reason);
 
     /** Inserts information on a accepted scan from a certain instrument into the database. */
     void InsertAcception(const novac::CString& serial);
 
     /** Retrieves the number of rejected full scans due to the specified reason */
-    unsigned long GetRejectionNum(const novac::CString& serial, const REASON_FOR_REJECTION& reason);
+    unsigned long GetRejectionNum(const novac::CString& serial, ReasonForScanRejection reason);
 
     /** Retrieves the number of accepted full scans */
     unsigned long GetAcceptionNum(const novac::CString& serial);

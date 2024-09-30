@@ -11,7 +11,7 @@ namespace FileHandler
 class CEvaluationConfigurationParser : public CXMLFileReader
 {
 public:
-    CEvaluationConfigurationParser(ILogger& logger)
+    CEvaluationConfigurationParser(novac::ILogger& logger)
         : CXMLFileReader(logger)
     {
     }

@@ -1,15 +1,17 @@
 #pragma once
 
 #include <SpectralEvaluation/DateTime.h>
-#include "Geometry/GeometryCalculator.h"
+#include <PPPLib/ContinuationOfProcessing.h>
+#include <PPPLib/Geometry/GeometryCalculator.h>
 #include <PPPLib/Meteorology/WindDataBase.h>
 #include <PPPLib/Configuration/NovacPPPConfiguration.h>
 #include <PPPLib/Configuration/UserConfiguration.h>
 #include <PPPLib/PostProcessingStatistics.h>
+#include <PPPLib/Logging.h>
 
-#include "Geometry/PlumeDataBase.h"
-#include "Flux/FluxResult.h"
-#include "Evaluation/ExtendedScanResult.h"
+#include <PPPLib/Geometry/PlumeDataBase.h>
+#include <PPPLib/Flux/FluxResult.h>
+#include <PPPLib/Evaluation/ExtendedScanResult.h>
 #include <PPPLib/MFC/CList.h>
 #include <PPPLib/MFC/CString.h>
 
@@ -27,7 +29,11 @@ class CReferenceFile;
 class CPostProcessing
 {
 public:
-    CPostProcessing(ILogger& logger, Configuration::CNovacPPPConfiguration setup, Configuration::CUserConfiguration userSettings);
+    CPostProcessing(
+        novac::ILogger& logger,
+        Configuration::CNovacPPPConfiguration setup,
+        Configuration::CUserConfiguration userSettings,
+        const CContinuationOfProcessing& continuation);
 
     // ----------------------------------------------------------------------
     // ---------------------- PUBLIC DATA -----------------------------------
@@ -66,11 +72,13 @@ protected:
     /** The database of plume-heights to use for the flux calculations */
     Geometry::CPlumeDataBase m_plumeDataBase;
 
-    ILogger& m_log;
+    novac::ILogger& m_log;
 
     Configuration::CNovacPPPConfiguration m_setup;
 
     Configuration::CUserConfiguration m_userSettings;
+
+    CContinuationOfProcessing m_continuation;
 
     // The statistics of the processing itself (number of successfully processed scans, vs number of rejected etc)
     CPostProcessingStatistics m_processingStats;
@@ -107,7 +115,7 @@ protected:
     int PreparePlumeHeights();
 
     /** Scans through the FTP-server (using the IP,username and password
-        found in g_userSettings) in search for .pak-files
+        found in userSettings) in search for .pak-files
         The files will be downloaded to the local computer (to the
         temporary directory) and the returned path's will be pointing
         there.
@@ -122,8 +130,10 @@ protected:
         @param evalLogFiles - will on successful return be filled
             with the path's and filenames of each evaluation log
             file generated and the properties of each scan. */
-    void EvaluateScans(const std::vector<std::string>& pakFileList,
-        novac::CList <Evaluation::CExtendedScanResult, Evaluation::CExtendedScanResult&>& evalLogFiles) const;
+    void EvaluateScans(
+        const std::vector<std::string>& pakFileList,
+        novac::CList <Evaluation::CExtendedScanResult,
+        Evaluation::CExtendedScanResult&>& evalLogFiles);
 
     /** Runs through the supplied list of .pak files and performs an instrument calibration
         on each one.

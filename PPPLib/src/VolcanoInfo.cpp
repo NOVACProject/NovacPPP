@@ -199,9 +199,9 @@ void CVolcanoInfo::GetSimpleVolcanoName(unsigned int index, novac::CString& name
     }
 }
 
-double CVolcanoInfo::GetPeakLatitude(unsigned int index)
+double CVolcanoInfo::GetPeakLatitude(int index)
 {
-    if (index >= m_volcanoNum)
+    if ((unsigned int)index >= m_volcanoNum)
     {
         return 0.0;
     }
@@ -211,9 +211,9 @@ double CVolcanoInfo::GetPeakLatitude(unsigned int index)
         return vol.m_peakLatitude;
     }
 }
-double CVolcanoInfo::GetPeakLongitude(unsigned int index)
+double CVolcanoInfo::GetPeakLongitude(int index)
 {
-    if (index >= m_volcanoNum)
+    if ((unsigned int)index >= m_volcanoNum)
     {
         return 0.0;
     }
@@ -223,9 +223,9 @@ double CVolcanoInfo::GetPeakLongitude(unsigned int index)
         return vol.m_peakLongitude;
     }
 }
-double CVolcanoInfo::GetPeakAltitude(unsigned int index)
+double CVolcanoInfo::GetPeakAltitude(int index)
 {
-    if (index >= m_volcanoNum)
+    if ((unsigned int)index >= m_volcanoNum)
     {
         return 0.0;
     }
@@ -236,10 +236,9 @@ double CVolcanoInfo::GetPeakAltitude(unsigned int index)
     }
 }
 
-/** Retrieves the time-zone this volcano is in */
-double CVolcanoInfo::GetHoursToGMT(unsigned int index)
+double CVolcanoInfo::GetHoursToGMT(int index)
 {
-    if (index >= m_volcanoNum)
+    if ((unsigned int)index >= m_volcanoNum)
     {
         return 0.0;
     }
@@ -250,10 +249,9 @@ double CVolcanoInfo::GetHoursToGMT(unsigned int index)
     }
 }
 
-/** Retrieves the observatory that monitors this volcano */
-int CVolcanoInfo::GetObservatoryIndex(unsigned int index)
+int CVolcanoInfo::GetObservatoryIndex(int index)
 {
-    if (index >= m_volcanoNum)
+    if ((unsigned int)index >= m_volcanoNum)
     {
         return 1;
     }

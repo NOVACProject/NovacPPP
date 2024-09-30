@@ -1,9 +1,10 @@
 #include "StratosphereCalculator.h"
+#include <SpectralEvaluation/Geometry.h>
 
-#include "../Evaluation/ScanResult.h"
+#include <PPPLib/Logging.h>
+#include <PPPLib/Evaluation/ScanResult.h>
 #include <PPPLib/Molecule.h>
-#include "../Common/Common.h"
-#include "../Common/EvaluationLogFileHandler.h"
+#include <PPPLib/File/EvaluationLogFileHandler.h>
 #include <PPPLib/File/Filesystem.h>
 
 // This is the settings for how to do the procesing
@@ -13,10 +14,7 @@
 #include <PPPLib/Configuration/NovacPPPConfiguration.h>
 
 #include <Poco/Path.h>
-
-
-extern Configuration::CNovacPPPConfiguration        g_setup;	   // <-- The settings
-extern Configuration::CUserConfiguration			g_userSettings;// <-- The settings of the user
+#include <cmath>
 
 using namespace Stratosphere;
 using namespace novac;
@@ -70,7 +68,10 @@ CStratosphereCalculator::CMeasurementDay& CStratosphereCalculator::CMeasurementD
 }
 
 
-CStratosphereCalculator::CStratosphereCalculator(void)
+CStratosphereCalculator::CStratosphereCalculator(
+    const Configuration::CNovacPPPConfiguration& setup,
+    const Configuration::CUserConfiguration& userSettings)
+        : m_setup(setup), m_userSettings(userSettings)
 {
 }
 
@@ -89,7 +90,7 @@ void CStratosphereCalculator::CalculateVCDs(const std::list <Evaluation::CExtend
 
     // remove the old stratospheric output-file
     // TODO: ImplementMe
-    //fileName.Format("%s%cStratosphere.txt", (const char*)g_userSettings.m_outputDirectory,  Poco::Path::separator());
+    //fileName.Format("%s%cStratosphere.txt", (const char*)m_userSettings.m_outputDirectory,  Poco::Path::separator());
     //DeleteFile(fileName);
 
 
@@ -113,9 +114,9 @@ void CStratosphereCalculator::CalculateVCDs(const std::list <Evaluation::CExtend
 void CStratosphereCalculator::BuildMeasurementList(const std::list <Evaluation::CExtendedScanResult>& results)
 {
     std::list<Evaluation::CExtendedScanResult>::const_iterator p = results.begin();
-    novac::CString mainFitWindowName = novac::CString(g_userSettings.m_fitWindowsToUse[g_userSettings.m_mainFitWindow]);
+    novac::CString mainFitWindowName = novac::CString(m_userSettings.m_fitWindowsToUse[m_userSettings.m_mainFitWindow]);
     novac::CString evalLogfileToRead;
-    CMolecule specie = CMolecule(g_userSettings.m_molecule);
+    CMolecule specie = CMolecule(m_userSettings.m_molecule);
 
     // loop through all the evaluation log files
     while (p != results.end())
@@ -123,7 +124,7 @@ void CStratosphereCalculator::BuildMeasurementList(const std::list <Evaluation::
         const Evaluation::CExtendedScanResult& result = (Evaluation::CExtendedScanResult&)*(p++);
 
         evalLogfileToRead.Format("");
-        for (int k = 0; k < g_userSettings.m_nFitWindowsToUse; ++k)
+        for (int k = 0; k < m_userSettings.m_nFitWindowsToUse; ++k)
         {
             if (Equals(result.m_fitWindowName[k], mainFitWindowName))
             {
@@ -161,7 +162,7 @@ void CStratosphereCalculator::BuildMeasurementList(const std::list <Evaluation::
                 meas.column = scanResult.GetColumn(k, specie);
 
                 // find the location of this instrument
-                auto instrLocation = g_setup.GetInstrumentLocation(scanResult.GetSerial().std_str(), meas.time);
+                auto instrLocation = m_setup.GetInstrumentLocation(scanResult.GetSerial().std_str(), meas.time);
                 CGPSData location = CGPSData(instrLocation.m_latitude, instrLocation.m_longitude, instrLocation.m_altitude);
 
                 // calculate the AMF
@@ -219,14 +220,10 @@ void CStratosphereCalculator::InsertIntoMeasurementList(const CMeasurementDay& m
 
 }
 
-/** Retrieves the Air Mass Factor for a zenith measuremnt performed
-    at the given location and at the given time of day (UTC). */
 double CStratosphereCalculator::GetAMF_ZenithMeasurement(const CGPSData& location, const CDateTime& gmtTime)
 {
     double SZA, SAZ;
-
-    if (RETURN_CODE::SUCCESS != Common::GetSunPosition(gmtTime, location.m_latitude, location.m_longitude, SZA, SAZ))
-        return 1.0;
+    novac::GetSunPosition(gmtTime, location.m_latitude, location.m_longitude, SZA, SAZ);
 
     return 1.0 / cos(DEGREETORAD * SZA);
 }
@@ -250,7 +247,7 @@ void CStratosphereCalculator::WriteResultToFile(CMeasurementDay& measDay, double
     novac::CString fileName;
 
     // the name of the output file
-    fileName.Format("%s%cStratosphere.txt", (const char*)g_userSettings.m_outputDirectory, Poco::Path::separator());
+    fileName.Format("%s%cStratosphere.txt", (const char*)m_userSettings.m_outputDirectory, Poco::Path::separator());
 
     if (!Filesystem::IsExistingFile(fileName))
         writeHeader = true;

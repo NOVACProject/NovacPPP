@@ -139,12 +139,13 @@ novac::CString AppendPathSeparator(novac::CString path)
     {
         return path;
     }
+    const char pathSeparatorChar = '/'; // always use the forward slash for path separation (works on both windows and linux)
 
     char separator[8];
 #ifdef _MSC_VER
-    sprintf_s(separator, "%c", Poco::Path::separator());
+    sprintf_s(separator, "%c", pathSeparatorChar);
 #else
-    sprintf(separator, "%c", Poco::Path::separator());
+    sprintf(separator, "%c", pathSeparatorChar);
 #endif
 
     return path.Append(separator);

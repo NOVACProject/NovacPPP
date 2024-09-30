@@ -1,19 +1,25 @@
 #pragma once
 
-#ifndef STRATCALC_H
-#define STRATCALC_H
+#include <PPPLib/Evaluation/ExtendedScanResult.h>
+#include <SpectralEvaluation/GPSData.h>
+#include <SpectralEvaluation/DateTime.h>
 
-#include "../Evaluation/ExtendedScanResult.h"
-
-// include the list-template from the C++ standard library
 #include <list>
+
+namespace Configuration
+{
+    class CNovacPPPConfiguration;
+    class CUserConfiguration;
+}
 
 namespace Stratosphere
 {
 class CStratosphereCalculator
 {
 public:
-    CStratosphereCalculator(void);
+    CStratosphereCalculator(
+        const Configuration::CNovacPPPConfiguration& setup,
+        const Configuration::CUserConfiguration& userSettings);
     ~CStratosphereCalculator(void);
 
     // -----------------------------------------------------------
@@ -58,6 +64,10 @@ private:
     /** The set of measurements that we have */
     std::list <CMeasurementDay> m_measurementDays;
 
+    const Configuration::CNovacPPPConfiguration& m_setup;
+
+    const Configuration::CUserConfiguration& m_userSettings;
+
     // -----------------------------------------------------------
     // --------------------- PRIVATE METHODS ---------------------
     // -----------------------------------------------------------
@@ -86,5 +96,3 @@ private:
 
 };
 }
-
-#endif

@@ -1,6 +1,5 @@
 #include <PPPLib/File/SetupFileReader.h>
 #include "catch.hpp"
-#include "StdOutLogger.h"
 
 #ifdef _MSC_VER
 #pragma warning(push)
@@ -25,15 +24,14 @@ static std::string GetProcessingConfigurationFile()
 
 TEST_CASE("SetupFileReader ReadSetupFile gives expected configuration", "[SetupFileReader][File]")
 {
-    StdOutLogger logger;
+    novac::ConsoleLog logger;
     Configuration::CNovacPPPConfiguration resultingConfiguration;
     FileHandler::CSetupFileReader sut{ logger };
 
-    RETURN_CODE returnCode = sut.ReadSetupFile(
+    sut.ReadSetupFile(
         GetProcessingConfigurationFile(),
         resultingConfiguration);
 
-    REQUIRE(returnCode == RETURN_CODE::SUCCESS);
     REQUIRE(4 == resultingConfiguration.NumberOfInstruments());
 
     {
@@ -64,4 +62,14 @@ TEST_CASE("SetupFileReader ReadSetupFile gives expected configuration", "[SetupF
         REQUIRE_NOTHROW(instrumentConfiguration->m_location.CheckSettings());
     }
 }
+
+TEST_CASE("SetupFileReader ReadSetupFile with invalid file path throws exception", "[SetupFileReader][File]")
+{
+    novac::ConsoleLog logger;
+    Configuration::CNovacPPPConfiguration resultingConfiguration;
+    FileHandler::CSetupFileReader sut{ logger };
+
+    REQUIRE_THROWS(sut.ReadSetupFile("./some-non-exisisting-file.txt", resultingConfiguration));
+}
+
 }

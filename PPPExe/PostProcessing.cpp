@@ -1,38 +1,39 @@
 #include "stdafx.h"
 #include "PostProcessing.h"
+#include "Common/Common.h"
 #include <SpectralEvaluation/File/File.h>
 
 #undef min
 #undef max
 
 #include <algorithm>
+#include <cmath>
 #include <sstream>
+#include <functional>
 
 // the PostEvaluationController takes care of the DOAS evaluations
-#include "Evaluation/PostEvaluationController.h"
+#include <PPPLib/Evaluation/PostEvaluationController.h>
 
 // The PostCalibration takes care of the instrument calibrations.
 #include <PPPLib/Calibration/PostCalibration.h>
 #include <PPPLib/Calibration/PostCalibrationStatistics.h>
 
 // The FluxCalculator takes care of calculating the fluxes
-#include "Flux/FluxCalculator.h"
+#include <PPPLib/Flux/FluxCalculator.h>
 
 // The Stratospherecalculator takes care of calculating Stratospheric VCD's
 #include "Stratosphere/StratosphereCalculator.h"
 
 // The flux CFluxStatistics takes care of the statistical part of the fluxes
-#include "Flux/FluxStatistics.h"
+#include <PPPLib/Flux/FluxStatistics.h>
 
 // We also need to read the evaluation-log files
-#include "Common/EvaluationLogFileHandler.h"
+#include <PPPLib/File/EvaluationLogFileHandler.h>
 
-#include "WindMeasurement/WindSpeedCalculator.h"
+#include <PPPLib/WindMeasurement/WindSpeedCalculator.h>
 
 #include <PPPLib/Meteorology/XMLWindFileReader.h>
 #include <PPPLib/File/Filesystem.h>
-#include "Common/EvaluationLogFileHandler.h"
-
 #include <PPPLib/VolcanoInfo.h>
 #include <PPPLib/MFC/CFileUtils.h>
 #include <PPPLib/ThreadUtils.h>
@@ -54,15 +55,15 @@ using namespace novac;
 
 
 // this is the working-thread that takes care of evaluating a portion of the scans
-void EvaluateScansThread(const Configuration::CNovacPPPConfiguration& setup, const Configuration::CUserConfiguration& userSettings, CPostProcessingStatistics& processingStats);
+void EvaluateScansThread(ILogger& log, const Configuration::CNovacPPPConfiguration& setup, const Configuration::CUserConfiguration& userSettings, const CContinuationOfProcessing& continuation, CPostProcessingStatistics& processingStats);
 
 // this takes care of adding the evaluated log-files to the list in an synchronized way
 //  the parameter passed in a reference to an array of strings holding the names of the 
 //  eval-log files generated
 void AddResultToList(const novac::CString& pakFileName, const novac::CString(&evalLog)[MAX_FIT_WINDOWS], const CPlumeInScanProperty& scanProperties, const Configuration::CUserConfiguration& userSettings, CPostProcessingStatistics& processingStats);
 
-CPostProcessing::CPostProcessing(ILogger& logger, Configuration::CNovacPPPConfiguration setup, Configuration::CUserConfiguration userSettings)
-    : m_log(logger), m_setup(setup), m_userSettings(userSettings)
+CPostProcessing::CPostProcessing(ILogger& logger, Configuration::CNovacPPPConfiguration setup, Configuration::CUserConfiguration userSettings, const CContinuationOfProcessing& continuation)
+    : m_log(logger), m_setup(setup), m_userSettings(userSettings), m_continuation(continuation)
 {
 }
 
@@ -236,7 +237,7 @@ void CPostProcessing::DoPostProcessing_InstrumentCalibration()
 
     ShowMessage("--- Running Calibrations --- ");
 
-    novac::CPostCalibration calibrationController{ standardCrossSections, m_log };
+    novac::CPostCalibration calibrationController{ standardCrossSections, m_setup, m_userSettings, m_log };
     novac::CPostCalibrationStatistics calibrationStatistics;
 
     // Unlike other parts of the NovacPPP, this function is intended to be single threaded. The reason for this is that the
@@ -254,7 +255,7 @@ void CPostProcessing::DoPostProcessing_Strat()
 {
     novac::CList <Evaluation::CExtendedScanResult, Evaluation::CExtendedScanResult&> evalLogFiles;
     novac::CString messageToUser, statFileName;
-    Stratosphere::CStratosphereCalculator strat;
+    Stratosphere::CStratosphereCalculator strat(m_setup, m_userSettings);
 
     // --------------- PREPARING FOR THE PROCESSING -----------
 
@@ -339,7 +340,8 @@ volatile unsigned long s_nFilesToProcess;
 
 void CPostProcessing::EvaluateScans(
     const std::vector<std::string>& pakFileList,
-    novac::CList <Evaluation::CExtendedScanResult, Evaluation::CExtendedScanResult&>& evalLogFiles) const
+    novac::CList <Evaluation::CExtendedScanResult,
+    Evaluation::CExtendedScanResult&>& evalLogFiles)
 {
     s_nFilesToProcess = (long)pakFileList.size();
     novac::CString messageToUser;
@@ -358,7 +360,7 @@ void CPostProcessing::EvaluateScans(
     std::vector<std::thread> evalThreads(m_userSettings.m_maxThreadNum);
     for (unsigned int threadIdx = 0; threadIdx < m_userSettings.m_maxThreadNum; ++threadIdx)
     {
-        std::thread t{ EvaluateScansThread, m_setup, m_userSettings, m_processingStats };
+        std::thread t( EvaluateScansThread, std::ref(m_log), std::cref(m_setup), std::cref(m_userSettings), std::cref(m_continuation), std::ref(m_processingStats) );
         evalThreads[threadIdx] = std::move(t);
     }
 
@@ -375,12 +377,17 @@ void CPostProcessing::EvaluateScans(
     ShowMessage(messageToUser);
 }
 
-void EvaluateScansThread(const Configuration::CNovacPPPConfiguration& setup, const Configuration::CUserConfiguration& userSettings, CPostProcessingStatistics& processingStats)
+void EvaluateScansThread(
+    ILogger& log,
+    const Configuration::CNovacPPPConfiguration& setup,
+    const Configuration::CUserConfiguration& userSettings,
+    const CContinuationOfProcessing& continuation,
+    CPostProcessingStatistics& processingStats)
 {
     std::string fileName;
 
     // create a new CPostEvaluationController
-    Evaluation::CPostEvaluationController eval{ setup, userSettings, processingStats };
+    Evaluation::CPostEvaluationController eval{ log, setup, userSettings, continuation, processingStats };
 
     // while there are more .pak-files
     while (s_pakFilesRemaining.PopFront(fileName))
@@ -395,7 +402,7 @@ void EvaluateScansThread(const Configuration::CNovacPPPConfiguration& setup, con
         {
             for (int fitWindowIndex = 0; fitWindowIndex < userSettings.m_nFitWindowsToUse; ++fitWindowIndex)
             {
-                if (0 != eval.EvaluateScan(fileName, userSettings.m_fitWindowsToUse[fitWindowIndex], &evalLog[fitWindowIndex], &scanProperties[fitWindowIndex]))
+                if (!eval.EvaluateScan(fileName, userSettings.m_fitWindowsToUse[fitWindowIndex], &evalLog[fitWindowIndex], &scanProperties[fitWindowIndex]))
                 {
                     evaluationSucceeded = false;
                     break;
@@ -866,7 +873,7 @@ void CPostProcessing::CalculateGeometries(novac::CList <Evaluation::CExtendedSca
         novac::CFileUtils::GetInfoFromFileName(evalLog1, startTime1, serial1, channel, measMode1);
 
         // If this is not a flux-measurement, then there's no use in trying to use it...
-        if (measMode1 != MODE_FLUX)
+        if (measMode1 != MEASUREMENT_MODE::MODE_FLUX)
         {
             continue;
         }
@@ -904,7 +911,7 @@ void CPostProcessing::CalculateGeometries(novac::CList <Evaluation::CExtendedSca
             }
 
             // If this is not a flux-measurement, then there's no use in trying to use it...
-            if (measMode2 != MODE_FLUX)
+            if (measMode2 != MEASUREMENT_MODE::MODE_FLUX)
             {
                 continue;
             }
@@ -929,7 +936,7 @@ void CPostProcessing::CalculateGeometries(novac::CList <Evaluation::CExtendedSca
             }
 
             // make sure that the distance between the instruments is not too long....
-            double instrumentDistance = Common::GPSDistance(location[0].m_latitude, location[0].m_longitude, location[1].m_latitude, location[1].m_longitude);
+            double instrumentDistance = novac::GpsMath::Distance(location[0].m_latitude, location[0].m_longitude, location[1].m_latitude, location[1].m_longitude);
             if (instrumentDistance < m_userSettings.m_calcGeometry_MinDistance || instrumentDistance > m_userSettings.m_calcGeometry_MaxDistance)
             {
                 ++nTooLongdistance;
@@ -1067,7 +1074,7 @@ void CPostProcessing::CalculateFluxes(novac::CList <Evaluation::CExtendedScanRes
     novac::CList <Flux::CFluxResult, Flux::CFluxResult&> calculatedFluxes;
 
     // Initiate the flux-calculator
-    Flux::CFluxCalculator fluxCalc;
+    Flux::CFluxCalculator fluxCalc(this->m_setup, this->m_userSettings);
 
     // Loop through the list of evaluation log files. For each of them, find
     // the best available wind-speed, wind-direction and plume height and
@@ -1091,7 +1098,7 @@ void CPostProcessing::CalculateFluxes(novac::CList <Evaluation::CExtendedScanRes
         novac::CFileUtils::GetInfoFromFileName(evalLog, scanStartTime, serial, channel, measMode);
 
         // If this is not a flux-measurement, then there's no point in calculating any flux for it
-        if (measMode != MODE_FLUX)
+        if (measMode != MEASUREMENT_MODE::MODE_FLUX)
             continue;
 
         // Extract a plume height at this time of day
@@ -1508,7 +1515,7 @@ void CPostProcessing::CalculateDualBeamWindSpeeds(novac::CList <Evaluation::CExt
     int channel, channel2, nWindMeasFound = 0;
     MEASUREMENT_MODE meas_mode, meas_mode2;
     Configuration::CInstrumentLocation location;
-    WindSpeedMeasurement::CWindSpeedCalculator calculator;
+    WindSpeedMeasurement::CWindSpeedCalculator calculator(m_userSettings);
     Geometry::CPlumeHeight plumeHeight;
     Meteorology::CWindField windField, oldWindField;
 
@@ -1528,7 +1535,7 @@ void CPostProcessing::CalculateDualBeamWindSpeeds(novac::CList <Evaluation::CExt
 
             novac::CFileUtils::GetInfoFromFileName(fileName, startTime, serial, channel, meas_mode);
 
-            if (meas_mode == MODE_WINDSPEED)
+            if (meas_mode == MEASUREMENT_MODE::MODE_WINDSPEED)
             {
                 ++nWindMeasFound;
 

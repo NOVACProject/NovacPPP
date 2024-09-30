@@ -51,8 +51,10 @@ int CEvaluationConfiguration::SetFitWindow(int index, const novac::CFitWindow& w
 
 int CEvaluationConfiguration::GetFitWindow(int index, novac::CFitWindow& window, novac::CDateTime& validFrom, novac::CDateTime& validTo) const
 {
-    if (index < 0 || index >= m_windows.size())
+    if (static_cast<size_t>(index) >= m_windows.size())
+    {
         return 1;
+    }
 
     window = m_windows[index].window;
     validFrom = m_windows[index].validFrom;

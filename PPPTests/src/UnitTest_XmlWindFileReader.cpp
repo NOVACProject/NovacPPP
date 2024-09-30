@@ -1,7 +1,6 @@
 #include <PPPLib/Meteorology/XMLWindFileReader.h>
 #include <PPPLib/Configuration/UserConfiguration.h>
 #include "catch.hpp"
-#include "StdOutLogger.h"
 
 namespace novac
 {
@@ -21,7 +20,7 @@ static std::string GetWindFieldFile()
 
 TEST_CASE("ReadWindFile gives expected wind profile", "[XMLWindFileReader][File]")
 {
-    StdOutLogger logger;
+    novac::ConsoleLog logger;
     Configuration::CUserConfiguration userConfiguration;
     Meteorology::CWindDataBase resultingDatabase;
     FileHandler::CXMLWindFileReader sut{ logger, userConfiguration };
