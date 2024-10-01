@@ -3,6 +3,7 @@
 #include <SpectralEvaluation/Spectra/Spectrum.h>
 #include <SpectralEvaluation/Spectra/SpectrometerModel.h>
 #include <SpectralEvaluation/File/SpectrumIO.h>
+#include <SpectralEvaluation/File/File.h>
 #include <SpectralEvaluation/File/STDFile.h>
 #include <SpectralEvaluation/File/TXTFile.h>
 #include <PPPLib/Logging.h>
@@ -32,6 +33,9 @@ std::unique_ptr<CScanResult> CScanEvaluation::EvaluateScan(
 {
     ValidateSetup(fitWindow); // Verify that the setup of the fit window is ok. Throws exception if it isn't
 
+    novac::LogContext context;
+    context = context.With("file", novac::GetFileName(scan.GetFileName()));
+
     std::unique_ptr<CEvaluationBase> eval; // the evaluator
     CFitWindow adjustedFitWindow = fitWindow; // we may need to make some small adjustments to the fit-window. This is a modified copy
 
@@ -52,7 +56,7 @@ std::unique_ptr<CScanResult> CScanEvaluation::EvaluateScan(
 
     if (adjustedFitWindow.fraunhoferRef.m_path.size() > 4)
     {
-        m_log.Information("Determining shift from FraunhoferReference");
+        m_log.Information(context, "Determining shift from FraunhoferReference");
         this->m_lastErrorMessage.clear();
 
         int result = adjustedFitWindow.fraunhoferRef.ReadCrossSectionDataFromFile();
@@ -89,7 +93,7 @@ std::unique_ptr<CScanResult> CScanEvaluation::EvaluateScan(
         eval.reset(new CEvaluationBase(window2));
 
         // evaluate the scan one time
-        std::unique_ptr<CScanResult> result = EvaluateOpenedScan(scan, eval, spectrometerModel, darkSettings);
+        std::unique_ptr<CScanResult> result = EvaluateOpenedScan(context, scan, eval, spectrometerModel, darkSettings);
         if (result == nullptr)
         {
             return 0;
@@ -97,9 +101,7 @@ std::unique_ptr<CScanResult> CScanEvaluation::EvaluateScan(
 
         if (m_indexOfMostAbsorbingSpectrum < 0)
         {
-            CString message;
-            message.Format("Could not determine optimal shift & squeeze. No good spectra in scan. %s", scan.GetFileName().c_str());
-            m_log.Information(message.std_str());
+            m_log.Information(context, "Could not determine optimal shift & squeeze. No good spectra in scan");
             return 0;
         }
 
@@ -109,11 +111,13 @@ std::unique_ptr<CScanResult> CScanEvaluation::EvaluateScan(
         double highestColumn = result->GetColumn(m_indexOfMostAbsorbingSpectrum, specieNum);
         if (highestColumn < 2 * columnError)
         {
-            m_log.Information("Could not determine optimal shift & squeeze. Maximum column is too low.");
+            CString message;
+            message.Format("Could not determine optimal shift & squeeze. Maximum column is too low (%.1lf +- %.1lf", highestColumn, columnError);
+            m_log.Information(context, message.std_str());
             return 0;
         }
 
-        eval.reset(FindOptimumShiftAndSqueeze(adjustedFitWindow, m_indexOfMostAbsorbingSpectrum, scan));
+        eval.reset(FindOptimumShiftAndSqueeze(context, adjustedFitWindow, m_indexOfMostAbsorbingSpectrum, scan));
     }
     else
     {
@@ -128,12 +132,13 @@ std::unique_ptr<CScanResult> CScanEvaluation::EvaluateScan(
 
 
     // Make the real evaluation of the scan
-    auto result = EvaluateOpenedScan(scan, eval, spectrometerModel, darkSettings);
+    auto result = EvaluateOpenedScan(context, scan, eval, spectrometerModel, darkSettings);
 
     return result;
 }
 
 std::unique_ptr<CScanResult> CScanEvaluation::EvaluateOpenedScan(
+    novac::LogContext logContext,
     novac::CScanFileHandler& scan,
     std::unique_ptr<novac::CEvaluationBase>& eval,
     const novac::SpectrometerModel& spectrometer,
@@ -193,7 +198,7 @@ std::unique_ptr<CScanResult> CScanEvaluation::EvaluateOpenedScan(
     while (1)
     {
         // remember which spectrum we're at
-        int spectrumIndex = current.ScanIndex();
+        const int spectrumIndex = current.ScanIndex();
 
         // a. Read the next spectrum from the file
         int ret = scan.GetNextSpectrum(current);
@@ -221,7 +226,7 @@ std::unique_ptr<CScanResult> CScanEvaluation::EvaluateOpenedScan(
                 }
                 ShowMessage(errMsg);
                 // remember that this spectrum is corrupted
-                result->MarkAsCorrupted(spectrumIndex);
+                result->MarkAsCorrupted(curSpectrumIndex);
                 continue;
             }
         }
@@ -252,6 +257,15 @@ std::unique_ptr<CScanResult> CScanEvaluation::EvaluateOpenedScan(
         current.m_info.m_peakIntensity = (float)current.MaxValue(0, current.m_length - 2);
         current.m_info.m_fitIntensity = (float)current.MaxValue(m_fitLow, m_fitHigh);
 
+        // Check if this spectrum is worth evaluating
+        const double spectrumMaximumSaturationRatioInFitRegion = novac::GetMaximumSaturationRatioOfSpectrum(current, spectrometer, m_fitLow, m_fitHigh);
+        if (spectrumMaximumSaturationRatioInFitRegion < m_userSettings.m_minimumSaturationInFitRegion)
+        {
+            message.Format("ignoring spectrum %d with maximum saturation %.3lf (%.0lf counts) in fit region (at least %.3lf required)", curSpectrumIndex, spectrumMaximumSaturationRatioInFitRegion, current.m_info.m_fitIntensity, m_userSettings.m_minimumSaturationInFitRegion);
+            m_log.Information(logContext, message.std_str());
+            continue;
+        }
+
         // c. Divide the measured spectrum with the number of co-added spectra
         //     The sky and dark spectra should already be divided before this loop.
         if (current.NumSpectra() > 0 && !m_averagedSpectra)
@@ -265,15 +279,7 @@ std::unique_ptr<CScanResult> CScanEvaluation::EvaluateOpenedScan(
             dark.Div(dark.NumSpectra());
         }
 
-        // e. Check if this spectrum is worth evaluating
-        if (Ignore(current, dark, m_fitLow, m_fitHigh))
-        {
-            message.Format("  - Ignoring spectrum %d in scan %s.", current.ScanIndex(), scan.GetFileName().c_str());
-            m_log.Information(message.std_str());
-            continue;
-        }
-
-        // f. The spectrum is ok, remove the dark.
+        // Remove the dark current spectrum
         current.Sub(dark);
 
         // e. Evaluate the spectrum
@@ -286,7 +292,7 @@ std::unique_ptr<CScanResult> CScanEvaluation::EvaluateOpenedScan(
                 message.AppendFormat("(%s)", eval->m_lastError.c_str());
             }
 
-            m_log.Information(message.std_str());
+            m_log.Information(logContext, message.std_str());
             continue;
         }
 
@@ -297,10 +303,10 @@ std::unique_ptr<CScanResult> CScanEvaluation::EvaluateOpenedScan(
         result->CheckGoodnessOfFit(current.m_info, &spectrometer);
 
         // g. If it is ok, then check if the value is higher than any of the previous ones
-        if (result->IsOk(result->GetEvaluatedNum() - 1) && fabs(result->GetColumn(result->GetEvaluatedNum() - 1, 0)) > highestColumnInScan)
+        if (result->IsOk(result->GetEvaluatedNum() - 1) && std::abs(result->GetColumn(result->GetEvaluatedNum() - 1, 0)) > highestColumnInScan)
         {
-            highestColumnInScan = fabs(result->GetColumn(result->GetEvaluatedNum() - 1, 0));
-            m_indexOfMostAbsorbingSpectrum = curSpectrumIndex;
+            highestColumnInScan = std::abs(result->GetColumn(result->GetEvaluatedNum() - 1, 0));
+            m_indexOfMostAbsorbingSpectrum = spectrumIndex;
         }
     } // end while(1)
 
@@ -333,50 +339,34 @@ bool CScanEvaluation::GetSky(novac::CScanFileHandler& scan, const Configuration:
     return successs;
 }
 
-/** Returns true if the spectrum should be ignored */
-bool CScanEvaluation::Ignore(const CSpectrum& spec, const CSpectrum& dark, int fitLow, int fitHigh)
+// Sets the first reference to 'shfit free' and links the shift of all the other refernces to the first.
+static void SetupFitWindowFitShiftDetermination(CFitWindow& window)
 {
-
-    // check if the intensity is below the given limit
-    const double maxIntensity = spec.MaxValue(fitLow, fitHigh) - dark.MinValue(fitLow, fitHigh);
-
-    const double dynamicRange = CSpectrometerDatabase::GetInstance().GetModel(spec.m_info.m_specModelName).maximumIntensityForSingleReadout;
-
-    if (maxIntensity < (dynamicRange * m_userSettings.m_minimumSaturationInFitRegion))
+    window.ref[0].m_shiftOption = SHIFT_TYPE::SHIFT_FREE;
+    window.ref[0].m_squeezeOption = SHIFT_TYPE::SHIFT_FIX;
+    window.ref[0].m_squeezeValue = 1.0;
+    for (int k = 1; k < window.nRef; ++k)
     {
-        return true;
-    }
-
-    return false;
-}
-
-
-CEvaluationBase* CScanEvaluation::FindOptimumShiftAndSqueeze(const CFitWindow& fitWindow, int indexOfMostAbsorbingSpectrum, novac::CScanFileHandler& scan)
-{
-    CSpectrum spec, sky, dark;
-
-    // Tell the user
-    novac::CString message;
-    message.Format("ReEvaluating spectrum number %d to determine optimum shift and squeeze", indexOfMostAbsorbingSpectrum);
-    m_log.Information(message.std_str());
-
-    // Evaluate this spectrum again with free (and linked) shift
-    CFitWindow fitWindow2 = fitWindow;
-    fitWindow2.ref[0].m_shiftOption = SHIFT_TYPE::SHIFT_FREE;
-    fitWindow2.ref[0].m_squeezeOption = SHIFT_TYPE::SHIFT_FIX;
-    fitWindow2.ref[0].m_squeezeValue = 1.0;
-    for (int k = 1; k < fitWindow2.nRef; ++k)
-    {
-        if (novac::Equals(fitWindow2.ref[k].m_specieName, "FraunhoferRef"))
+        if (novac::Equals(window.ref[k].m_specieName, "FraunhoferRef"))
         {
             continue;
         }
 
-        fitWindow2.ref[k].m_shiftOption = SHIFT_TYPE::SHIFT_LINK;
-        fitWindow2.ref[k].m_squeezeOption = SHIFT_TYPE::SHIFT_LINK;
-        fitWindow2.ref[k].m_shiftValue = 0.0;
-        fitWindow2.ref[k].m_squeezeValue = 0.0;
+        window.ref[k].m_shiftOption = SHIFT_TYPE::SHIFT_LINK;
+        window.ref[k].m_squeezeOption = SHIFT_TYPE::SHIFT_LINK;
+        window.ref[k].m_shiftValue = 0.0;
+        window.ref[k].m_squeezeValue = 0.0;
     }
+}
+
+CEvaluationBase* CScanEvaluation::FindOptimumShiftAndSqueeze(novac::LogContext logContext, const CFitWindow& fitWindow, int indexOfMostAbsorbingSpectrum, novac::CScanFileHandler& scan)
+{
+    novac::CString message;
+    CSpectrum spec, sky, dark;
+
+    // Evaluate this spectrum again with free (and linked) shift
+    CFitWindow fitWindow2 = fitWindow;
+    SetupFitWindowFitShiftDetermination(fitWindow2);
 
     // Get the sky-spectrum
     if (!GetSky(scan, m_userSettings.sky, sky))
@@ -402,11 +392,22 @@ CEvaluationBase* CScanEvaluation::FindOptimumShiftAndSqueeze(const CFitWindow& f
     sky.Sub(dark);
 
     // create the new evaluator
-    CEvaluationBase* intermediateEvaluator = new CEvaluationBase(fitWindow2);
+    std::unique_ptr<CEvaluationBase> intermediateEvaluator = std::make_unique<CEvaluationBase>(fitWindow2);
     intermediateEvaluator->SetSkySpectrum(sky);
 
     // Get the measured spectrum
-    scan.GetSpectrum(spec, 2 + indexOfMostAbsorbingSpectrum); // The two comes from the sky and the dark spectra in the beginning
+    int ret = scan.GetSpectrum(spec, 2 + indexOfMostAbsorbingSpectrum); // The two comes from the sky and the dark spectra in the beginning
+    if (ret != 1)
+    {
+        message.Format("Failed to read spectrum %d in file", indexOfMostAbsorbingSpectrum);
+        m_log.Error(logContext, message.std_str());
+        return nullptr;
+    }
+
+    // Tell the user
+    message.Format("Re-evaluating spectrum number %d (scan angle %.1lf, started at %2d:%2d:%2d) to determine optimum shift and squeeze", indexOfMostAbsorbingSpectrum, spec.ScanAngle(), spec.m_info.m_startTime.hour, spec.m_info.m_startTime.minute, spec.m_info.m_startTime.second);
+    m_log.Information(logContext, message.std_str());
+
     if (spec.m_info.m_interlaceStep > 1)
     {
         spec.InterpolateSpectrum();
@@ -441,14 +442,13 @@ CEvaluationBase* CScanEvaluation::FindOptimumShiftAndSqueeze(const CFitWindow& f
         fitWindow2.ref[k].m_shiftValue = optimumShift;
         fitWindow2.ref[k].m_squeezeValue = optimumSqueeze;
     }
-    delete intermediateEvaluator;
 
     CEvaluationBase* newEvaluator = new CEvaluationBase(fitWindow2);
     newEvaluator->SetSkySpectrum(sky);
 
     // 6. We're done!
     message.Format("Optimum shift set to : %.2lf. Optimum squeeze set to: %.2lf ", optimumShift, optimumSqueeze);
-    m_log.Information(message.std_str());
+    m_log.Information(logContext, message.std_str());
 
     return newEvaluator;
 }

@@ -48,7 +48,12 @@ private:
 
     /** Performs the evaluation using the supplied evaluator
         @return the result of the evaluation, or null if something goes wrong */
-    std::unique_ptr<CScanResult> EvaluateOpenedScan(novac::CScanFileHandler& scan, std::unique_ptr<novac::CEvaluationBase>& eval, const novac::SpectrometerModel& spectrometer, const Configuration::CDarkSettings* darkSettings = nullptr);
+    std::unique_ptr<CScanResult> EvaluateOpenedScan(
+        novac::LogContext logContext,
+        novac::CScanFileHandler& scan,
+        std::unique_ptr<novac::CEvaluationBase>& eval,
+        const novac::SpectrometerModel& spectrometer,
+        const Configuration::CDarkSettings* darkSettings = nullptr);
 
     /** This returns the sky spectrum that is to be used in the fitting.
         Which spectrum to be used is taken from the given settings.
@@ -63,11 +68,6 @@ private:
         @return true on success. */
     bool GetDark(novac::CScanFileHandler& scan, const novac::CSpectrum& spec, novac::CSpectrum& dark, const Configuration::CDarkSettings* darkSettings = NULL);
 
-    /** checks the spectrum to the settings and returns 'true' if the spectrum should not be evaluated.
-        The spectra 'spec' and 'dark' should be divided by the number of co-adds before calling this function.
-     */
-    bool Ignore(const novac::CSpectrum& spec, const novac::CSpectrum& dark, int fitLow, int fitHigh);
-
     /** Finds the optimum shift and squeeze for an evaluated scan by looking at
             the spectrum with the highest absorption of the evaluated specie
             and evaluate it with shift and squeeze free
@@ -77,7 +77,7 @@ private:
         @param scan The scan to improve the evaluation for.
         @return a new evaluator with the fit-window set to the new optimum values.
         @return nullptr if the evaluation failed. */
-    novac::CEvaluationBase* FindOptimumShiftAndSqueeze(const novac::CFitWindow& fitWindow, int indexOfMostAbsorbingSpectrum, novac::CScanFileHandler& scan);
+    novac::CEvaluationBase* FindOptimumShiftAndSqueeze(novac::LogContext logContext, const novac::CFitWindow& fitWindow, int indexOfMostAbsorbingSpectrum, novac::CScanFileHandler& scan);
 
     // ------------------------ THE PARAMETERS FOR THE EVALUATION ------------------
 
@@ -85,7 +85,7 @@ private:
         adjust the shift and squeeze with it later */
     int m_indexOfMostAbsorbingSpectrum = -1;
 
-    /** Performs a basic validation on the setup of the given fit window. 
+    /** Performs a basic validation on the setup of the given fit window.
         @throws std::exception (or subclass of this) if the window is not ok */
     static void ValidateSetup(const novac::CFitWindow& window);
 };

@@ -2,6 +2,7 @@
 #include <SpectralEvaluation/Spectra/SpectrometerModel.h>
 #include <SpectralEvaluation/Evaluation/FitWindow.h>
 #include "catch.hpp"
+#include <iostream>
 
 static std::string GetTestDataDirectory()
 {
@@ -118,7 +119,7 @@ TEST_CASE("EvaluateScan, scan with saturated sky spectrum expected result - case
     novac::CScanFileHandler scan;
     VerifyScanCanBeRead(scan, filename);
     Configuration::CUserConfiguration userSettings;
-    const Configuration::CDarkSettings *darkSettings = nullptr;
+    const Configuration::CDarkSettings* darkSettings = nullptr;
 
     novac::CFitWindow fitWindow;
     SetupFitWindow(fitWindow);
@@ -134,12 +135,97 @@ TEST_CASE("EvaluateScan, scan with saturated sky spectrum expected result - case
     REQUIRE(result != nullptr);
 }
 
-// TEST_CASE("EvaluateScan, scan with clearly visible plume expected result - case 2 (Ruahepu, Avantes)", "[ScanEvaluation][EvaluateScan][IntegrationTest][Avantes]")
-// {
-//     const std::string filename = GetTestDataDirectory() + "2002128M1/2002128M1_230120_1907_0.pak";
-//     novac::CScanFileHandler scan;
-//     VerifyScanCanBeRead(scan, filename);
-// 
-// 
-// 
-// }
+TEST_CASE("EvaluateScan, scan with clearly visible plume expected result - case 2 (Ruahepu, Avantes)", "[ScanEvaluation][EvaluateScan][IntegrationTest][Avantes]")
+{
+    // Arrange
+    const std::string filename = GetTestDataDirectory() + "2002128M1/2002128M1_230120_1907_0.pak";
+
+    novac::ConsoleLog logger;
+
+    novac::CScanFileHandler scan;
+    VerifyScanCanBeRead(scan, filename);
+    Configuration::CUserConfiguration userSettings;
+    const Configuration::CDarkSettings* darkSettings = nullptr;
+
+    SECTION("Default settings")
+    {
+        novac::CFitWindow fitWindow;
+        fitWindow.fitType = novac::FIT_TYPE::FIT_HP_DIV; // the references are HP500
+        SetupFitWindow(fitWindow);
+
+        novac::SpectrometerModel spectrometerModel = novac::CSpectrometerDatabase::GetInstance().SpectrometerModel_AVASPEC();
+
+        Evaluation::CScanEvaluation sut(userSettings, logger);
+
+        // Act
+        auto result = sut.EvaluateScan(scan, fitWindow, spectrometerModel, darkSettings);
+
+        // Assert
+        REQUIRE(result != nullptr);
+        REQUIRE(44 == result->GetEvaluatedNum());
+        REQUIRE(-90.0 == result->GetScanAngle(0));
+        REQUIRE(82.0 == result->GetScanAngle(43));
+
+        // for (long i = 0; i < result->GetEvaluatedNum(); i++)
+        // {
+        //     std::cout << "spectrum " << i << " has column " << result->GetColumn(i, 0) << std::endl;
+        // }
+
+        REQUIRE(Approx(-61.56348) == result->GetColumn(0, 0));
+
+        // the sky spectrum info should be set
+        auto skySpecInfo = result->GetSkySpectrumInfo();
+        REQUIRE(skySpecInfo.m_startTime == novac::CDateTime(2023, 1, 20, 19, 7, 48, 870));
+
+        // the dark spectrum info should be set
+        auto darkSpecInfo = result->GetDarkSpectrumInfo();
+        REQUIRE(darkSpecInfo.m_startTime == novac::CDateTime(2023, 1, 20, 19, 8, 29, 240));
+    }
+
+    SECTION("Find optimum shift of references (there is a shift between the references and the spectra)")
+    {
+        novac::CFitWindow fitWindow;
+        fitWindow.fitType = novac::FIT_TYPE::FIT_HP_DIV; // the references are HP500
+        fitWindow.findOptimalShift = 1;
+        SetupFitWindow(fitWindow);
+
+        novac::SpectrometerModel spectrometerModel = novac::CSpectrometerDatabase::GetInstance().SpectrometerModel_AVASPEC();
+
+        Evaluation::CScanEvaluation sut(userSettings, logger);
+
+        // Act
+        auto result = sut.EvaluateScan(scan, fitWindow, spectrometerModel, darkSettings);
+
+        // Assert
+        REQUIRE(result != nullptr);
+        REQUIRE(44 == result->GetEvaluatedNum());
+        REQUIRE(-90.0 == result->GetScanAngle(0));
+        REQUIRE(82.0 == result->GetScanAngle(43));
+
+        REQUIRE(Approx(-61.8223) == result->GetColumn(0, 0));
+        REQUIRE(Approx(0.0113).margin(0.001) == result->GetShift(0, 0));
+        REQUIRE(Approx(1.00) == result->GetSqueeze(0, 0));
+    }
+
+    SECTION("Lower minimum saturation ratio")
+    {
+        userSettings.m_minimumSaturationInFitRegion = 0.01; // less than the default value of 5%
+
+        novac::CFitWindow fitWindow;
+        fitWindow.fitType = novac::FIT_TYPE::FIT_HP_DIV; // the references are HP500
+        SetupFitWindow(fitWindow);
+
+        novac::SpectrometerModel spectrometerModel = novac::CSpectrometerDatabase::GetInstance().SpectrometerModel_AVASPEC();
+
+        Evaluation::CScanEvaluation sut(userSettings, logger);
+
+        // Act
+        auto result = sut.EvaluateScan(scan, fitWindow, spectrometerModel, darkSettings);
+
+        // Assert
+        REQUIRE(result != nullptr);
+        REQUIRE(51 == result->GetEvaluatedNum()); // all spectra evaluated
+        REQUIRE(-90.0 == result->GetScanAngle(0));
+        REQUIRE(90.0 == result->GetScanAngle(50));
+    }
+}

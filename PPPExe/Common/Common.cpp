@@ -23,12 +23,6 @@ extern std::string s_exeFileName;
 #undef min
 #undef max
 
-void UpdateMessage(const novac::CString& message)
-{
-    Poco::Logger& log = Poco::Logger::get("NovacPPP");
-    log.information(message.std_str());
-}
-
 void ShowMessage(const novac::CString& message)
 {
     Poco::Logger& log = Poco::Logger::get("NovacPPP");
@@ -74,16 +68,54 @@ void PocoLogger::Debug(const std::string& message)
     log.debug(message);
 }
 
+Poco::Message PrepareMessage(const novac::LogContext& c, const std::string& message)
+{
+    Poco::Message msg;
+    msg.setText(message);
+    for each (const auto & p in c.properties)
+    {
+        msg.set(p.first, p.second);
+    }
+
+    return msg;
+}
+
+void PocoLogger::Debug(const novac::LogContext& c, const std::string& message)
+{
+    Poco::Logger& log = Poco::Logger::get("NovacPPP");
+
+    Poco::Message msg = PrepareMessage(c, message);
+    msg.setPriority(Poco::Message::PRIO_DEBUG);
+    log.log(msg);
+}
+
+
 void PocoLogger::Information(const std::string& message)
 {
     Poco::Logger& log = Poco::Logger::get("NovacPPP");
     log.information(message);
+}
+void PocoLogger::Information(const novac::LogContext& c, const std::string& message)
+{
+    Poco::Logger& log = Poco::Logger::get("NovacPPP");
+
+    Poco::Message msg = PrepareMessage(c, message);
+    msg.setPriority(Poco::Message::PRIO_INFORMATION);
+    log.log(msg);
 }
 
 void PocoLogger::Error(const std::string& message)
 {
     Poco::Logger& log = Poco::Logger::get("NovacPPP");
     log.fatal(message);
+}
+void PocoLogger::Error(const novac::LogContext& c, const std::string& message)
+{
+    Poco::Logger& log = Poco::Logger::get("NovacPPP");
+
+    Poco::Message msg = PrepareMessage(c, message);
+    msg.setPriority(Poco::Message::PRIO_FATAL);
+    log.log(msg);
 }
 
 Common::Common()

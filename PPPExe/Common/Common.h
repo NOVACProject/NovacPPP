@@ -13,14 +13,14 @@ class PocoLogger : public novac::ILogger
 {
 public:
     virtual void Debug(const std::string& message) override;
+    virtual void Debug(const novac::LogContext& c, const std::string& message) override;
 
     virtual void Information(const std::string& message) override;
+    virtual void Information(const novac::LogContext& c, const std::string& message) override;
 
     virtual void Error(const std::string& message) override;
+    virtual void Error(const novac::LogContext& c, const std::string& message) override;
 };
-
-/** Update the top line of list box */
-void UpdateMessage(const novac::CString& message);
 
 
 // -------------------------------------------------------
