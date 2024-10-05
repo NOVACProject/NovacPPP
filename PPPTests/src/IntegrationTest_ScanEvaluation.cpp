@@ -3,7 +3,6 @@
 #include <SpectralEvaluation/Evaluation/FitWindow.h>
 #include <SpectralEvaluation/File/File.h>
 #include "catch.hpp"
-#include <iostream>
 
 static std::string GetTestDataDirectory()
 {
@@ -220,6 +219,7 @@ TEST_CASE("EvaluateScan, scan with clearly visible plume expected result - case 
         REQUIRE(82.0 == result->GetScanAngle(43));
 
         REQUIRE(Approx(-61.56348) == result->GetColumn(0, 0));
+        REQUIRE(0.0 == result->GetShift(0, 0));
 
         // the sky spectrum info should be set
         auto skySpecInfo = result->GetSkySpectrumInfo();
@@ -274,7 +274,7 @@ TEST_CASE("EvaluateScan, scan with clearly visible plume expected result - case 
     }
 }
 
-TEST_CASE("EvaluateScan, scan with clearly visible plume and calibrated references expected result - case 3 (Ruahepu, Avantes)", "[ScanEvaluation][EvaluateScan][IntegrationTest][Avantes][2002128M1_230120_1907_0][Crash]")
+TEST_CASE("EvaluateScan, scan with clearly visible plume and calibrated references expected result - case 3 (Ruahepu, Avantes)", "[ScanEvaluation][EvaluateScan][IntegrationTest][Avantes][2002128M1_230120_1907_0]")
 {
     // Arrange
     const std::string filename = GetTestDataDirectory() + "2002128M1/2002128M1_230120_1907_0.pak";
@@ -294,37 +294,32 @@ TEST_CASE("EvaluateScan, scan with clearly visible plume and calibrated referenc
 
     SECTION("Calibrated references with Polynomial fit and Fraunhofer Reference")
     {
-        try
-        {
-            novac::CFitWindow fitWindow;
-            fitWindow.fitType = novac::FIT_TYPE::FIT_POLY;
-            SetupFitWindowWithCalibratedReferences(fitWindow);
+        novac::CFitWindow fitWindow;
+        fitWindow.fitType = novac::FIT_TYPE::FIT_POLY;
+        SetupFitWindowWithCalibratedReferences(fitWindow);
 
-            Evaluation::CScanEvaluation sut(userSettings, logger);
+        Evaluation::CScanEvaluation sut(userSettings, logger);
 
-            // Act
-            auto result = sut.EvaluateScan(context, scan, fitWindow, spectrometerModel, darkSettings);
+        // Act
+        auto result = sut.EvaluateScan(context, scan, fitWindow, spectrometerModel, darkSettings);
 
-            /*
-            // Assert
-            REQUIRE(result != nullptr);
-            REQUIRE(44 == result->GetEvaluatedNum());
-            REQUIRE(-90.0 == result->GetScanAngle(0));
-            REQUIRE(82.0 == result->GetScanAngle(43));
+        // Assert
+        REQUIRE(result != nullptr);
+        REQUIRE(44 == result->GetEvaluatedNum());
+        REQUIRE(-90.0 == result->GetScanAngle(0));
+        REQUIRE(82.0 == result->GetScanAngle(43));
 
-            REQUIRE(Approx(-61.56348) == result->GetColumn(0, 0));
+        // A shift has been applied to the DOAS fit.
+        REQUIRE(Approx(0.58).margin(0.01) == result->GetShift(0, 0));
 
-            // the sky spectrum info should be set
-            auto skySpecInfo = result->GetSkySpectrumInfo();
-            REQUIRE(skySpecInfo.m_startTime == novac::CDateTime(2023, 1, 20, 19, 7, 48, 870));
+        REQUIRE(Approx(-2.345e17).margin(1e15) == result->GetColumn(0, 0));
 
-            // the dark spectrum info should be set
-            auto darkSpecInfo = result->GetDarkSpectrumInfo();
-            REQUIRE(darkSpecInfo.m_startTime == novac::CDateTime(2023, 1, 20, 19, 8, 29, 240)); */
-        }
-        catch (std::exception& ex)
-        {
-            std::cout << "exception caught with message: " << ex.what() << std::endl;
-        }
+        // the sky spectrum info should be set
+        auto skySpecInfo = result->GetSkySpectrumInfo();
+        REQUIRE(skySpecInfo.m_startTime == novac::CDateTime(2023, 1, 20, 19, 7, 48, 870));
+
+        // the dark spectrum info should be set
+        auto darkSpecInfo = result->GetDarkSpectrumInfo();
+        REQUIRE(darkSpecInfo.m_startTime == novac::CDateTime(2023, 1, 20, 19, 8, 29, 240));
     }
 }

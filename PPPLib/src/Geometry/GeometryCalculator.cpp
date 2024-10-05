@@ -1,7 +1,7 @@
 #include <PPPLib/Geometry/GeometryCalculator.h>
 #include <PPPLib/VolcanoInfo.h>
 #include <PPPLib/File/EvaluationLogFileHandler.h>
-
+#include <PPPLib/Configuration/UserConfiguration.h>
 #include <SpectralEvaluation/GPSData.h>
 
 // This is the settings for how to do the procesing
@@ -17,8 +17,7 @@
 using namespace Geometry;
 using namespace novac;
 
-extern novac::CVolcanoInfo					g_volcanoes;   // <-- A list of all known volcanoes
-extern Configuration::CUserConfiguration	g_userSettings;// <-- The settings of the user
+extern novac::CVolcanoInfo g_volcanoes;   // <-- A list of all known volcanoes
 
 CGeometryCalculator::CGeometryCalculationInfo::CGeometryCalculationInfo()
 {
@@ -37,6 +36,13 @@ void CGeometryCalculator::CGeometryCalculationInfo::Clear()
         plumeCentre[k] = 0.0;
     }
 }
+
+Geometry::CGeometryCalculator::CGeometryCalculator(novac::ILogger& log, const Configuration::CUserConfiguration& userSettings)
+    : m_userSettings(userSettings), m_log(log)
+{
+}
+
+
 Geometry::CGeometryCalculator::CGeometryCalculationInfo& CGeometryCalculator::CGeometryCalculationInfo::operator =(const Geometry::CGeometryCalculator::CGeometryCalculationInfo& info2)
 {
     for (int k = 0; k < 2; ++k)
@@ -362,19 +368,23 @@ bool CGeometryCalculator::CalculateGeometry(const novac::CString& evalLog1, cons
 
 bool CGeometryCalculator::CalculateGeometry(const novac::CString& evalLog1, int scanIndex1, const novac::CString& evalLog2, int scanIndex2, const Configuration::CInstrumentLocation locations[2], Geometry::CGeometryResult& result)
 {
-    FileHandler::CEvaluationLogFileHandler reader[2];
     CGPSData source;
     CPlumeInScanProperty plume[2];
     CDateTime startTime[2];
     int k; // iterator
 
     // 1. Read the evaluation-logs
-    reader[0].m_evaluationLog.Format("%s", (const char*)evalLog1);
-    reader[1].m_evaluationLog.Format("%s", (const char*)evalLog2);
+    std::vector<FileHandler::CEvaluationLogFileHandler> reader;
+
+    FileHandler::CEvaluationLogFileHandler reader1(m_log, evalLog1.std_str(), m_userSettings.m_molecule);
     if (RETURN_CODE::SUCCESS != reader[0].ReadEvaluationLog())
         return false;
+    reader.push_back(reader1);
+
+    FileHandler::CEvaluationLogFileHandler reader2(m_log, evalLog2.std_str(), m_userSettings.m_molecule);
     if (RETURN_CODE::SUCCESS != reader[1].ReadEvaluationLog())
         return false;
+    reader.push_back(reader2);
 
     // 2. Get the 'CPlumeInScanProperty' for the two scans and the start-times
     int index[2] = { scanIndex1, scanIndex2 };
@@ -382,11 +392,11 @@ bool CGeometryCalculator::CalculateGeometry(const novac::CString& evalLog1, int 
     {
         reader[k].m_scan[index[k]].GetStartTime(0, startTime[k]);
 
-        if (false == reader[k].m_scan[index[k]].CalculatePlumeCentre(CMolecule(g_userSettings.m_molecule), plume[k]))
+        if (false == reader[k].m_scan[index[k]].CalculatePlumeCentre(CMolecule(m_userSettings.m_molecule), plume[k]))
         {
             return false; // <-- cannot see the plume
         }
-        if (plume[k].completeness < g_userSettings.m_calcGeometry_CompletenessLimit + 0.01)
+        if (plume[k].completeness < m_userSettings.m_calcGeometry_CompletenessLimit + 0.01)
         {
             return false; // <-- cannot see enough of the plume
         }
@@ -584,7 +594,6 @@ double CGeometryCalculator::GetWindDirection(const CGPSData source, double plume
 
 bool CGeometryCalculator::CalculatePlumeHeight(const novac::CString& evalLog, int scanIndex, Meteorology::CWindField& windField, Configuration::CInstrumentLocation location, Geometry::CGeometryResult& result)
 {
-    FileHandler::CEvaluationLogFileHandler reader;
     CPlumeInScanProperty plume;
     CGPSData source, scannerPos;
 
@@ -600,16 +609,16 @@ bool CGeometryCalculator::CalculatePlumeHeight(const novac::CString& evalLog, in
     source.m_altitude = (long)g_volcanoes.GetPeakAltitude(volcanoIndex1);
 
     // 3. Read the evaluation-log
-    reader.m_evaluationLog.Format("%s", (const char*)evalLog);
+    FileHandler::CEvaluationLogFileHandler reader(m_log, evalLog.std_str(), m_userSettings.m_molecule);
     if (RETURN_CODE::SUCCESS != reader.ReadEvaluationLog())
         return false;
 
     // 4. Get the scan-angles around which the plumes are centred
-    if (false == reader.m_scan[scanIndex].CalculatePlumeCentre(CMolecule(g_userSettings.m_molecule), plume))
+    if (false == reader.m_scan[scanIndex].CalculatePlumeCentre(CMolecule(m_userSettings.m_molecule), plume))
     {
         return false; // <-- cannot see the plume
     }
-    if (plume.completeness < g_userSettings.m_calcGeometry_CompletenessLimit + 0.01)
+    if (plume.completeness < m_userSettings.m_calcGeometry_CompletenessLimit + 0.01)
     {
         return false; // <-- cannot see enough of the plume
     }
@@ -638,7 +647,7 @@ bool CGeometryCalculator::CalculatePlumeHeight(const novac::CString& evalLog, in
 
 #ifdef _DEBUG
     novac::CString fileName;
-    fileName.Format("%s%cdebugGeometrySingleInstr.txt", (const char*)g_userSettings.m_outputDirectory, Poco::Path::separator());
+    fileName.Format("%s%cdebugGeometrySingleInstr.txt", (const char*)m_userSettings.m_outputDirectory, Poco::Path::separator());
     FILE* f = fopen(fileName, "a");
     if (f > 0)
     {
@@ -647,7 +656,7 @@ bool CGeometryCalculator::CalculatePlumeHeight(const novac::CString& evalLog, in
     }
 #endif
 
-    if (plumeHeightErr > g_userSettings.m_calcGeometry_MaxPlumeAltError)
+    if (plumeHeightErr > m_userSettings.m_calcGeometry_MaxPlumeAltError)
         return false;
 
     reader.m_scan[scanIndex].GetStartTime(0, result.m_averageStartTime);
@@ -664,7 +673,6 @@ bool CGeometryCalculator::CalculatePlumeHeight(const novac::CString& evalLog, in
 
 bool CGeometryCalculator::CalculateWindDirection(const novac::CString& evalLog, int scanIndex, Geometry::CPlumeHeight& absolutePlumeHeight, Configuration::CInstrumentLocation location, Geometry::CGeometryResult& result)
 {
-    FileHandler::CEvaluationLogFileHandler reader;
     CPlumeInScanProperty plume;
     CGPSData source, scannerPos;
 
@@ -680,16 +688,16 @@ bool CGeometryCalculator::CalculateWindDirection(const novac::CString& evalLog, 
     source.m_altitude = (long)g_volcanoes.GetPeakAltitude(volcanoIndex1);
 
     // 3. Read the evaluation-log
-    reader.m_evaluationLog.Format("%s", (const char*)evalLog);
+    FileHandler::CEvaluationLogFileHandler reader(m_log, evalLog.std_str(), m_userSettings.m_molecule);
     if (RETURN_CODE::SUCCESS != reader.ReadEvaluationLog())
         return false;
 
     // 4. Get the scan-angles around which the plumes are centred
-    if (false == reader.m_scan[scanIndex].CalculatePlumeCentre(CMolecule(g_userSettings.m_molecule), plume))
+    if (false == reader.m_scan[scanIndex].CalculatePlumeCentre(CMolecule(m_userSettings.m_molecule), plume))
     {
         return false; // <-- cannot see the plume
     }
-    if (plume.completeness < g_userSettings.m_calcGeometry_CompletenessLimit + 0.01)
+    if (plume.completeness < m_userSettings.m_calcGeometry_CompletenessLimit + 0.01)
     {
         return false; // <-- cannot see enough of the plume
     }
@@ -720,7 +728,7 @@ bool CGeometryCalculator::CalculateWindDirection(const novac::CString& evalLog, 
 
 #ifdef _DEBUG
     novac::CString fileName;
-    fileName.Format("%s%cdebugGeometrySingleInstr.txt", (const char*)g_userSettings.m_outputDirectory, Poco::Path::separator());
+    fileName.Format("%s%cdebugGeometrySingleInstr.txt", (const char*)m_userSettings.m_outputDirectory, Poco::Path::separator());
     FILE* f = fopen(fileName, "a");
     if (f > 0)
     {
@@ -729,7 +737,7 @@ bool CGeometryCalculator::CalculateWindDirection(const novac::CString& evalLog, 
     }
 #endif
 
-    if (windDirectionErr > g_userSettings.m_calcGeometry_MaxWindDirectionError)
+    if (windDirectionErr > m_userSettings.m_calcGeometry_MaxWindDirectionError)
         return false;
 
     reader.m_scan[scanIndex].GetStartTime(0, result.m_averageStartTime);

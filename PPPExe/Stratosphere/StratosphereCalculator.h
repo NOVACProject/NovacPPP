@@ -3,6 +3,7 @@
 #include <PPPLib/Evaluation/ExtendedScanResult.h>
 #include <SpectralEvaluation/GPSData.h>
 #include <SpectralEvaluation/DateTime.h>
+#include <SpectralEvaluation/Log.h>
 
 #include <list>
 
@@ -18,6 +19,7 @@ class CStratosphereCalculator
 {
 public:
     CStratosphereCalculator(
+        novac::ILogger& log,
         const Configuration::CNovacPPPConfiguration& setup,
         const Configuration::CUserConfiguration& userSettings);
     ~CStratosphereCalculator(void);
@@ -63,6 +65,8 @@ private:
 
     /** The set of measurements that we have */
     std::list <CMeasurementDay> m_measurementDays;
+
+    novac::ILogger& m_log;
 
     const Configuration::CNovacPPPConfiguration& m_setup;
 

@@ -131,8 +131,8 @@ CWindSpeedCalculator::CMeasurementSeries::~CMeasurementSeries()
 }
 
 
-CWindSpeedCalculator::CWindSpeedCalculator(const Configuration::CUserConfiguration& userSettings)
-    : m_userSettings(userSettings)
+CWindSpeedCalculator::CWindSpeedCalculator(novac::ILogger& log, const Configuration::CUserConfiguration& userSettings)
+    : m_log(log), m_userSettings(userSettings)
 {
     shift = NULL;
     corr = NULL;
@@ -530,11 +530,8 @@ int CWindSpeedCalculator::CalculateWindSpeed(const novac::CString& evalLog1, con
     return 0;
 }
 
-/** Calculate the correlation between the two time-series found in the
-        given evaluation-files. */
 RETURN_CODE CWindSpeedCalculator::CalculateCorrelation(const novac::CString& evalLog1, const novac::CString& evalLog2)
 {
-    FileHandler::CEvaluationLogFileHandler reader[2];
     CDateTime time;
     Meteorology::CWindField wf;
     novac::CString errorMessage;
@@ -543,19 +540,26 @@ RETURN_CODE CWindSpeedCalculator::CalculateCorrelation(const novac::CString& eva
     double delay;
 
     // 1. Read the evaluation-logs
-    reader[0].m_evaluationLog.Format("%s", (const char*)evalLog1);
-    reader[1].m_evaluationLog.Format("%s", (const char*)evalLog2);
-    if (RETURN_CODE::SUCCESS != reader[0].ReadEvaluationLog())
+    std::vector<FileHandler::CEvaluationLogFileHandler> reader;
+
+    FileHandler::CEvaluationLogFileHandler reader1(m_log, evalLog1.std_str(), m_userSettings.m_molecule);
+    if (RETURN_CODE::SUCCESS != reader1.ReadEvaluationLog())
         return RETURN_CODE::FAIL;
-    if (RETURN_CODE::SUCCESS != reader[1].ReadEvaluationLog())
+    reader.push_back(reader1);
+
+    FileHandler::CEvaluationLogFileHandler reader2(m_log, evalLog2.std_str(), m_userSettings.m_molecule);
+    if (RETURN_CODE::SUCCESS != reader2.ReadEvaluationLog())
         return RETURN_CODE::FAIL;
+    reader.push_back(reader2);
 
     // 2. Find the wind-speed measurement series in the log-files
     for (int k = 0; k < 2; ++k)
     {
         for (scanIndex[k] = 0; scanIndex[k] < reader[k].m_scan.size(); ++scanIndex[k])
-            if (reader[k].IsWindSpeedMeasurement(static_cast<int>(scanIndex[k])))
+        {
+            if (reader[k].m_scan[scanIndex[k]].IsWindMeasurement())
                 break;
+        }
         if (scanIndex[k] == reader[k].m_scan.size())
             return RETURN_CODE::FAIL;		// <-- no wind-speed measurement found
     }
@@ -666,7 +670,6 @@ RETURN_CODE CWindSpeedCalculator::CalculateCorrelation(const novac::CString& eva
         given evaluation-file. */
 RETURN_CODE CWindSpeedCalculator::CalculateCorrelation_Heidelberg(const novac::CString& evalLog)
 {
-    FileHandler::CEvaluationLogFileHandler reader;
     WindSpeedMeasurement::CWindSpeedCalculator::CMeasurementSeries* series[2];
     Meteorology::CWindField wf;
     CDateTime time;
@@ -674,14 +677,18 @@ RETURN_CODE CWindSpeedCalculator::CalculateCorrelation_Heidelberg(const novac::C
     double delay;
 
     // 1. Read the evaluation-log
-    reader.m_evaluationLog.Format("%s", (const char*)evalLog);
+    FileHandler::CEvaluationLogFileHandler reader(m_log, evalLog.std_str(), m_userSettings.m_molecule);
     if (RETURN_CODE::SUCCESS != reader.ReadEvaluationLog())
         return RETURN_CODE::FAIL;
 
     // 2. Find the wind-speed measurement series in the log-files
     for (scanIndex = 0; scanIndex < reader.m_scan.size(); ++scanIndex)
-        if (reader.IsWindSpeedMeasurement_Heidelberg(static_cast<int>(scanIndex)))
+    {
+        if (reader.m_scan[scanIndex].IsWindMeasurement_Heidelberg())
+        {
             break;
+        }
+    }
     if (scanIndex == reader.m_scan.size())
         return RETURN_CODE::FAIL; // <-- no wind-speed measurement found
 

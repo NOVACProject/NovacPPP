@@ -18,13 +18,19 @@
 using namespace Flux;
 
 CFluxCalculator::CFluxCalculator(
+    novac::ILogger& log,
     const Configuration::CNovacPPPConfiguration& setup,
     const Configuration::CUserConfiguration& userSettings)
-    : m_setup(setup), m_userSettings(userSettings)
+    : m_log(log), m_setup(setup), m_userSettings(userSettings)
 {
 }
 
-int CFluxCalculator::CalculateFlux(const novac::CString& evalLogFileName, const Meteorology::CWindDataBase& windDataBase, const Geometry::CPlumeHeight& plumeAltitude, CFluxResult& fluxResult)
+bool CFluxCalculator::CalculateFlux(
+    novac::LogContext context,
+    const std::string& evalLogFileName,
+    const Meteorology::CWindDataBase& windDataBase,
+    const Geometry::CPlumeHeight& plumeAltitude,
+    CFluxResult& fluxResult)
 {
     novac::CDateTime skyStartTime;
     novac::CString errorMessage, serial;
@@ -33,32 +39,32 @@ int CFluxCalculator::CalculateFlux(const novac::CString& evalLogFileName, const 
     int channel;
     MEASUREMENT_MODE mode;
 
-    // 1. Assert that the evaluation-log-file exists
+    context = context.With("file", novac::GetFileName(evalLogFileName));
+
     if (!Filesystem::IsExistingFile(evalLogFileName))
     {
-        ShowMessage("Recieved evaluation-log with illegal path. Could not calculate flux.");
-        return 1;
+        m_log.Error(context, "Recieved evaluation-log with illegal path. Could not calculate flux.");
+        return false;
     }
 
     // 2. Get some information about the scan from the file-name
-    std::string shortFileName = evalLogFileName.std_str();
-    shortFileName = novac::GetFileName(shortFileName);
+    const std::string shortFileName = novac::GetFileName(evalLogFileName);
     novac::CFileUtils::GetInfoFromFileName(shortFileName, skyStartTime, serial, channel, mode);
+
+    context = context.With("instrument", serial.std_str());
 
     // 3. Find the location of this instrument
     Configuration::CInstrumentLocation instrLocation;
-    if (GetLocation(serial, skyStartTime, instrLocation))
+    if (GetLocation(context, serial, skyStartTime, instrLocation))
     {
-        errorMessage.Format("Failed to find location of instrument %s on %04d.%02d.%02d. Could not calculate flux", (const char*)serial, skyStartTime.year, skyStartTime.month, skyStartTime.day);
-        ShowMessage(errorMessage);
-        return 3;
+        return false;
     }
 
     // 4. Get the wind field at the time of the collection of this scan
     if (!windDataBase.GetWindField(skyStartTime, novac::CGPSData(instrLocation.m_latitude, instrLocation.m_longitude, plumeAltitude.m_plumeAltitude), Meteorology::INTERP_NEAREST_NEIGHBOUR, windField))
     {
-        ShowMessage("Could not retrieve wind field at time of measurement. Could not calculate flux");
-        return 4;
+        m_log.Error(context, "Could not retrieve wind field at time of measurement. Could not calculate flux");
+        return false;
     }
 
     // 4b. Adjust the altitude of the plume so that it is relative to the altitude of the instrument...
@@ -66,24 +72,21 @@ int CFluxCalculator::CalculateFlux(const novac::CString& evalLogFileName, const 
     relativePlumeHeight.m_plumeAltitude -= instrLocation.m_altitude;
     if (relativePlumeHeight.m_plumeAltitude <= 0)
     {
-        ShowMessage(" Negative plume height obtained when calculating flux. No flux can be calculated.");
-        return 6;
+        m_log.Error(context, "Negative plume height obtained when calculating flux. No flux can be calculated.");
+        return false;
     }
 
     // 5. Read in the evaluation log file 
-    FileHandler::CEvaluationLogFileHandler reader;
-    reader.m_evaluationLog.Format(evalLogFileName);
+    FileHandler::CEvaluationLogFileHandler reader(m_log, evalLogFileName, m_userSettings.m_molecule);
     reader.ReadEvaluationLog();
     if (reader.m_scan.size() == 0)
     {
-        errorMessage.Format("Recieved evaluation log file (%s) with no scans inside. Cannot calculate flux", (const char*)evalLogFileName);
-        ShowMessage(errorMessage);
-        return 2;
+        m_log.Error("Recieved evaluation log file with no scans inside. Cannot calculate flux");
+        return false;
     }
     else if (reader.m_scan.size() > 1)
     {
-        errorMessage.Format("Recieved evaluation log file (%s) with more than one scans inside. Can only calculate flux for the first scan.", (const char*)evalLogFileName);
-        ShowMessage(errorMessage);
+        m_log.Error("Recieved evaluation log file with more than one scans inside. Can only calculate flux for the first scan.");
     }
 
     // 6. extract the scan
@@ -95,29 +98,29 @@ int CFluxCalculator::CalculateFlux(const novac::CString& evalLogFileName, const 
     // 7. Calculate the offset of the scan
     if (result.CalculateOffset(CMolecule(m_userSettings.m_molecule)))
     {
-        ShowMessage("Could not calculate offset for scan. No flux can be calculated.");
-        return 7;
+        m_log.Information(context, "Could not calculate offset for scan. No flux can be calculated.");
+        return false;
     }
 
     // 8. Check that the completeness is higher than our limit...
     if (!result.CalculatePlumeCentre(CMolecule(m_userSettings.m_molecule)))
     {
-        ShowMessage(" - Scan does not see the plume, no flux can be calculated");
-        return 8;
+        m_log.Information(context, "Scan does not see the plume, no flux can be calculated");
+        return false;
     }
     double completeness = result.GetCalculatedPlumeCompleteness();
     if (completeness < (m_userSettings.m_completenessLimitFlux + 0.01))
     {
-        errorMessage.Format(" - Scan has completeness = %.2lf which is less than limit of %.2lf. Rejected!", completeness, m_userSettings.m_completenessLimitFlux);
-        ShowMessage(errorMessage);
-        return 8;
+        errorMessage.Format("Scan has completeness = %.2lf which is less than limit of %.2lf. Rejected!", completeness, m_userSettings.m_completenessLimitFlux);
+        m_log.Information(context, errorMessage.std_str());
+        return false;
     }
 
     // 9. Calculate the flux
     if (result.CalculateFlux(CMolecule(m_userSettings.m_molecule), windField, relativePlumeHeight, instrLocation.m_compass, instrLocation.m_coneangle, instrLocation.m_tilt))
     {
-        ShowMessage("Flux calculation failed. No flux generated");
-        return 9;
+        m_log.Information(context, "Flux calculation failed. No flux generated");
+        return false;
     }
     fluxResult = result.GetFluxResult();
 
@@ -173,16 +176,14 @@ int CFluxCalculator::CalculateFlux(const novac::CString& evalLogFileName, const 
     }
 
     // ok
-    return 0;
+    return true;
 }
 
-/** Looks in the configuration of the instruments and searches
-    for a configured location which is valid for the spectrometer that
-    collected the given scan and is also valid at the time when the scan
-    was made.
-    @return 0 if successful otherwise non-zero
-*/
-int CFluxCalculator::GetLocation(const novac::CString& serial, const novac::CDateTime& startTime, Configuration::CInstrumentLocation& instrLocation)
+int CFluxCalculator::GetLocation(
+    novac::LogContext context,
+    const novac::CString& serial,
+    const novac::CDateTime& startTime,
+    Configuration::CInstrumentLocation& instrLocation)
 {
     novac::CDateTime day, evalValidFrom, evalValidTo;
     const Configuration::CInstrumentConfiguration* instrumentConf = nullptr;
@@ -200,8 +201,7 @@ int CFluxCalculator::GetLocation(const novac::CString& serial, const novac::CDat
     }
     if (instrumentConf == nullptr)
     {
-        errorMessage.Format("Recieved spectrum from not-configured instrument %s. Cannot calculate flux!", (const char*)serial);
-        ShowMessage(errorMessage);
+        m_log.Error(context, "Recieved spectrum from not-configured instrument. Cannot calculate flux!");
         return 1;
     }
 
@@ -221,8 +221,7 @@ int CFluxCalculator::GetLocation(const novac::CString& serial, const novac::CDat
     }
     if (!foundValidLocation)
     {
-        errorMessage.Format("Recieved spectrum from instrument %s with not configured location. Cannot calculate flux!", (const char*)serial);
-        ShowMessage(errorMessage);
+        m_log.Error(context, "Recieved spectrum from not-configured instrument. Cannot calculate flux!");
         return 1;
     }
 
@@ -230,7 +229,10 @@ int CFluxCalculator::GetLocation(const novac::CString& serial, const novac::CDat
     return 0;
 }
 
-RETURN_CODE CFluxCalculator::WriteFluxResult(const Flux::CFluxResult& fluxResult, const Evaluation::CScanResult* result)
+RETURN_CODE CFluxCalculator::WriteFluxResult(
+    novac::LogContext context,
+    const Flux::CFluxResult& fluxResult,
+    const Evaluation::CScanResult* result)
 {
     novac::CString string, dateStr, dateStr2, serialNumber;
     novac::CString fluxLogFile, directory;
@@ -324,8 +326,7 @@ RETURN_CODE CFluxCalculator::WriteFluxResult(const Flux::CFluxResult& fluxResult
         Poco::Path::separator(), (const char*)serialNumber, Poco::Path::separator());
     if (Filesystem::CreateDirectoryStructure(directory))
     {
-        errorMessage.Format("Could not create storage directory for flux-data. Please check settings and restart.");
-        ShowError(errorMessage);
+        m_log.Error(context, "Could not create storage directory for flux-data. Please check settings and restart.");
         return RETURN_CODE::FAIL;
     }
 

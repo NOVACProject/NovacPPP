@@ -29,7 +29,7 @@ public:
 
     /** Attaches the supplied list of flux results to the current set
         of measured data. */
-    void AttachFluxList(novac::CList<CFluxResult, CFluxResult&>& calculatedFluxes);
+    void AttachFluxList(const std::list<CFluxResult>& calculatedFluxes);
 
     /** Attaches the given flux result to the current set of
         measured data */

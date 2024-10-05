@@ -112,19 +112,14 @@ void CFluxStatistics::Clear()
     m_measurements.RemoveAll();
 }
 
-/** Attaches the supplied list of flux results to the current set
-    of measured data. */
-void CFluxStatistics::AttachFluxList(novac::CList <CFluxResult, CFluxResult&>& calculatedFluxes)
+void CFluxStatistics::AttachFluxList(const std::list<CFluxResult>& calculatedFluxes)
 {
-    auto p = calculatedFluxes.GetHeadPosition();
-    while (p != nullptr)
+    for each (const CFluxResult & result in calculatedFluxes)
     {
-        AttachFlux(calculatedFluxes.GetNext(p));
+        AttachFlux(result);
     }
 }
 
-/** Attaches the given flux result to the current set of
-    measured data */
 void CFluxStatistics::AttachFlux(const CFluxResult& result)
 {
     CFluxResult r = result; // make a local copy of the result

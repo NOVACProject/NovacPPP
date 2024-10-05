@@ -191,8 +191,8 @@ protected:
     void SortEvaluationLogs(novac::CList <Evaluation::CExtendedScanResult, Evaluation::CExtendedScanResult&>& evalLogs);
 
     /** Writes the calculated fluxes to the flux result file */
-    void WriteFluxResult_XML(novac::CList <Flux::CFluxResult, Flux::CFluxResult&>& calculatedFluxes);
-    void WriteFluxResult_Txt(novac::CList <Flux::CFluxResult, Flux::CFluxResult&>& calculatedFluxes);
+    void WriteFluxResult_XML(const std::list<Flux::CFluxResult>& calculatedFluxes);
+    void WriteFluxResult_Txt(const std::list<Flux::CFluxResult>& calculatedFluxes);
 
     /** Takes care of uploading the result files to the FTP server */
     void UploadResultsToFTP();

@@ -8,6 +8,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <list>
 #include <sstream>
 #include <functional>
 
@@ -255,7 +256,7 @@ void CPostProcessing::DoPostProcessing_Strat()
 {
     novac::CList <Evaluation::CExtendedScanResult, Evaluation::CExtendedScanResult&> evalLogFiles;
     novac::CString messageToUser, statFileName;
-    Stratosphere::CStratosphereCalculator strat(m_setup, m_userSettings);
+    Stratosphere::CStratosphereCalculator strat(m_log, m_setup, m_userSettings);
 
     // --------------- PREPARING FOR THE PROCESSING -----------
 
@@ -948,7 +949,8 @@ void CPostProcessing::CalculateGeometries(novac::CList <Evaluation::CExtendedSca
 
             // If the files have passed these tests then make a geometry-calculation
             Geometry::CGeometryResult* result = new Geometry::CGeometryResult();
-            if (Geometry::CGeometryCalculator::CalculateGeometry(plume1, startTime1, plume2, startTime2, location, *result))
+            Geometry::CGeometryCalculator geometryCalculator(m_log, m_userSettings);
+            if (geometryCalculator.CalculateGeometry(plume1, startTime1, plume2, startTime2, location, *result))
             {
                 // Check the quality of the measurement before we insert it...
                 if (result->m_plumeAltitudeError > m_userSettings.m_calcGeometry_MaxPlumeAltError)
@@ -1028,7 +1030,8 @@ void CPostProcessing::CalculateGeometries(novac::CList <Evaluation::CExtendedSca
             }
 
             // Try to calculate the wind-direction
-            if (Geometry::CGeometryCalculator::CalculateWindDirection(evalLog1, 0, plumeHeight, location[0], *result))
+            Geometry::CGeometryCalculator geometryCalculator(m_log, m_userSettings);
+            if (geometryCalculator.CalculateWindDirection(evalLog1, 0, plumeHeight, location[0], *result))
             {
                 // Success!!
                 result->m_instr1.Format(serial1);
@@ -1071,10 +1074,10 @@ void CPostProcessing::CalculateFluxes(novac::CList <Evaluation::CExtendedScanRes
     Flux::CFluxStatistics stat;
 
     // we keep the calculated fluxes in a list
-    novac::CList <Flux::CFluxResult, Flux::CFluxResult&> calculatedFluxes;
+    std::list<Flux::CFluxResult> calculatedFluxes;
 
     // Initiate the flux-calculator
-    Flux::CFluxCalculator fluxCalc(this->m_setup, this->m_userSettings);
+    Flux::CFluxCalculator fluxCalc(m_log, m_setup, m_userSettings);
 
     // Loop through the list of evaluation log files. For each of them, find
     // the best available wind-speed, wind-direction and plume height and
@@ -1086,11 +1089,14 @@ void CPostProcessing::CalculateFluxes(novac::CList <Evaluation::CExtendedScanRes
         const novac::CString& evalLog = evalLogFiles.GetAt(pos).m_evalLogFile[m_userSettings.m_mainFitWindow];
         const CPlumeInScanProperty& plume = evalLogFiles.GetNext(pos).m_scanProperties;
 
+        novac::LogContext context;
+        context = context.With("file", evalLog.std_str());
+
         // if the completeness is too low then ignore this scan.
         if (plume.completeness < (m_userSettings.m_completenessLimitFlux + 0.01))
         {
-            messageToUser.Format(" - Scan %s has completeness = %.2lf which is less than limit of %.2lf. Rejected!", (const char*)evalLog, plume.completeness, m_userSettings.m_completenessLimitFlux);
-            ShowMessage(messageToUser);
+            messageToUser.Format("Scan has completeness = %.2lf which is less than limit of %.2lf. Rejected!", plume.completeness, m_userSettings.m_completenessLimitFlux);
+            m_log.Information(context, messageToUser.std_str());
             continue;
         }
 
@@ -1104,26 +1110,24 @@ void CPostProcessing::CalculateFluxes(novac::CList <Evaluation::CExtendedScanRes
         // Extract a plume height at this time of day
         m_plumeDataBase.GetPlumeHeight(scanStartTime, plumeHeight);
 
-        // tell the user
-        messageToUser.Format("Calculating flux for measurement %s", (const char*)evalLog);
-        ShowMessage(messageToUser);
+        m_log.Information("Calculating flux");
 
         // Calculate the flux. This also takes care of writing
         // the results to file
         Flux::CFluxResult fluxResult;
-        if (0 == fluxCalc.CalculateFlux(evalLog, m_windDataBase, plumeHeight, fluxResult))
+        if (fluxCalc.CalculateFlux(context, evalLog.std_str(), m_windDataBase, plumeHeight, fluxResult))
         {
-            calculatedFluxes.AddTail(fluxResult);
+            calculatedFluxes.push_back(fluxResult);
         }
     }
 
     // Now we can write the final fluxes to file
-    ShowMessage("Writing flux log");
+    m_log.Information("Writing flux log");
     WriteFluxResult_XML(calculatedFluxes);
     WriteFluxResult_Txt(calculatedFluxes);
 
     // Also write the statistics for the flux
-    ShowMessage("Writing flux statistics");
+    m_log.Information("Writing flux statistics");
     stat.AttachFluxList(calculatedFluxes);
 
     novac::CString fluxStatFileName;
@@ -1131,7 +1135,7 @@ void CPostProcessing::CalculateFluxes(novac::CList <Evaluation::CExtendedScanRes
     stat.WriteFluxStat(fluxStatFileName);
 }
 
-void CPostProcessing::WriteFluxResult_XML(novac::CList <Flux::CFluxResult, Flux::CFluxResult&>& calculatedFluxes)
+void CPostProcessing::WriteFluxResult_XML(const std::list<Flux::CFluxResult>& calculatedFluxes)
 {
     novac::CString fluxLogFile, styleFile, wsSrc, wdSrc, phSrc, typeStr;
     CDateTime now;
@@ -1160,12 +1164,9 @@ void CPostProcessing::WriteFluxResult_XML(novac::CList <Flux::CFluxResult, Flux:
     fprintf(f, "<!-- File generated on %04d.%02d.%02d at %02d:%02d:%02d -->\n\n", now.year, now.month, now.day, now.hour, now.minute, now.second);
 
     fprintf(f, "<NovacPPPFluxResults>\n");
-    auto pos = calculatedFluxes.GetHeadPosition();
-    while (pos != nullptr)
-    {
-        // Get the next flux result in the list
-        const Flux::CFluxResult& fluxResult = calculatedFluxes.GetNext(pos);
 
+    for each (const Flux::CFluxResult & fluxResult in calculatedFluxes)
+    {
         // extract the sources of information about wind-speed, wind-direction and plume-height
         fluxResult.m_windField.GetWindSpeedSource(wsSrc);
         fluxResult.m_windField.GetWindDirectionSource(wdSrc);
@@ -1283,7 +1284,7 @@ void CPostProcessing::WriteFluxResult_XML(novac::CList <Flux::CFluxResult, Flux:
     fclose(f);
 }
 
-void CPostProcessing::WriteFluxResult_Txt(novac::CList <Flux::CFluxResult, Flux::CFluxResult&>& calculatedFluxes)
+void CPostProcessing::WriteFluxResult_Txt(const std::list<Flux::CFluxResult>& calculatedFluxes)
 {
     novac::CString fluxLogFile, wsSrc, wdSrc, phSrc, typeStr;
     CDateTime now;
@@ -1314,12 +1315,8 @@ void CPostProcessing::WriteFluxResult_Txt(novac::CList <Flux::CFluxResult, Flux:
     fprintf(f, "#StartTime\tStopTime\tSerial\tInstrumentType\tFlux_kgs\tFluxQuality\tFluxError_Wind_kgs\tFluxError_PlumeHeight_kgs\tWindSpeed_ms\tWindSpeedErr_ms\tWindSpeedSrc\tWindDir_deg\tWindDirErr_deg\tWindDirSrc\tPlumeHeight_m\tPlumeHeightErr_m\tPlumeHeightSrc\t");
     fprintf(f, "Compass\tConeAngle\tTilt\tnSpectra\tPlumeCentre_1\tPlumeCentre_2\tPlumeCompleteness\tScanOffset\n");
 
-    auto pos = calculatedFluxes.GetHeadPosition();
-    while (pos != nullptr)
+    for each (const Flux::CFluxResult & fluxResult in calculatedFluxes)
     {
-        // Get the next flux result in the list
-        const Flux::CFluxResult& fluxResult = calculatedFluxes.GetNext(pos);
-
         // extract the instrument type
         if (fluxResult.m_instrumentType == INSTRUMENT_TYPE::INSTR_HEIDELBERG)
         {
@@ -1515,7 +1512,7 @@ void CPostProcessing::CalculateDualBeamWindSpeeds(novac::CList <Evaluation::CExt
     int channel, channel2, nWindMeasFound = 0;
     MEASUREMENT_MODE meas_mode, meas_mode2;
     Configuration::CInstrumentLocation location;
-    WindSpeedMeasurement::CWindSpeedCalculator calculator(m_userSettings);
+    WindSpeedMeasurement::CWindSpeedCalculator calculator(m_log, m_userSettings);
     Geometry::CPlumeHeight plumeHeight;
     Meteorology::CWindField windField, oldWindField;
 
@@ -1897,8 +1894,7 @@ void CPostProcessing::LocateEvaluationLogFiles(const novac::CString& directory, 
         result.m_evalLogFile[0] = f;
         result.m_startTime = startTime;
 
-        FileHandler::CEvaluationLogFileHandler logReader;
-        logReader.m_evaluationLog = novac::CString(f);
+        FileHandler::CEvaluationLogFileHandler logReader(m_log, f, m_userSettings.m_molecule);
         if (RETURN_CODE::SUCCESS != logReader.ReadEvaluationLog() || logReader.m_scan.size() == 0)
         {
             ++nofFailedLogReads;

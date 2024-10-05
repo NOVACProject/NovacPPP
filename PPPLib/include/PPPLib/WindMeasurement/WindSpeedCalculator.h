@@ -7,6 +7,8 @@
 #include <PPPLib/Meteorology/WindField.h>
 #include <PPPLib/MFC/CString.h>
 
+#include <SpectralEvaluation/Log.h>
+
 namespace Configuration
 {
 class CUserConfiguration;
@@ -41,7 +43,7 @@ public:
         size_t length;
     };
 
-    CWindSpeedCalculator(const Configuration::CUserConfiguration& userSettings);
+    CWindSpeedCalculator(novac::ILogger& log, const Configuration::CUserConfiguration& userSettings);
     ~CWindSpeedCalculator(void);
 
     // ----------------------------------------------------------------------
@@ -49,7 +51,7 @@ public:
     // ----------------------------------------------------------------------
 
     /** The settings for how to perform the correlation calculations */
-    CWindSpeedMeasSettings	m_settings;
+    CWindSpeedMeasSettings m_settings;
 
     // ----------------------------------------------------------------------
     // --------------------- PUBLIC METHODS ---------------------------------
@@ -93,6 +95,8 @@ private:
     // ----------------------------------------------------------------------
 
     const Configuration::CUserConfiguration& m_userSettings;
+
+    novac::ILogger& m_log;
 
     /** The calculated values. These will be filled in after a call to 'CalculateDelay'
             Before that they are null and cannot be used. The length of these arrays are 'm_length' */

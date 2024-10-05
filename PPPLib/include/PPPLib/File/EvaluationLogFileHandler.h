@@ -1,11 +1,13 @@
 #pragma once
 
+#include <SpectralEvaluation/Definitions.h>
+#include <SpectralEvaluation/Log.h>
+#include <SpectralEvaluation/Spectra/SpectrometerModel.h>
+
 #include <PPPLib/PPPLib.h>
 #include <PPPLib/Evaluation/ScanResult.h>
-#include <SpectralEvaluation/Definitions.h>
-#include <PPPLib/MFC/CString.h>
 #include <PPPLib/MFC/CArray.h>
-#include <SpectralEvaluation/Definitions.h>
+#include <PPPLib/Configuration/UserConfiguration.h>
 
 namespace FileHandler
 {
@@ -13,10 +15,19 @@ namespace FileHandler
 class CEvaluationLogFileHandler
 {
 public:
-    CEvaluationLogFileHandler();
+    CEvaluationLogFileHandler(
+        novac::ILogger& log,
+        std::string evaluationLog,
+        CMolecule molecule,
+        novac::SpectrometerModel* spectrometerModel = nullptr);
 
     /** The evaluation log */
-    novac::CString m_evaluationLog;
+    std::string m_evaluationLog;
+
+    /** The model of the spectrometer which created the scans in this file.
+        If this is specified in the constructor, then this will be used when reading the data.
+        If this is NOT specified in the constructor then this will be guess from the data when reading. */
+    novac::SpectrometerModel m_spectrometerModel;
 
     // ------------------- PUBLIC METHODS -------------------------
 
@@ -25,15 +36,7 @@ public:
 
     /** Writes the contents of the array 'm_scan' to a new evaluation-log file */
     // TODO:refactor the software version here, this isn't that pretty.
-    RETURN_CODE WriteEvaluationLog(const novac::CString fileName, int softwareMajorNumber, int softwareMinorNumber);
-
-    /** Returns true if the scan number 'scanNo' in the most recently read
-            evaluation log file is a wind speed measurement. */
-    bool IsWindSpeedMeasurement(int scanNo);
-
-    /** Returns true if the scan number 'scanNo' in the most recently read
-            evaluation log file is a wind speed measurement of heidelberg type. */
-    bool IsWindSpeedMeasurement_Heidelberg(int scanNo);
+    RETURN_CODE WriteEvaluationLog(const std::string& fileName, novac::SpectrometerModel spectrometerModel, int softwareMajorNumber, int softwareMinorNumber);
 
     /** Appends the evaluation result of one spectrum to the given string.
             @param info - the information about the spectrum
@@ -50,14 +53,10 @@ public:
     /** Information of the wind field used to calculate the flux of each scan */
     std::vector<Meteorology::CWindField> m_windField;
 
-    /** The species that were found in this evaluation log */
-    novac::CString m_specie[20];
+    /** The names of the species that were found in this evaluation log */
+    std::vector<std::string> m_specieName;
 
-    /** The number of species found in the evaluation log */
-    long m_specieNum;
-
-    /** The currently selected specie */
-    long m_curSpecie;
+    CMolecule m_molecule;
 
     /** The instrument-type for the instrument that generated the results */
     INSTRUMENT_TYPE m_instrumentType;
@@ -65,7 +64,7 @@ public:
     /** The additional spectrum information of one spectrum. */
     novac::CSpectrumInfo m_specInfo;
 
-protected:
+private:
 
     typedef struct LogColumns
     {
@@ -97,6 +96,8 @@ protected:
 
     /** The result from the evaluation of one spectrum. */
     novac::CEvaluationResult m_evResult;
+
+    novac::ILogger& m_log;
 
     /** Reads the header line for the scan information and retrieves which
         column represents which value. */

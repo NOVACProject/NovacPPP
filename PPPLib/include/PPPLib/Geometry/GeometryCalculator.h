@@ -1,5 +1,6 @@
 #pragma once
 
+#include <SpectralEvaluation/Log.h>
 #include <SpectralEvaluation/GPSData.h>
 #include <SpectralEvaluation/Flux/PlumeInScanProperty.h>
 #include <PPPLib/Meteorology/WindField.h>
@@ -7,6 +8,11 @@
 #include <PPPLib/Geometry/PlumeHeight.h>
 #include <PPPLib/Configuration/InstrumentLocation.h>
 #include <PPPLib/MFC/CString.h>
+
+namespace Configuration
+{
+class CUserConfiguration;
+}
 
 namespace Geometry
 {
@@ -17,6 +23,8 @@ namespace Geometry
 class CGeometryCalculator
 {
 public:
+
+    CGeometryCalculator(novac::ILogger& log, const Configuration::CUserConfiguration& userSettings);
 
     /** The class 'CGeometryCalculationInfo' is an auxiliary data storage
             to be able to handle the calculation of plume height and plume direction */
@@ -51,9 +59,9 @@ public:
             @param result - will on successful return be filled with information on the result
                 the resulting plume height is the altitude of the plume in meters above sea level...
             @return true on success */
-    static bool CalculateGeometry(const novac::CString& evalLog1, const novac::CString& evalLog2, const Configuration::CInstrumentLocation locations[2], Geometry::CGeometryResult& result);
-    static bool CalculateGeometry(const novac::CString& evalLog1, int scanIndex1, const novac::CString& evalLog2, int scanIndex2, const Configuration::CInstrumentLocation locations[2], Geometry::CGeometryResult& result);
-    static bool CalculateGeometry(const novac::CPlumeInScanProperty& plume1, const novac::CDateTime& startTime1, const novac::CPlumeInScanProperty& plume2, const novac::CDateTime& startTime2, const Configuration::CInstrumentLocation locations[2], Geometry::CGeometryResult& result);
+    bool CalculateGeometry(const novac::CString& evalLog1, const novac::CString& evalLog2, const Configuration::CInstrumentLocation locations[2], Geometry::CGeometryResult& result);
+    bool CalculateGeometry(const novac::CString& evalLog1, int scanIndex1, const novac::CString& evalLog2, int scanIndex2, const Configuration::CInstrumentLocation locations[2], Geometry::CGeometryResult& result);
+    bool CalculateGeometry(const novac::CPlumeInScanProperty& plume1, const novac::CDateTime& startTime1, const novac::CPlumeInScanProperty& plume2, const novac::CDateTime& startTime2, const Configuration::CInstrumentLocation locations[2], Geometry::CGeometryResult& result);
 
     /** Calculate the plume-height using the scan found in the given evaluation-file.
             @param windDirection - the assumed wind-direction at the time the measurement was made
@@ -62,7 +70,7 @@ public:
                 the estimated error is based on the error in wind-direction and the error in estimating
                     the plume centre position.
             @return true on success */
-    static bool CalculatePlumeHeight(const novac::CString& evalLog, int scanIndex, Meteorology::CWindField& windField, Configuration::CInstrumentLocation location, Geometry::CGeometryResult& result);
+    bool CalculatePlumeHeight(const novac::CString& evalLog, int scanIndex, Meteorology::CWindField& windField, Configuration::CInstrumentLocation location, Geometry::CGeometryResult& result);
 
     /** Calculate the wind direction using the scan found in the given evaluation-file.
             @param absolutePlumeHeight - the assumed plume height (in meters above sea level)
@@ -70,9 +78,13 @@ public:
             @param result - will on successful return be filled with information on the result
                 only the wind-direction (and its error) will be filled in
             @return true on success */
-    static bool CalculateWindDirection(const novac::CString& evalLog, int scanIndex, Geometry::CPlumeHeight& absolutePlumeHeight, Configuration::CInstrumentLocation location, Geometry::CGeometryResult& result);
+    bool CalculateWindDirection(const novac::CString& evalLog, int scanIndex, Geometry::CPlumeHeight& absolutePlumeHeight, Configuration::CInstrumentLocation location, Geometry::CGeometryResult& result);
 
 protected:
+
+    const Configuration::CUserConfiguration& m_userSettings;
+
+    novac::ILogger& m_log;
 
     /** Calculates the height of the plume given data from two scans
             @param gps - the gps-positions for the two scanning instruments

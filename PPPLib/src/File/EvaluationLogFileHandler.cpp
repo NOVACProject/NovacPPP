@@ -1,24 +1,26 @@
 #include <PPPLib/File/EvaluationLogFileHandler.h>
-#include <SpectralEvaluation/Spectra/SpectrometerModel.h>
-#include <SpectralEvaluation/StringUtils.h>
-#include <cstring>
-#include <algorithm>
 #include <PPPLib/File/Filesystem.h>
 #include <PPPLib/MFC/CSingleLock.h>
-#include <cmath>
 
-// This is the settings for how to do the procesing
-#include <PPPLib/Configuration/UserConfiguration.h>
+#include <SpectralEvaluation/Spectra/SpectrometerModel.h>
+#include <SpectralEvaluation/StringUtils.h>
+
+#include <cstring>
+#include <algorithm>
+#include <cmath>
+#include <iostream>
 
 // Global variables;
 novac::CCriticalSection g_evalLogCritSect; // synchronization access to evaluation-log files
-extern Configuration::CUserConfiguration g_userSettings;// <-- The settings of the user
-
 
 using namespace FileHandler;
-using namespace novac;
 
-CEvaluationLogFileHandler::CEvaluationLogFileHandler(void)
+CEvaluationLogFileHandler::CEvaluationLogFileHandler(
+    novac::ILogger& log,
+    std::string evaluationLog,
+    CMolecule molecule,
+    novac::SpectrometerModel* spectrometerModel)
+    : m_evaluationLog(evaluationLog), m_log(log), m_molecule(molecule)
 {
     // Defining which column contains which information
     m_col.position = 1;
@@ -47,6 +49,15 @@ CEvaluationLogFileHandler::CEvaluationLogFileHandler(void)
     }
 
     m_instrumentType = INSTRUMENT_TYPE::INSTR_GOTHENBURG;
+
+    if (spectrometerModel != nullptr)
+    {
+        m_spectrometerModel = *spectrometerModel;
+    }
+    else
+    {
+        m_spectrometerModel = novac::CSpectrometerDatabase::SpectrometerModel_Unknown();
+    }
 }
 
 void CEvaluationLogFileHandler::ParseScanHeader(const char szLine[8192])
@@ -91,7 +102,7 @@ void CEvaluationLogFileHandler::ParseScanHeader(const char szLine[8192])
         ++curCol;
 
         // The scan-angle (previously known as elevation)
-        if (Equals(szToken, elevation, strlen(elevation)))
+        if (novac::Equals(szToken, elevation, strlen(elevation)))
         {
             m_col.position = curCol;
             szToken = nullptr;
@@ -99,7 +110,7 @@ void CEvaluationLogFileHandler::ParseScanHeader(const char szLine[8192])
         }
 
         // The scan-angle (previously known as elevation)
-        if (Equals(szToken, scanAngle, strlen(scanAngle)))
+        if (novac::Equals(szToken, scanAngle, strlen(scanAngle)))
         {
             m_col.position = curCol;
             szToken = nullptr;
@@ -107,7 +118,7 @@ void CEvaluationLogFileHandler::ParseScanHeader(const char szLine[8192])
         }
 
         // The observation-angle (the scan-angle for the heidelberg instrument)
-        if (Equals(szToken, obsAngle, strlen(obsAngle)))
+        if (novac::Equals(szToken, obsAngle, strlen(obsAngle)))
         {
             m_col.position = curCol;
             szToken = nullptr;
@@ -115,7 +126,7 @@ void CEvaluationLogFileHandler::ParseScanHeader(const char szLine[8192])
         }
 
         // The azimuth-angle (defined for the heidelberg instrument)
-        if (Equals(szToken, azimuth, strlen(azimuth)))
+        if (novac::Equals(szToken, azimuth, strlen(azimuth)))
         {
             m_col.position2 = curCol;
             szToken = nullptr;
@@ -123,7 +134,7 @@ void CEvaluationLogFileHandler::ParseScanHeader(const char szLine[8192])
         }
 
         // The exposure time
-        if (Equals(szToken, exposureTime, strlen(exposureTime)))
+        if (novac::Equals(szToken, exposureTime, strlen(exposureTime)))
         {
             m_col.expTime = curCol;
             szToken = nullptr;
@@ -131,7 +142,7 @@ void CEvaluationLogFileHandler::ParseScanHeader(const char szLine[8192])
         }
 
         // The start time
-        if (Equals(szToken, starttime, strlen(starttime)))
+        if (novac::Equals(szToken, starttime, strlen(starttime)))
         {
             m_col.starttime = curCol;
             szToken = nullptr;
@@ -139,7 +150,7 @@ void CEvaluationLogFileHandler::ParseScanHeader(const char szLine[8192])
         }
 
         // The stop time
-        if (Equals(szToken, stoptime, strlen(stoptime)))
+        if (novac::Equals(szToken, stoptime, strlen(stoptime)))
         {
             m_col.stoptime = curCol;
             szToken = nullptr;
@@ -147,7 +158,7 @@ void CEvaluationLogFileHandler::ParseScanHeader(const char szLine[8192])
         }
 
         // The name of the spectrum
-        if (Equals(szToken, nameStr, strlen(nameStr)))
+        if (novac::Equals(szToken, nameStr, strlen(nameStr)))
         {
             m_col.name = curCol;
             szToken = nullptr;
@@ -155,7 +166,7 @@ void CEvaluationLogFileHandler::ParseScanHeader(const char szLine[8192])
         }
 
         // The number of co-added spectra
-        if (Equals(szToken, numSpec, strlen(numSpec)))
+        if (novac::Equals(szToken, numSpec, strlen(numSpec)))
         {
             m_col.nSpec = curCol;
             szToken = nullptr;
@@ -163,7 +174,7 @@ void CEvaluationLogFileHandler::ParseScanHeader(const char szLine[8192])
         }
 
         // The offset
-        if (Equals(szToken, offset, strlen(offset)))
+        if (novac::Equals(szToken, offset, strlen(offset)))
         {
             m_col.offset = curCol;
             szToken = nullptr;
@@ -171,7 +182,7 @@ void CEvaluationLogFileHandler::ParseScanHeader(const char szLine[8192])
         }
 
         // The column error (must be looked for before 'column')
-        if (Equals(szToken, columnError, strlen(columnError)))
+        if (novac::Equals(szToken, columnError, strlen(columnError)))
         {
             m_col.columnError[m_evResult.m_referenceResult.size() - 1] = curCol;
             szToken = nullptr;
@@ -179,12 +190,13 @@ void CEvaluationLogFileHandler::ParseScanHeader(const char szLine[8192])
         }
 
         // The column
-        if (Equals(szToken, column, strlen(column)))
+        if (novac::Equals(szToken, column, strlen(column)))
         {
             m_col.column[m_evResult.m_referenceResult.size()] = curCol;
             char* pt = szToken + strlen(column) + 1;
             szToken[strlen(szToken) - 1] = 0;
             std::string specieStr(pt);
+            std::transform(specieStr.begin(), specieStr.end(), specieStr.begin(), ::toupper);
             m_evResult.InsertSpecie(specieStr);
             ++m_col.nSpecies;
             szToken = nullptr;
@@ -192,7 +204,7 @@ void CEvaluationLogFileHandler::ParseScanHeader(const char szLine[8192])
         }
 
         // The shift error (must be checked before 'shift')
-        if (Equals(szToken, shiftError, strlen(shiftError)))
+        if (novac::Equals(szToken, shiftError, strlen(shiftError)))
         {
             m_col.shiftError[m_evResult.m_referenceResult.size() - 1] = curCol;
             szToken = nullptr;
@@ -200,7 +212,7 @@ void CEvaluationLogFileHandler::ParseScanHeader(const char szLine[8192])
         }
 
         // The shift
-        if (Equals(szToken, shift, strlen(shift)))
+        if (novac::Equals(szToken, shift, strlen(shift)))
         {
             m_col.shift[m_evResult.m_referenceResult.size() - 1] = curCol;
             szToken = nullptr;
@@ -208,7 +220,7 @@ void CEvaluationLogFileHandler::ParseScanHeader(const char szLine[8192])
         }
 
         // The squeeze error (must be checked before 'squeeze')
-        if (Equals(szToken, squeezeError, strlen(squeezeError)))
+        if (novac::Equals(szToken, squeezeError, strlen(squeezeError)))
         {
             m_col.squeezeError[m_evResult.m_referenceResult.size() - 1] = curCol;
             szToken = nullptr;
@@ -216,7 +228,7 @@ void CEvaluationLogFileHandler::ParseScanHeader(const char szLine[8192])
         }
 
         // The squeeze
-        if (Equals(szToken, squeeze, strlen(squeeze)))
+        if (novac::Equals(szToken, squeeze, strlen(squeeze)))
         {
             m_col.squeeze[m_evResult.m_referenceResult.size() - 1] = curCol;
             szToken = nullptr;
@@ -224,7 +236,7 @@ void CEvaluationLogFileHandler::ParseScanHeader(const char szLine[8192])
         }
 
         // The spectrum peak-intensity
-        if (Equals(szToken, intensity, strlen(intensity)))
+        if (novac::Equals(szToken, intensity, strlen(intensity)))
         {
             m_col.intensity = curCol;
             szToken = nullptr;
@@ -232,8 +244,8 @@ void CEvaluationLogFileHandler::ParseScanHeader(const char szLine[8192])
         }
 
         // The spectrum fit-intensity
-        if (Equals(szToken, fitIntensity, strlen(fitIntensity)) ||
-            Equals(szToken, fitIntensity2, strlen(fitIntensity2)))
+        if (novac::Equals(szToken, fitIntensity, strlen(fitIntensity)) ||
+            novac::Equals(szToken, fitIntensity2, strlen(fitIntensity2)))
         {
 
             m_col.fitIntensity = curCol;
@@ -242,7 +254,7 @@ void CEvaluationLogFileHandler::ParseScanHeader(const char szLine[8192])
         }
 
         // The spectrum maximum saturation ratio of the whole spectrum
-        if (Equals(szToken, peakSat, strlen(peakSat)))
+        if (novac::Equals(szToken, peakSat, strlen(peakSat)))
         {
             m_col.peakSaturation = curCol;
             szToken = nullptr;
@@ -250,7 +262,7 @@ void CEvaluationLogFileHandler::ParseScanHeader(const char szLine[8192])
         }
 
         // The spectrum maximum saturation ratio in the fit region
-        if (Equals(szToken, fitSat, strlen(fitSat)))
+        if (novac::Equals(szToken, fitSat, strlen(fitSat)))
         {
             m_col.fitSaturation = curCol;
             szToken = nullptr;
@@ -258,7 +270,7 @@ void CEvaluationLogFileHandler::ParseScanHeader(const char szLine[8192])
         }
 
         // The delta of the fit
-        if (Equals(szToken, delta, strlen(delta)))
+        if (novac::Equals(szToken, delta, strlen(delta)))
         {
             m_col.delta = curCol;
             szToken = nullptr;
@@ -266,7 +278,7 @@ void CEvaluationLogFileHandler::ParseScanHeader(const char szLine[8192])
         }
 
         // The chi-square of the fit
-        if (Equals(szToken, chiSquare, strlen(chiSquare)))
+        if (novac::Equals(szToken, chiSquare, strlen(chiSquare)))
         {
             m_col.chiSquare = curCol;
             szToken = nullptr;
@@ -276,10 +288,9 @@ void CEvaluationLogFileHandler::ParseScanHeader(const char szLine[8192])
         szToken = nullptr;
     }
 
-    m_specieNum = static_cast<long>(m_evResult.m_referenceResult.size());
-    for (int k = 0; k < m_specieNum; ++k)
+    for (size_t k = 0; k < m_evResult.m_referenceResult.size(); ++k)
     {
-        m_specie[k] = novac::CString(m_evResult.m_referenceResult[k].m_specieName);
+        m_specieName.push_back(m_evResult.m_referenceResult[k].m_specieName);
     }
 
     return;
@@ -300,7 +311,7 @@ RETURN_CODE CEvaluationLogFileHandler::ReadEvaluationLog()
     double flux = 0.0;
 
     // If no evaluation log selected, quit
-    if (strlen(m_evaluationLog) <= 1)
+    if (m_evaluationLog.size() <= 1)
         return RETURN_CODE::FAIL;
 
     // First count the number of scans in the file.
@@ -319,7 +330,7 @@ RETURN_CODE CEvaluationLogFileHandler::ReadEvaluationLog()
     singleLock.Lock();
     if (singleLock.IsLocked())
     {
-        FILE* f = fopen(m_evaluationLog, "r");
+        FILE* f = fopen(m_evaluationLog.c_str(), "r");
         if (nullptr == f)
         {
             singleLock.Unlock();
@@ -405,7 +416,7 @@ RETURN_CODE CEvaluationLogFileHandler::ReadEvaluationLog()
                     // 2. Calculate the offset
                     if (m_scan.size() >= 0)
                     {
-                        m_scan.back().CalculateOffset(CMolecule(g_userSettings.m_molecule));
+                        m_scan.back().CalculateOffset(m_molecule);
                     }
 
                     // start the next scan.
@@ -609,19 +620,19 @@ RETURN_CODE CEvaluationLogFileHandler::ReadEvaluationLog()
             //  CScanResult structure
 
             m_specInfo.m_scanIndex = (short)measNr;
-            if (Equals(m_specInfo.m_name, "sky"))
+            if (novac::Equals(m_specInfo.m_name, "sky"))
             {
                 newResult.SetSkySpecInfo(m_specInfo);
             }
-            else if (Equals(m_specInfo.m_name, "dark"))
+            else if (novac::Equals(m_specInfo.m_name, "dark"))
             {
                 newResult.SetDarkSpecInfo(m_specInfo);
             }
-            else if (Equals(m_specInfo.m_name, "offset"))
+            else if (novac::Equals(m_specInfo.m_name, "offset"))
             {
                 newResult.SetOffsetSpecInfo(m_specInfo);
             }
-            else if (Equals(m_specInfo.m_name, "dark_cur"))
+            else if (novac::Equals(m_specInfo.m_name, "dark_cur"))
             {
                 newResult.SetDarkCurrentSpecInfo(m_specInfo);
             }
@@ -639,9 +650,12 @@ RETURN_CODE CEvaluationLogFileHandler::ReadEvaluationLog()
             }
 
             // Guess the spectrometer model
-            const novac::SpectrometerModel spectrometerModel = CSpectrometerDatabase::GetInstance().GuessModelFromSerial(m_specInfo.m_device);
+            if (m_spectrometerModel.IsUnknown())
+            {
+                m_spectrometerModel = novac::CSpectrometerDatabase::GetInstance().GuessModelFromSerial(m_specInfo.m_device);
+            }
 
-            newResult.CheckGoodnessOfFit(m_specInfo, &spectrometerModel);
+            newResult.CheckGoodnessOfFit(m_specInfo, &m_spectrometerModel);
             ++measNr;
         }
 
@@ -658,7 +672,7 @@ RETURN_CODE CEvaluationLogFileHandler::ReadEvaluationLog()
     }
 
     // Calculate the offset
-    newResult.CalculateOffset(CMolecule(g_userSettings.m_molecule));
+    newResult.CalculateOffset(m_molecule);
 
     // Insert the new scan
     m_scan.push_back(newResult);
@@ -680,7 +694,7 @@ long CEvaluationLogFileHandler::CountScansInFile()
     long  nScans = 0;
 
     // If no evaluation log selected, quit
-    if (strlen(m_evaluationLog) <= 1)
+    if (m_evaluationLog.size() <= 1)
         return 0;
 
     novac::CSingleLock singleLock(&g_evalLogCritSect);
@@ -689,7 +703,7 @@ long CEvaluationLogFileHandler::CountScansInFile()
     {
 
         // Open the evaluation log
-        FILE* f = fopen(m_evaluationLog, "r");
+        FILE* f = fopen(m_evaluationLog.c_str(), "r");
         if (nullptr == f)
         {
             singleLock.Unlock();
@@ -722,7 +736,7 @@ long CEvaluationLogFileHandler::CountScansInFile()
 }
 
 /** Reads and parses the 'scanInfo' header before the scan */
-void CEvaluationLogFileHandler::ParseScanInformation(CSpectrumInfo& scanInfo, double& flux, FILE* f)
+void CEvaluationLogFileHandler::ParseScanInformation(novac::CSpectrumInfo& scanInfo, double& flux, FILE* f)
 {
     char szLine[8192];
     char* pt = nullptr;
@@ -847,7 +861,11 @@ void CEvaluationLogFileHandler::ParseScanInformation(CSpectrumInfo& scanInfo, do
             MakeUpper(scanInfo.m_device);	// Convert the serial-number to all upper case letters
 
             // Extract the spectrometer-model from the serial-number of the spectrometer
-            scanInfo.m_specModelName = CSpectrometerDatabase::GetInstance().GuessModelFromSerial(scanInfo.m_device).modelName;
+            if (m_spectrometerModel.IsUnknown())
+            {
+                m_spectrometerModel = novac::CSpectrometerDatabase::GetInstance().GuessModelFromSerial(scanInfo.m_device);
+            }
+            scanInfo.m_specModelName = m_spectrometerModel.modelName;
 
             continue;
         }
@@ -912,7 +930,7 @@ void CEvaluationLogFileHandler::ParseScanInformation(CSpectrumInfo& scanInfo, do
         if (nullptr != pt)
         {
             sscanf(pt + 15, "%s", instrumentType);
-            if (Equals(instrumentType, "heidelberg"))
+            if (novac::Equals(instrumentType, "heidelberg"))
             {
                 m_instrumentType = INSTRUMENT_TYPE::INSTR_HEIDELBERG;
             }
@@ -1017,7 +1035,6 @@ void CEvaluationLogFileHandler::ResetColumns()
     m_evResult.m_referenceResult.clear();
     m_col.expTime = m_col.nSpec = -1;
     m_col.name = -1;
-    m_specieNum = m_curSpecie = 0;
 }
 
 void CEvaluationLogFileHandler::ResetScanInformation()
@@ -1026,28 +1043,6 @@ void CEvaluationLogFileHandler::ResetScanInformation()
     m_specInfo.m_compass = m_specInfo.m_scanAngle = 0.0;
 
     m_col.starttime = -1; m_col.stoptime = -1;
-}
-
-/** Returns true if the most recently read evaluation log file is a
-            wind speed measurement. */
-bool CEvaluationLogFileHandler::IsWindSpeedMeasurement(int scanNo)
-{
-    // check so that there are some scans read, and that the scan index is ok
-    if (m_scan.size() < 1 || scanNo > m_scan.size() || scanNo < 0)
-        return false;
-
-    return m_scan[scanNo].IsWindMeasurement();
-}
-
-/** Returns true if the scan number 'scanNo' in the most recently read
-        evaluation log file is a wind speed measurement of heidelberg type. */
-bool	CEvaluationLogFileHandler::IsWindSpeedMeasurement_Heidelberg(int scanNo)
-{
-    // check so that there are some scans read, and that the scan index is ok
-    if (m_scan.size() < 1 || scanNo > m_scan.size() || scanNo < 0)
-        return false;
-
-    return m_scan[scanNo].IsWindMeasurement_Heidelberg();
 }
 
 void CEvaluationLogFileHandler::SortScans()
@@ -1072,9 +1067,9 @@ void CEvaluationLogFileHandler::SortScans()
 }
 
 /** Returns true if the scans are already ordered */
-bool	CEvaluationLogFileHandler::IsSorted()
+bool CEvaluationLogFileHandler::IsSorted()
 {
-    CDateTime time1, time2;
+    novac::CDateTime time1, time2;
 
     for (int k = 0; k < m_scan.size() - 1; ++k)
     {
@@ -1098,18 +1093,18 @@ bool	CEvaluationLogFileHandler::IsSorted()
 }
 
 
-RETURN_CODE CEvaluationLogFileHandler::WriteEvaluationLog(const novac::CString fileName, int softwareMajorNumber, int softwareMinorNumber)
+RETURN_CODE CEvaluationLogFileHandler::WriteEvaluationLog(const std::string& fileName, novac::SpectrometerModel spectrometerModel, int softwareMajorNumber, int softwareMinorNumber)
 {
     novac::CString string, specieName;
     novac::CString wsSrc, wdSrc, phSrc;
-    CDateTime startTime;
+    novac::CDateTime startTime;
 
     // 1. Test if the file already exists, if so then return false
     if (Filesystem::IsExistingFile(fileName))
         return RETURN_CODE::FAIL;
 
     // 2. Write the file
-    FILE* f = fopen(fileName, "w");
+    FILE* f = fopen(fileName.c_str(), "w");
 
     for (int scanIndex = 0; scanIndex < this->m_scan.size(); ++scanIndex)
     {
@@ -1136,7 +1131,6 @@ RETURN_CODE CEvaluationLogFileHandler::WriteEvaluationLog(const novac::CString f
 
         string.AppendFormat("\tspectrometer=%s\n", m_specInfo.m_specModelName.c_str());
 
-        const SpectrometerModel spectrometerModel = CSpectrometerDatabase::GetInstance().GetModel(m_specInfo.m_specModelName);
         if (!spectrometerModel.IsUnknown())
         {
             string.AppendFormat("\tspectrometer_maxIntensity=%lf\n", spectrometerModel.maximumIntensityForSingleReadout);
@@ -1246,7 +1240,7 @@ RETURN_CODE CEvaluationLogFileHandler::WriteEvaluationLog(const novac::CString f
     return RETURN_CODE::SUCCESS;
 }
 
-RETURN_CODE CEvaluationLogFileHandler::FormatEvaluationResult(const CSpectrumInfo* info, const novac::CEvaluationResult* result, INSTRUMENT_TYPE iType, double maxIntensity, int nSpecies, novac::CString& string)
+RETURN_CODE CEvaluationLogFileHandler::FormatEvaluationResult(const novac::CSpectrumInfo* info, const novac::CEvaluationResult* result, INSTRUMENT_TYPE iType, double maxIntensity, int nSpecies, novac::CString& string)
 {
     int itSpecie;
 
@@ -1382,7 +1376,7 @@ void FileHandler::CEvaluationLogFileHandler::SortScans(novac::CArray<Evaluation:
         result in the output-array 'result' */
 void FileHandler::CEvaluationLogFileHandler::MergeArrays(novac::CArray<Evaluation::CScanResult, Evaluation::CScanResult&>& array1, novac::CArray<Evaluation::CScanResult, Evaluation::CScanResult&>& array2, novac::CArray<Evaluation::CScanResult, Evaluation::CScanResult&>& result, bool ascending)
 {
-    CDateTime	time1, time2;
+    novac::CDateTime	time1, time2;
     unsigned long it1 = 0; // iterator for array1
     unsigned long it2 = 0; // iterator for array2
     unsigned long itr = 0; // iterator for result
@@ -1456,7 +1450,7 @@ void FileHandler::CEvaluationLogFileHandler::MergeArrays(novac::CArray<Evaluatio
             and thus uses very little memory */
 void FileHandler::CEvaluationLogFileHandler::BubbleSortScans(novac::CArray<Evaluation::CScanResult, Evaluation::CScanResult&>& array, bool /*ascending*/)
 {
-    CDateTime time1, time2;
+    novac::CDateTime time1, time2;
     bool change;
     unsigned long nElements = (unsigned long)array.GetSize(); // number of elements
 

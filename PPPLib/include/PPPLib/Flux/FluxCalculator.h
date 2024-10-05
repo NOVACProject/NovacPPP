@@ -8,6 +8,7 @@
 #include <PPPLib/Geometry/PlumeHeight.h>
 
 #include <PPPLib/MFC/CString.h>
+#include <SpectralEvaluation/Log.h>
 
 namespace Configuration
 {
@@ -34,6 +35,7 @@ class CFluxCalculator
 public:
     /** Default constructor */
     CFluxCalculator(
+        novac::ILogger& log,
         const Configuration::CNovacPPPConfiguration& setup,
         const Configuration::CUserConfiguration& userSettings);
 
@@ -56,9 +58,14 @@ public:
             be in meters above sea level.
         @param fluxResult - will on successful calculation of the flux be filled with
             the result of the calculations.
-        @return 0 on success, else non-zero value
+        @return true on success.
       */
-    int CalculateFlux(const novac::CString& evalLogFileName, const Meteorology::CWindDataBase& windDataBase, const Geometry::CPlumeHeight& plumeAltitude, CFluxResult& fluxResult);
+    bool CalculateFlux(
+        novac::LogContext context,
+        const std::string& evalLogFileName,
+        const Meteorology::CWindDataBase& windDataBase,
+        const Geometry::CPlumeHeight& plumeAltitude,
+        CFluxResult& fluxResult);
 
     /** Calculates the flux using the supplied data.
         Automatically decides which algorithm to use based on the given cone angle.
@@ -69,6 +76,8 @@ private:
     // ----------------------------------------------------------------------
     // ---------------------- PRIVATE DATA ----------------------------------
     // ----------------------------------------------------------------------
+
+    novac::ILogger& m_log;
 
     const Configuration::CNovacPPPConfiguration& m_setup;
 
@@ -84,12 +93,17 @@ private:
         was made.
         @return 0 if successful otherwise non-zero
     */
-    int GetLocation(const novac::CString& serial, const novac::CDateTime& startTime,
+    int GetLocation(novac::LogContext context,
+        const novac::CString& serial,
+        const novac::CDateTime& startTime,
         Configuration::CInstrumentLocation& instrLocation);
 
     /** Appends the evaluated flux to the appropriate log file.
         @param scan - the scan itself, also containing information about the evaluation and the flux.
         @return SUCCESS if operation completed sucessfully. */
-    RETURN_CODE WriteFluxResult(const Flux::CFluxResult& fluxResult, const Evaluation::CScanResult* result);
+    RETURN_CODE WriteFluxResult(
+        novac::LogContext context,
+        const Flux::CFluxResult& fluxResult,
+        const Evaluation::CScanResult* result);
 };
 }

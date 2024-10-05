@@ -69,9 +69,10 @@ CStratosphereCalculator::CMeasurementDay& CStratosphereCalculator::CMeasurementD
 
 
 CStratosphereCalculator::CStratosphereCalculator(
+    novac::ILogger& log,
     const Configuration::CNovacPPPConfiguration& setup,
     const Configuration::CUserConfiguration& userSettings)
-        : m_setup(setup), m_userSettings(userSettings)
+        : m_log(log), m_setup(setup), m_userSettings(userSettings)
 {
 }
 
@@ -137,8 +138,7 @@ void CStratosphereCalculator::BuildMeasurementList(const std::list <Evaluation::
             continue; // file not found...
 
         // REad the evaluation-log file
-        FileHandler::CEvaluationLogFileHandler reader;
-        reader.m_evaluationLog.Format(evalLogfileToRead);
+        FileHandler::CEvaluationLogFileHandler reader(m_log, evalLogfileToRead.std_str(), m_userSettings.m_molecule);
         if (RETURN_CODE::SUCCESS != reader.ReadEvaluationLog())
             continue;
 
