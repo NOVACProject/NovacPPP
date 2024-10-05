@@ -17,7 +17,7 @@ using namespace Evaluation;
 using namespace novac;
 
 CScanEvaluation::CScanEvaluation(const Configuration::CUserConfiguration& userSettings, novac::ILogger& log)
-    : ScanEvaluationBase(), m_userSettings(userSettings), m_log(log)
+    : ScanEvaluationBase(log), m_userSettings(userSettings)
 {
 }
 
@@ -32,7 +32,7 @@ std::unique_ptr<CScanResult> CScanEvaluation::EvaluateScan(
     const novac::SpectrometerModel& spectrometerModel,
     const Configuration::CDarkSettings* darkSettings)
 {
-    ValidateSetup(fitWindow); // Verify that the setup of the fit window is ok. Throws exception if it isn't
+    ValidateSetup(context, fitWindow); // Verify that the setup of the fit window is ok. Throws exception if it isn't
 
     std::unique_ptr<CEvaluationBase> eval; // the evaluator
     CFitWindow adjustedFitWindow = fitWindow; // we may need to make some small adjustments to the fit-window. This is a modified copy
@@ -65,12 +65,7 @@ std::unique_ptr<CScanResult> CScanEvaluation::EvaluateScan(
 
         // If we have a solar-spectrum that we can use to determine the shift
         // & squeeze then fit that first so that we know the wavelength calibration
-        eval.reset(FindOptimumShiftAndSqueezeFromFraunhoferReference(adjustedFitWindow, *darkSettings, m_userSettings.sky, scan));
-
-        if (m_lastErrorMessage.size() > 1)
-        {
-            m_log.Error(m_lastErrorMessage);
-        }
+        eval.reset(FindOptimumShiftAndSqueezeFromFraunhoferReference(context, adjustedFitWindow, *darkSettings, m_userSettings.sky, scan));
 
         if (nullptr == eval)
         {
@@ -485,7 +480,7 @@ CEvaluationBase* CScanEvaluation::FindOptimumShiftAndSqueeze(novac::LogContext l
     return newEvaluator;
 }
 
-void CScanEvaluation::ValidateSetup(const novac::CFitWindow& window)
+void CScanEvaluation::ValidateSetup(novac::LogContext context, const novac::CFitWindow& window)
 {
     if (window.fitHigh <= window.fitLow)
     {

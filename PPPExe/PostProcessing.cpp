@@ -303,9 +303,9 @@ void CPostProcessing::DoPostProcessing_Strat()
     SortEvaluationLogs(evalLogFiles);
     ShowMessage("Sort done.");
 
-    ShowMessage("Calculating stratospheric columns");
+    // ShowMessage("Calculating stratospheric columns");
     // strat.CalculateVCDs(evalLogFiles);
-    ShowMessage("Calculation Done");
+    // ShowMessage("Calculation Done");
 
     // 7. Write the statistics
     statFileName.Format("%s%cProcessingStatistics.txt", (const char*)m_userSettings.m_outputDirectory, Poco::Path::separator());
@@ -354,13 +354,13 @@ void CPostProcessing::EvaluateScans(
 
     // Keep the user informed about what we're doing
     messageToUser.Format("%ld spectrum files found. Begin evaluation using %d threads.", s_nFilesToProcess, m_userSettings.m_maxThreadNum);
-    ShowMessage(messageToUser);
+    m_log.Information(messageToUser.std_str());
 
     // start the threads
     std::vector<std::thread> evalThreads(m_userSettings.m_maxThreadNum);
     for (unsigned int threadIdx = 0; threadIdx < m_userSettings.m_maxThreadNum; ++threadIdx)
     {
-        std::thread t( EvaluateScansThread, std::ref(m_log), std::cref(m_setup), std::cref(m_userSettings), std::cref(m_continuation), std::ref(m_processingStats) );
+        std::thread t(EvaluateScansThread, std::ref(m_log), std::cref(m_setup), std::cref(m_userSettings), std::cref(m_continuation), std::ref(m_processingStats));
         evalThreads[threadIdx] = std::move(t);
     }
 
@@ -374,7 +374,7 @@ void CPostProcessing::EvaluateScans(
     s_evalLogs.CopyTo(evalLogFiles);
 
     messageToUser.Format("All %ld scans evaluated.", s_nFilesToProcess);
-    ShowMessage(messageToUser);
+    m_log.Information(messageToUser.std_str());
 }
 
 void EvaluateScansThread(
@@ -411,7 +411,7 @@ void EvaluateScansThread(
         }
         catch (std::exception& ex)
         {
-            ShowMessage(ex.what());
+            log.Error(ex.what());
             evaluationSucceeded = false;
         }
 
@@ -423,13 +423,13 @@ void EvaluateScansThread(
             // Tell the user what is happening
             novac::CString messageToUser;
             messageToUser.Format(" + Inserted scan %s into list of evaluation logs", fileName.c_str());
-            ShowMessage(messageToUser);
+            log.Information(messageToUser.std_str());
         }
         else
         {
             novac::CString messageToUser;
             messageToUser.Format(" - No flux calculated for scan %s ", fileName.c_str());
-            ShowMessage(messageToUser);
+            log.Information(messageToUser.std_str());
         }
     }
 }

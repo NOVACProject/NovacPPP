@@ -49,8 +49,6 @@ private:
 
     const Configuration::CUserConfiguration& m_userSettings;
 
-    novac::ILogger& m_log;
-
     // ----------------------- PRIVATE METHODS ---------------------------
 
     /** Performs the evaluation using the supplied evaluator
@@ -99,6 +97,6 @@ private:
 
     /** Performs a basic validation on the setup of the given fit window.
         @throws std::exception (or subclass of this) if the window is not ok */
-    static void ValidateSetup(const novac::CFitWindow& window);
+    void ValidateSetup(novac::LogContext context, const novac::CFitWindow& window);
 };
 }

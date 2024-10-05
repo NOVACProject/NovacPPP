@@ -50,6 +50,46 @@ static void SetupFitWindow(novac::CFitWindow& window)
     window.nRef = 3;
 }
 
+static void SetupFitWindowWithCalibratedReferences(novac::CFitWindow& window)
+{
+    window.fitLow = 464;
+    window.fitHigh = 630;
+
+    novac::CReferenceFile so2;
+    so2.SetShift(novac::SHIFT_TYPE::SHIFT_FIX, 0.0);
+    so2.SetSqueeze(novac::SHIFT_TYPE::SHIFT_FIX, 1.0);
+    so2.m_path = GetTestDataDirectory() + "2002128M1/Calibrated/2002128M1_SO2_Bogumil_293K.txt";
+    int success = so2.ReadCrossSectionDataFromFile();
+    REQUIRE(success == 0);
+    REQUIRE(so2.m_data != nullptr);
+    REQUIRE(so2.m_data->GetSize() == 2048);
+
+    novac::CReferenceFile o3;
+    o3.SetShift(novac::SHIFT_TYPE::SHIFT_FIX, 0.0);
+    o3.SetSqueeze(novac::SHIFT_TYPE::SHIFT_FIX, 1.0);
+    o3.m_path = GetTestDataDirectory() + "2002128M1/Calibrated/2002128M1_O3_Voigt_223K.txt";
+    success = o3.ReadCrossSectionDataFromFile();
+    REQUIRE(success == 0);
+
+    novac::CReferenceFile ring;
+    ring.SetShift(novac::SHIFT_TYPE::SHIFT_FIX, 0.0);
+    ring.SetSqueeze(novac::SHIFT_TYPE::SHIFT_FIX, 1.0);
+    ring.m_path = GetTestDataDirectory() + "2002128M1/Calibrated/2002128M1_Ring.txt";
+    success = ring.ReadCrossSectionDataFromFile();
+    REQUIRE(success == 0);
+
+    novac::CReferenceFile fraunhofer;
+    fraunhofer.m_path = GetTestDataDirectory() + "2002128M1/Calibrated/2002128M1_Fraunhofer.txt";
+    success = fraunhofer.ReadCrossSectionDataFromFile();
+    REQUIRE(success == 0);
+
+    window.ref[0] = so2;
+    window.ref[1] = o3;
+    window.ref[2] = ring;
+    window.nRef = 3;
+    window.fraunhoferRef = fraunhofer;
+}
+
 // Endregion Helper methods
 
 TEST_CASE("EvaluateScan, Invalid fit window - throws Exception (Ruahepu, Avantes)", "[ScanEvaluation][EvaluateScan][IntegrationTest][Avantes]")
@@ -67,7 +107,6 @@ TEST_CASE("EvaluateScan, Invalid fit window - throws Exception (Ruahepu, Avantes
     novac::LogContext context;
     context = context.With("file", novac::GetFileName(filename));
     context = context.With("model", spectrometerModel.modelName);
-
 
     novac::CFitWindow fitWindow;
 
@@ -180,11 +219,6 @@ TEST_CASE("EvaluateScan, scan with clearly visible plume expected result - case 
         REQUIRE(-90.0 == result->GetScanAngle(0));
         REQUIRE(82.0 == result->GetScanAngle(43));
 
-        // for (long i = 0; i < result->GetEvaluatedNum(); i++)
-        // {
-        //     std::cout << "spectrum " << i << " has column " << result->GetColumn(i, 0) << std::endl;
-        // }
-
         REQUIRE(Approx(-61.56348) == result->GetColumn(0, 0));
 
         // the sky spectrum info should be set
@@ -237,5 +271,60 @@ TEST_CASE("EvaluateScan, scan with clearly visible plume expected result - case 
         REQUIRE(51 == result->GetEvaluatedNum()); // all spectra evaluated
         REQUIRE(-90.0 == result->GetScanAngle(0));
         REQUIRE(90.0 == result->GetScanAngle(50));
+    }
+}
+
+TEST_CASE("EvaluateScan, scan with clearly visible plume and calibrated references expected result - case 3 (Ruahepu, Avantes)", "[ScanEvaluation][EvaluateScan][IntegrationTest][Avantes][2002128M1_230120_1907_0][Crash]")
+{
+    // Arrange
+    const std::string filename = GetTestDataDirectory() + "2002128M1/2002128M1_230120_1907_0.pak";
+
+    novac::ConsoleLog logger;
+
+    novac::CScanFileHandler scan;
+    VerifyScanCanBeRead(scan, filename);
+    Configuration::CUserConfiguration userSettings;
+    const Configuration::CDarkSettings* darkSettings = nullptr;
+
+    novac::SpectrometerModel spectrometerModel = novac::CSpectrometerDatabase::GetInstance().SpectrometerModel_AVASPEC();
+
+    novac::LogContext context;
+    context = context.With("file", novac::GetFileName(filename));
+    context = context.With("model", spectrometerModel.modelName);
+
+    SECTION("Calibrated references with Polynomial fit and Fraunhofer Reference")
+    {
+        try
+        {
+            novac::CFitWindow fitWindow;
+            fitWindow.fitType = novac::FIT_TYPE::FIT_POLY;
+            SetupFitWindowWithCalibratedReferences(fitWindow);
+
+            Evaluation::CScanEvaluation sut(userSettings, logger);
+
+            // Act
+            auto result = sut.EvaluateScan(context, scan, fitWindow, spectrometerModel, darkSettings);
+
+            /*
+            // Assert
+            REQUIRE(result != nullptr);
+            REQUIRE(44 == result->GetEvaluatedNum());
+            REQUIRE(-90.0 == result->GetScanAngle(0));
+            REQUIRE(82.0 == result->GetScanAngle(43));
+
+            REQUIRE(Approx(-61.56348) == result->GetColumn(0, 0));
+
+            // the sky spectrum info should be set
+            auto skySpecInfo = result->GetSkySpectrumInfo();
+            REQUIRE(skySpecInfo.m_startTime == novac::CDateTime(2023, 1, 20, 19, 7, 48, 870));
+
+            // the dark spectrum info should be set
+            auto darkSpecInfo = result->GetDarkSpectrumInfo();
+            REQUIRE(darkSpecInfo.m_startTime == novac::CDateTime(2023, 1, 20, 19, 8, 29, 240)); */
+        }
+        catch (std::exception& ex)
+        {
+            std::cout << "exception caught with message: " << ex.what() << std::endl;
+        }
     }
 }
