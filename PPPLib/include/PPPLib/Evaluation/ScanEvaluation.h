@@ -36,7 +36,11 @@ public:
     *   @param darkSettings An optional set of settings for the dark correction. If null then the default settings will be used.
         @return the result of the evaluation. This is null if the evaluation failed.
         @throws std::exception (or subclass of this) if the given fit window is not ok */
-    std::unique_ptr<CScanResult> EvaluateScan(novac::CScanFileHandler& scan, const novac::CFitWindow& fitWindow, const novac::SpectrometerModel& spectrometerModel, const Configuration::CDarkSettings* darkSettings = nullptr);
+    std::unique_ptr<CScanResult> EvaluateScan(
+        novac::CScanFileHandler& scan,
+        const novac::CFitWindow& fitWindow,
+        const novac::SpectrometerModel& spectrometerModel,
+        const Configuration::CDarkSettings* darkSettings = nullptr);
 
 private:
 
@@ -77,7 +81,12 @@ private:
         @param scan The scan to improve the evaluation for.
         @return a new evaluator with the fit-window set to the new optimum values.
         @return nullptr if the evaluation failed. */
-    novac::CEvaluationBase* FindOptimumShiftAndSqueeze(novac::LogContext logContext, const novac::CFitWindow& fitWindow, int indexOfMostAbsorbingSpectrum, novac::CScanFileHandler& scan);
+    novac::CEvaluationBase* FindOptimumShiftAndSqueeze(
+        novac::LogContext logContext,
+        const novac::CFitWindow& fitWindow,
+        int indexOfMostAbsorbingSpectrum,
+        novac::CScanFileHandler& scan,
+        const Configuration::CDarkSettings* darkSettings = nullptr);
 
     // ------------------------ THE PARAMETERS FOR THE EVALUATION ------------------
 

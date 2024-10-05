@@ -51,11 +51,10 @@ static void SetupFitWindow(novac::CFitWindow& window)
 
 // Endregion Helper methods
 
-
 TEST_CASE("EvaluateScan, Invalid fit window - throws Exception (Ruahepu, Avantes)", "[ScanEvaluation][EvaluateScan][IntegrationTest][Avantes]")
 {
     // Arrange
-    const std::string filename = GetTestDataDirectory() + "2002128M1_230120_0148_0.pak";
+    const std::string filename = GetTestDataDirectory() + "2002128M1/2002128M1_230120_0148_0.pak";
     novac::ConsoleLog logger;
 
     novac::CScanFileHandler scan;
@@ -110,10 +109,10 @@ TEST_CASE("EvaluateScan, Invalid fit window - throws Exception (Ruahepu, Avantes
     }
 }
 
-TEST_CASE("EvaluateScan, scan with saturated sky spectrum expected result - case 1 (Ruahepu, Avantes)", "[ScanEvaluation][EvaluateScan][IntegrationTest][Avantes]")
+TEST_CASE("EvaluateScan, scan with saturated sky spectrum expected result - case 1 (Ruahepu, Avantes)", "[ScanEvaluation][EvaluateScan][IntegrationTest][Avantes][2002128M1_230120_0148_0]")
 {
     // Arrange
-    const std::string filename = GetTestDataDirectory() + "2002128M1_230120_0148_0.pak";
+    const std::string filename = GetTestDataDirectory() + "2002128M1/2002128M1_230120_0148_0.pak";
     novac::ConsoleLog logger;
 
     novac::CScanFileHandler scan;
@@ -122,6 +121,7 @@ TEST_CASE("EvaluateScan, scan with saturated sky spectrum expected result - case
     const Configuration::CDarkSettings* darkSettings = nullptr;
 
     novac::CFitWindow fitWindow;
+    fitWindow.fitType = novac::FIT_TYPE::FIT_HP_DIV; // the references are HP500
     SetupFitWindow(fitWindow);
 
     novac::SpectrometerModel spectrometerModel = novac::CSpectrometerDatabase::GetInstance().SpectrometerModel_AVASPEC();
@@ -131,11 +131,11 @@ TEST_CASE("EvaluateScan, scan with saturated sky spectrum expected result - case
     // Act
     auto result = sut.EvaluateScan(scan, fitWindow, spectrometerModel, darkSettings);
 
-    // Assert
-    REQUIRE(result != nullptr);
+    // Assert, the sky spectrum is bad hence the entire scan is bad. Skip
+    REQUIRE(result == nullptr);
 }
 
-TEST_CASE("EvaluateScan, scan with clearly visible plume expected result - case 2 (Ruahepu, Avantes)", "[ScanEvaluation][EvaluateScan][IntegrationTest][Avantes]")
+TEST_CASE("EvaluateScan, scan with clearly visible plume expected result - case 2 (Ruahepu, Avantes)", "[ScanEvaluation][EvaluateScan][IntegrationTest][Avantes][2002128M1_230120_1907_0]")
 {
     // Arrange
     const std::string filename = GetTestDataDirectory() + "2002128M1/2002128M1_230120_1907_0.pak";

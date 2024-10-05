@@ -117,7 +117,7 @@ std::unique_ptr<CScanResult> CScanEvaluation::EvaluateScan(
             return 0;
         }
 
-        eval.reset(FindOptimumShiftAndSqueeze(context, adjustedFitWindow, m_indexOfMostAbsorbingSpectrum, scan));
+        eval.reset(FindOptimumShiftAndSqueeze(context, adjustedFitWindow, m_indexOfMostAbsorbingSpectrum, scan, darkSettings));
     }
     else
     {
@@ -156,6 +156,7 @@ std::unique_ptr<CScanResult> CScanEvaluation::EvaluateOpenedScan(
     CSpectrum sky;
     if (!GetSky(scan, m_userSettings.sky, sky))
     {
+        m_log.Error(logContext, "Failed to get the sky spectrum. Scan evaluation failed.");
         return nullptr;
     }
     CSpectrum skySpecBeforeDarkCorrection = sky;
@@ -165,9 +166,26 @@ std::unique_ptr<CScanResult> CScanEvaluation::EvaluateOpenedScan(
         // Get the dark-spectrum and remove it from the sky
         if (!GetDark(scan, sky, dark, darkSettings))
         {
+            m_log.Error(logContext, "Failed to get the dark spectrum. Scan evaluation failed.");
             return nullptr;
         }
         sky.Sub(dark);
+    }
+
+    const double skyMaximumSaturationRatioInFitRegion = novac::GetMaximumSaturationRatioOfSpectrum(sky, spectrometer, m_fitLow, m_fitHigh);
+    if (skyMaximumSaturationRatioInFitRegion < m_userSettings.m_minimumSaturationInFitRegion)
+    {
+        const double fitIntensity = sky.MaxValue(m_fitLow, m_fitHigh);
+        message.Format("Sky spectrum has maximum saturation %.3lf (%.0lf counts) in fit region (at least %.3lf required). Skipping scan.", skyMaximumSaturationRatioInFitRegion, fitIntensity, m_userSettings.m_minimumSaturationInFitRegion);
+        m_log.Information(logContext, message.std_str());
+        return nullptr;
+    }
+    if (skyMaximumSaturationRatioInFitRegion > 0.95)
+    {
+        const double fitIntensity = sky.MaxValue(m_fitLow, m_fitHigh);
+        message.Format("Sky spectrum has maximum saturation %.3lf (%.0lf counts) in fit region and judged to be saturated. Skipping scan.", skyMaximumSaturationRatioInFitRegion, fitIntensity, m_userSettings.m_minimumSaturationInFitRegion);
+        m_log.Information(logContext, message.std_str());
+        return nullptr;
     }
 
     if (sky.NumSpectra() > 0 && !m_averagedSpectra)
@@ -249,6 +267,7 @@ std::unique_ptr<CScanResult> CScanEvaluation::EvaluateOpenedScan(
         // b. Get the dark spectrum for this measured spectrum
         if (!GetDark(scan, current, dark, darkSettings))
         {
+            m_log.Error(logContext, "Failed to get the dark spectrum for spectrum in scan. Scan evaluation failed.");
             return nullptr;
         }
 
@@ -273,7 +292,6 @@ std::unique_ptr<CScanResult> CScanEvaluation::EvaluateOpenedScan(
             current.Div(current.NumSpectra());
         }
 
-        // d. Get the dark spectrum
         if (dark.NumSpectra() > 0 && !m_averagedSpectra)
         {
             dark.Div(dark.NumSpectra());
@@ -285,8 +303,8 @@ std::unique_ptr<CScanResult> CScanEvaluation::EvaluateOpenedScan(
         // e. Evaluate the spectrum
         if (eval->Evaluate(current))
         {
-            message.Format("Failed to evaluate spectrum %d out of %d in scan %s from spectrometer %s.",
-                current.ScanIndex(), current.SpectraPerScan(), scan.GetFileName().c_str(), current.m_info.m_device.c_str());
+            message.Format("Failed to evaluate spectrum %d out of %d in scan from spectrometer %s.",
+                current.ScanIndex(), current.SpectraPerScan(), current.m_info.m_device.c_str());
             if (eval->m_lastError.size() > 0)
             {
                 message.AppendFormat("(%s)", eval->m_lastError.c_str());
@@ -359,37 +377,38 @@ static void SetupFitWindowFitShiftDetermination(CFitWindow& window)
     }
 }
 
-CEvaluationBase* CScanEvaluation::FindOptimumShiftAndSqueeze(novac::LogContext logContext, const CFitWindow& fitWindow, int indexOfMostAbsorbingSpectrum, novac::CScanFileHandler& scan)
+CEvaluationBase* CScanEvaluation::FindOptimumShiftAndSqueeze(novac::LogContext logContext, const CFitWindow& fitWindow, int indexOfMostAbsorbingSpectrum, novac::CScanFileHandler& scan, const Configuration::CDarkSettings* darkSettings)
 {
     novac::CString message;
-    CSpectrum spec, sky, dark;
+    CSpectrum spec, dark;
 
     // Evaluate this spectrum again with free (and linked) shift
     CFitWindow fitWindow2 = fitWindow;
     SetupFitWindowFitShiftDetermination(fitWindow2);
 
     // Get the sky-spectrum
+    CSpectrum sky;
     if (!GetSky(scan, m_userSettings.sky, sky))
     {
+        m_log.Error(logContext, "Failed to get the sky spectrum. Finding optimium shift and squeeze failed.");
         return nullptr;
     }
+
+    if (m_userSettings.sky.skyOption != Configuration::SKY_OPTION::USER_SUPPLIED)
+    {
+        // Get the dark-spectrum and remove it from the sky
+        if (!GetDark(scan, sky, dark, darkSettings))
+        {
+            m_log.Error(logContext, "Failed to get the dark spectrum. Finding optimium shift and squeeze failed.");
+            return nullptr;
+        }
+        sky.Sub(dark);
+    }
+
     if (sky.NumSpectra() > 0 && !m_averagedSpectra)
     {
         sky.Div(sky.NumSpectra());
     }
-
-    // Get the dark-spectrum
-    if (!GetDark(scan, sky, dark))
-    {
-        return nullptr;
-    }
-    if (dark.NumSpectra() > 0 && !m_averagedSpectra)
-    {
-        dark.Div(dark.NumSpectra());
-    }
-
-    // Subtract the dark...
-    sky.Sub(dark);
 
     // create the new evaluator
     std::unique_ptr<CEvaluationBase> intermediateEvaluator = std::make_unique<CEvaluationBase>(fitWindow2);
@@ -399,7 +418,7 @@ CEvaluationBase* CScanEvaluation::FindOptimumShiftAndSqueeze(novac::LogContext l
     int ret = scan.GetSpectrum(spec, 2 + indexOfMostAbsorbingSpectrum); // The two comes from the sky and the dark spectra in the beginning
     if (ret != 1)
     {
-        message.Format("Failed to read spectrum %d in file", indexOfMostAbsorbingSpectrum);
+        message.Format("Failed to read spectrum %d in file. Finding optimium shift and squeeze failed.", indexOfMostAbsorbingSpectrum);
         m_log.Error(logContext, message.std_str());
         return nullptr;
     }
@@ -412,17 +431,32 @@ CEvaluationBase* CScanEvaluation::FindOptimumShiftAndSqueeze(novac::LogContext l
     {
         spec.InterpolateSpectrum();
     }
+
+    // Get the dark-spectrum and remove it
+    if (!GetDark(scan, spec, dark, darkSettings))
+    {
+        m_log.Error(logContext, "Failed to get the dark spectrum for spectrum in scan. Finding optimium shift and squeeze failed.");
+        return nullptr;
+    }
+
     if (spec.NumSpectra() > 0 && !m_averagedSpectra)
     {
         spec.Div(spec.NumSpectra());
     }
 
-    // Get the dark-spectrum and remove it
-    GetDark(scan, spec, dark);
     spec.Sub(dark);
 
     // Evaluate
-    intermediateEvaluator->Evaluate(spec, 5000);
+    if (intermediateEvaluator->Evaluate(spec, 5000))
+    {
+        message.Format("Failed to evaluate spectrum. Finding optimium shift and squeeze failed.");
+        if (intermediateEvaluator->m_lastError.size() > 0)
+        {
+            message.AppendFormat("Error message: '%s'", intermediateEvaluator->m_lastError.c_str());
+        }
+
+        m_log.Information(logContext, message.std_str());
+    }
 
     // 4. See what the optimum value for the shift turned out to be.
     CEvaluationResult newResult = intermediateEvaluator->GetEvaluationResult();

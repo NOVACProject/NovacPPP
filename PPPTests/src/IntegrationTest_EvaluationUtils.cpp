@@ -31,7 +31,7 @@ TEST_CASE("IsGoodEnoughToEvaluate gives expected configuration", "[EvaluationUti
 
     SECTION("Scan with saturated sky spectrum in fit region - Returns expected reason")
     {
-        const std::string filename = GetTestDataDirectory() + "2002128M1_230120_0148_0.pak";
+        const std::string filename = GetTestDataDirectory() + "2002128M1/2002128M1_230120_0148_0.pak";
         novac::CScanFileHandler scan;
         VerifyScanCanBeRead(scan, filename);
 
@@ -46,7 +46,7 @@ TEST_CASE("IsGoodEnoughToEvaluate gives expected configuration", "[EvaluationUti
 
     SECTION("Scan with ok spectrum - Returns true and no failure reason")
     {
-        const std::string filename = GetTestDataDirectory() + "2002128M1_230120_0148_0.pak";
+        const std::string filename = GetTestDataDirectory() + "2002128M1/2002128M1_230120_0148_0.pak";
         novac::CScanFileHandler scan;
         VerifyScanCanBeRead(scan, filename);
 
