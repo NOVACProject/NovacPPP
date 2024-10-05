@@ -26,15 +26,13 @@ CScanEvaluation::~CScanEvaluation()
 }
 
 std::unique_ptr<CScanResult> CScanEvaluation::EvaluateScan(
+    novac::LogContext context,
     novac::CScanFileHandler& scan,
     const CFitWindow& fitWindow,
     const novac::SpectrometerModel& spectrometerModel,
     const Configuration::CDarkSettings* darkSettings)
 {
     ValidateSetup(fitWindow); // Verify that the setup of the fit window is ok. Throws exception if it isn't
-
-    novac::LogContext context;
-    context = context.With("file", novac::GetFileName(scan.GetFileName()));
 
     std::unique_ptr<CEvaluationBase> eval; // the evaluator
     CFitWindow adjustedFitWindow = fitWindow; // we may need to make some small adjustments to the fit-window. This is a modified copy

@@ -1,14 +1,13 @@
 #pragma once
 
-#include <SpectralEvaluation/File/ScanFileHandler.h>
-#include <SpectralEvaluation/Evaluation/Ratio.h>
-
 #include <PPPLib/Logging.h>
 #include <PPPLib/Evaluation/ScanResult.h>
 #include <PPPLib/Configuration/NovacPPPConfiguration.h>
 #include <PPPLib/Configuration/UserConfiguration.h>
 #include <PPPLib/ContinuationOfProcessing.h>
 #include <PPPLib/PostProcessingStatistics.h>
+
+#include <SpectralEvaluation/File/ScanFileHandler.h>
 
 namespace Evaluation
 {
@@ -50,7 +49,7 @@ public:
             results
         @param plumeProperties - if not NULL then this will on return be filled
             with the properties of the evaluated scan.
-        @return true on success */
+        @return true on success, meaning that the evaluation succeeded and the scan is good enough to calculate a flux from. */
     bool EvaluateScan(const novac::CString& pakFileName, const novac::CString& fitWindowName, novac::CString* txtFileName = NULL, novac::CPlumeInScanProperty* plumeProperties = NULL);
 
 
@@ -73,49 +72,10 @@ private:
     // --------------------- PRIVATE METHODS --------------------------------
     // ----------------------------------------------------------------------
 
-    /** Writes the evaluation result to the appropriate log file.
-        @param result - a CScanResult holding information about the result
-        @param scan - the scan itself, also containing information about the evaluation and the flux.
-        @param scanningInstrument - information about the scanning instrument that generated the scan.
-        @param txtFileName - if not null, this will on successful writing of the file be filled
-            with the full path and filename of the txt - file generated
-        @return SUCCESS if operation completed sucessfully. */
-    RETURN_CODE WriteEvaluationResult(const std::unique_ptr<CScanResult>& result, const novac::CScanFileHandler* scan, const Configuration::CInstrumentLocation* instrLocation, const novac::CFitWindow* window, Meteorology::CWindField& windField, novac::CString* txtFileName = nullptr);
-
-    /** Writes the evaluation result of one ratio calculation to the appropriate log file.
-        @param result - a vector of calculated ratios.
-        @param scan - the scan itself, also containing information about the evaluation and the flux.
-        @param scanningInstrument - information about the scanning instrument that generated the scan.
-        @param txtFileName - if not null, this will on successful writing of the file be filled
-            with the full path and filename of the txt - file generated
-        @return SUCCESS if operation completed sucessfully. */
-    RETURN_CODE WriteRatioResult(const std::vector<novac::Ratio>& result, const novac::CScanFileHandler& scan, const novac::CFitWindow& window);
-
-    /** Appends the evaluation result to the evaluation summary log file.
-        @param result - a CScanResult holding information about the result
-        @param scan - the scan itself
-        @param scanningInstrument - information about the scanning instrument that generated the scan.
-        @return SUCCESS if operation completed sucessfully. */
-    RETURN_CODE AppendToEvaluationSummaryFile(const std::unique_ptr<CScanResult>& result, const novac::CScanFileHandler* scan, const Configuration::CInstrumentLocation* instrLocation, const novac::CFitWindow* window, Meteorology::CWindField& windField);
-
-    /** Appends the evaluation result to the pak-file summary log file.
-        @param result - a CScanResult holding information about the result
-        @param scan - the scan itself
-        @param scanningInstrument - information about the scanning instrument that generated the scan.
-        @return SUCCESS if operation completed sucessfully. */
-    RETURN_CODE AppendToPakFileSummaryFile(const std::unique_ptr<CScanResult>& result, const novac::CScanFileHandler* scan, const Configuration::CInstrumentLocation* instrLocation, const novac::CFitWindow* window, Meteorology::CWindField& windField);
-
-    /** This function takes as input parameter an eval-log containing the result of a flux - measurement
-        and checks the quality of the measurement.
-        @param evalLog - the full path and filename of the flux measurement
-        @return 0 - if the measurement should be rejected.
-        @return -1 - if the measurement is not a flux measurement.
-        */
-    int CheckQualityOfFluxMeasurement(std::unique_ptr<CScanResult>& result, const novac::CString& pakFileName) const;
-
-    /** Creates the 'pluem spectrum file' which is a text file containing a list of which spectra are judged to be _in_ the plume
-        and which spectra are judged to be _out_ of the plume. Useful for determining plume composition at a later stage */
-    void CreatePlumespectrumFile(const std::unique_ptr<CScanResult>& result, const novac::CString& fitWindowName, novac::CScanFileHandler& scan, const novac::SpectrometerModel& spectrometerModel, novac::CPlumeInScanProperty* plumeProperties, int specieIndex);
+    /** Checks if a scan is goood enough to use for flux calculation.
+        @param result an evaluated scan.
+        @return true if the measurement should be used to calculate a flux */
+    bool IsGoodEnoughToCalculateFlux(novac::LogContext context, std::unique_ptr<CScanResult>& result) const;
 
 };
 }

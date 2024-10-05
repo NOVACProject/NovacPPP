@@ -22,16 +22,4 @@ bool IsGoodEnoughToEvaluate(
     const Configuration::CUserConfiguration& userSettings,
     ReasonForScanRejection& reason,
     std::string& reasonMessage);
-
-
-/** Gets the filename under which the scan-file should be stored.
-    @return true if a filename is found. */
-bool GetArchivingfileName(
-    novac::CString& pakFile,
-    novac::CString& txtFile,
-    const novac::CString& fitWindowName,
-    const novac::CString& temporaryScanFile,
-    std::string outputDirectory,
-    MEASUREMENT_MODE mode);
-
 }

@@ -1,6 +1,7 @@
 #include <PPPLib/Evaluation/ScanEvaluation.h>
 #include <SpectralEvaluation/Spectra/SpectrometerModel.h>
 #include <SpectralEvaluation/Evaluation/FitWindow.h>
+#include <SpectralEvaluation/File/File.h>
 #include "catch.hpp"
 #include <iostream>
 
@@ -63,6 +64,11 @@ TEST_CASE("EvaluateScan, Invalid fit window - throws Exception (Ruahepu, Avantes
     const Configuration::CDarkSettings* darkSettings = nullptr;
     novac::SpectrometerModel spectrometerModel = novac::CSpectrometerDatabase::GetInstance().SpectrometerModel_AVASPEC();
 
+    novac::LogContext context;
+    context = context.With("file", novac::GetFileName(filename));
+    context = context.With("model", spectrometerModel.modelName);
+
+
     novac::CFitWindow fitWindow;
 
     novac::CReferenceFile so2;
@@ -82,7 +88,7 @@ TEST_CASE("EvaluateScan, Invalid fit window - throws Exception (Ruahepu, Avantes
         fitWindow.nRef = 1;
 
         // Act & Assert
-        REQUIRE_THROWS(sut.EvaluateScan(scan, fitWindow, spectrometerModel, darkSettings));
+        REQUIRE_THROWS(sut.EvaluateScan(context, scan, fitWindow, spectrometerModel, darkSettings));
     }
 
     SECTION("Fit window has no reference setup")
@@ -93,7 +99,7 @@ TEST_CASE("EvaluateScan, Invalid fit window - throws Exception (Ruahepu, Avantes
         fitWindow.nRef = 0;
 
         // Act & Assert
-        REQUIRE_THROWS(sut.EvaluateScan(scan, fitWindow, spectrometerModel, darkSettings));
+        REQUIRE_THROWS(sut.EvaluateScan(context, scan, fitWindow, spectrometerModel, darkSettings));
     }
 
     SECTION("Fit window has same reference multiple times")
@@ -105,7 +111,7 @@ TEST_CASE("EvaluateScan, Invalid fit window - throws Exception (Ruahepu, Avantes
         fitWindow.nRef = 2;
 
         // Act & Assert
-        REQUIRE_THROWS(sut.EvaluateScan(scan, fitWindow, spectrometerModel, darkSettings));
+        REQUIRE_THROWS(sut.EvaluateScan(context, scan, fitWindow, spectrometerModel, darkSettings));
     }
 }
 
@@ -126,10 +132,14 @@ TEST_CASE("EvaluateScan, scan with saturated sky spectrum expected result - case
 
     novac::SpectrometerModel spectrometerModel = novac::CSpectrometerDatabase::GetInstance().SpectrometerModel_AVASPEC();
 
+    novac::LogContext context;
+    context = context.With("file", novac::GetFileName(filename));
+    context = context.With("model", spectrometerModel.modelName);
+
     Evaluation::CScanEvaluation sut(userSettings, logger);
 
     // Act
-    auto result = sut.EvaluateScan(scan, fitWindow, spectrometerModel, darkSettings);
+    auto result = sut.EvaluateScan(context, scan, fitWindow, spectrometerModel, darkSettings);
 
     // Assert, the sky spectrum is bad hence the entire scan is bad. Skip
     REQUIRE(result == nullptr);
@@ -147,18 +157,22 @@ TEST_CASE("EvaluateScan, scan with clearly visible plume expected result - case 
     Configuration::CUserConfiguration userSettings;
     const Configuration::CDarkSettings* darkSettings = nullptr;
 
+    novac::SpectrometerModel spectrometerModel = novac::CSpectrometerDatabase::GetInstance().SpectrometerModel_AVASPEC();
+
+    novac::LogContext context;
+    context = context.With("file", novac::GetFileName(filename));
+    context = context.With("model", spectrometerModel.modelName);
+
     SECTION("Default settings")
     {
         novac::CFitWindow fitWindow;
         fitWindow.fitType = novac::FIT_TYPE::FIT_HP_DIV; // the references are HP500
         SetupFitWindow(fitWindow);
 
-        novac::SpectrometerModel spectrometerModel = novac::CSpectrometerDatabase::GetInstance().SpectrometerModel_AVASPEC();
-
         Evaluation::CScanEvaluation sut(userSettings, logger);
 
         // Act
-        auto result = sut.EvaluateScan(scan, fitWindow, spectrometerModel, darkSettings);
+        auto result = sut.EvaluateScan(context, scan, fitWindow, spectrometerModel, darkSettings);
 
         // Assert
         REQUIRE(result != nullptr);
@@ -189,12 +203,10 @@ TEST_CASE("EvaluateScan, scan with clearly visible plume expected result - case 
         fitWindow.findOptimalShift = 1;
         SetupFitWindow(fitWindow);
 
-        novac::SpectrometerModel spectrometerModel = novac::CSpectrometerDatabase::GetInstance().SpectrometerModel_AVASPEC();
-
         Evaluation::CScanEvaluation sut(userSettings, logger);
 
         // Act
-        auto result = sut.EvaluateScan(scan, fitWindow, spectrometerModel, darkSettings);
+        auto result = sut.EvaluateScan(context, scan, fitWindow, spectrometerModel, darkSettings);
 
         // Assert
         REQUIRE(result != nullptr);
@@ -215,12 +227,10 @@ TEST_CASE("EvaluateScan, scan with clearly visible plume expected result - case 
         fitWindow.fitType = novac::FIT_TYPE::FIT_HP_DIV; // the references are HP500
         SetupFitWindow(fitWindow);
 
-        novac::SpectrometerModel spectrometerModel = novac::CSpectrometerDatabase::GetInstance().SpectrometerModel_AVASPEC();
-
         Evaluation::CScanEvaluation sut(userSettings, logger);
 
         // Act
-        auto result = sut.EvaluateScan(scan, fitWindow, spectrometerModel, darkSettings);
+        auto result = sut.EvaluateScan(context, scan, fitWindow, spectrometerModel, darkSettings);
 
         // Assert
         REQUIRE(result != nullptr);

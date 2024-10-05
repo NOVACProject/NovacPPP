@@ -25,7 +25,9 @@ class CScanEvaluation : public novac::ScanEvaluationBase
 {
 
 public:
-    CScanEvaluation(const Configuration::CUserConfiguration& userSettings, novac::ILogger& log);
+    CScanEvaluation(
+        const Configuration::CUserConfiguration& userSettings,
+        novac::ILogger& log);
 
     ~CScanEvaluation();
 
@@ -37,6 +39,7 @@ public:
         @return the result of the evaluation. This is null if the evaluation failed.
         @throws std::exception (or subclass of this) if the given fit window is not ok */
     std::unique_ptr<CScanResult> EvaluateScan(
+        novac::LogContext context,
         novac::CScanFileHandler& scan,
         const novac::CFitWindow& fitWindow,
         const novac::SpectrometerModel& spectrometerModel,
