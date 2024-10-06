@@ -26,7 +26,7 @@ public:
 
     /** The model of the spectrometer which created the scans in this file.
         If this is specified in the constructor, then this will be used when reading the data.
-        If this is NOT specified in the constructor then this will be guess from the data when reading. */
+        If this is NOT specified in the constructor then this will be guessed from the data when reading. */
     novac::SpectrometerModel m_spectrometerModel;
 
     // ------------------- PUBLIC METHODS -------------------------

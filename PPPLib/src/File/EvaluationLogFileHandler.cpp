@@ -780,13 +780,15 @@ void CEvaluationLogFileHandler::ParseScanInformation(novac::CSpectrumInfo& scanI
         pt = strstr(szLine, "date=");
         if (nullptr != pt)
         {
-            sscanf(pt + 5, "%d.%d.%d", &tmpInt[0], &tmpInt[1], &tmpInt[2]);
-            scanInfo.m_startTime.year = (unsigned short)tmpInt[2];
-            scanInfo.m_startTime.month = (unsigned char)tmpInt[1];
-            scanInfo.m_startTime.day = (unsigned char)tmpInt[0];
-            scanInfo.m_stopTime.year = (unsigned short)tmpInt[2];
-            scanInfo.m_stopTime.month = (unsigned char)tmpInt[1];
-            scanInfo.m_stopTime.day = (unsigned char)tmpInt[0];
+            if (3 == sscanf(pt + 5, "%d.%d.%d", &tmpInt[0], &tmpInt[1], &tmpInt[2]))
+            {
+                scanInfo.m_startTime.year = (unsigned short)tmpInt[2];
+                scanInfo.m_startTime.month = (unsigned char)tmpInt[1];
+                scanInfo.m_startTime.day = (unsigned char)tmpInt[0];
+                scanInfo.m_stopTime.year = (unsigned short)tmpInt[2];
+                scanInfo.m_stopTime.month = (unsigned char)tmpInt[1];
+                scanInfo.m_stopTime.day = (unsigned char)tmpInt[0];
+            }
             continue;
         }
 
@@ -817,39 +819,49 @@ void CEvaluationLogFileHandler::ParseScanInformation(novac::CSpectrumInfo& scanI
         pt = strstr(szLine, "compass=");
         if (nullptr != pt)
         {
-            sscanf(pt + 8, "%lf", &tmpDouble);
-            scanInfo.m_compass = (float)fmod(tmpDouble, 360.0);
+            if (1 == sscanf(pt + 8, "%lf", &tmpDouble))
+            {
+                scanInfo.m_compass = (float)fmod(tmpDouble, 360.0);
+            }
             continue;
         }
 
         pt = strstr(szLine, "tilt=");
         if (nullptr != pt)
         {
-            sscanf(pt + 5, "%lf", &tmpDouble);
-            scanInfo.m_pitch = (float)tmpDouble;
+            if (1 == sscanf(pt + 5, "%lf", &tmpDouble))
+            {
+                scanInfo.m_pitch = (float)tmpDouble;
+            }
         }
 
         pt = strstr(szLine, "lat=");
         if (nullptr != pt)
         {
-            sscanf(pt + 4, "%lf", &tmpDouble);
-            scanInfo.m_gps.m_latitude = tmpDouble;
+            if (1 == sscanf(pt + 4, "%lf", &tmpDouble))
+            {
+                scanInfo.m_gps.m_latitude = tmpDouble;
+            }
             continue;
         }
 
         pt = strstr(szLine, "long=");
         if (nullptr != pt)
         {
-            sscanf(pt + 5, "%lf", &tmpDouble);
-            scanInfo.m_gps.m_longitude = tmpDouble;
+            if (1 == sscanf(pt + 5, "%lf", &tmpDouble))
+            {
+                scanInfo.m_gps.m_longitude = tmpDouble;
+            }
             continue;
         }
 
         pt = strstr(szLine, "alt=");
         if (nullptr != pt)
         {
-            sscanf(pt + 4, "%lf", &tmpDouble);
-            scanInfo.m_gps.m_altitude = (long)tmpDouble;
+            if (1 == sscanf(pt + 4, "%lf", &tmpDouble))
+            {
+                scanInfo.m_gps.m_altitude = (long)tmpDouble;
+            }
             continue;
         }
 
@@ -860,10 +872,14 @@ void CEvaluationLogFileHandler::ParseScanInformation(novac::CSpectrumInfo& scanI
             Remove(scanInfo.m_device, '\n'); // remove remaining strange things in the serial-number
             MakeUpper(scanInfo.m_device);	// Convert the serial-number to all upper case letters
 
+            std::cout << "read serial " << scanInfo.m_device << std::endl;
+
             // Extract the spectrometer-model from the serial-number of the spectrometer
             if (m_spectrometerModel.IsUnknown())
             {
+                std::cout << "guessing model name" << std::endl;
                 m_spectrometerModel = novac::CSpectrometerDatabase::GetInstance().GuessModelFromSerial(scanInfo.m_device);
+                std::cout << "guessed " << m_spectrometerModel.modelName << std::endl;
             }
             scanInfo.m_specModelName = m_spectrometerModel.modelName;
 
@@ -896,34 +912,53 @@ void CEvaluationLogFileHandler::ParseScanInformation(novac::CSpectrumInfo& scanI
         pt = strstr(szLine, "channel=");
         if (nullptr != pt)
         {
-            sscanf(pt + 8, "%lf", &tmpDouble);
-            scanInfo.m_channel = (unsigned char)tmpDouble;
+            if (1 == sscanf(pt + 8, "%lf", &tmpDouble))
+            {
+                scanInfo.m_channel = (unsigned char)tmpDouble;
+            }
+            continue;
         }
 
         pt = strstr(szLine, "coneangle=");
         if (nullptr != pt)
         {
-            sscanf(pt + 10, "%lf", &tmpDouble);
-            scanInfo.m_coneAngle = (float)tmpDouble;
+            if (1 == sscanf(pt + 10, "%lf", &tmpDouble))
+            {
+                scanInfo.m_coneAngle = (float)tmpDouble;
+            }
+            continue;
         }
 
         pt = strstr(szLine, "flux=");
         if (nullptr != pt)
         {
-            sscanf(pt + 5, "%lf", &tmpDouble);
-            flux = tmpDouble;
+            if (1 == sscanf(pt + 5, "%lf", &tmpDouble))
+            {
+                flux = tmpDouble;
+            }
+            continue;
         }
 
         pt = strstr(szLine, "battery=");
         if (nullptr != pt)
         {
-            sscanf(pt + 8, "%f", &scanInfo.m_batteryVoltage);
+            float tmpFloat = 0.0F;
+            if (1 == sscanf(pt + 8, "%f", &tmpFloat))
+            {
+                scanInfo.m_batteryVoltage = tmpFloat;
+            }
+            continue;
         }
 
         pt = strstr(szLine, "temperature");
         if (nullptr != pt)
         {
-            sscanf(pt + 12, "%f", &scanInfo.m_temperature);
+            float tmpFloat = 0.0F;
+            if (1 == sscanf(pt + 12, "%f", &tmpFloat))
+            {
+                scanInfo.m_temperature = tmpFloat;
+            }
+            continue;
         }
 
         pt = strstr(szLine, "instrumenttype=");
@@ -1040,9 +1075,10 @@ void CEvaluationLogFileHandler::ResetColumns()
 void CEvaluationLogFileHandler::ResetScanInformation()
 {
     m_specInfo.m_channel = 0;
-    m_specInfo.m_compass = m_specInfo.m_scanAngle = 0.0;
-
-    m_col.starttime = -1; m_col.stoptime = -1;
+    m_specInfo.m_compass = 0.0;
+    m_specInfo.m_scanAngle = 0.0;
+    m_col.starttime = -1;
+    m_col.stoptime = -1;
 }
 
 void CEvaluationLogFileHandler::SortScans()

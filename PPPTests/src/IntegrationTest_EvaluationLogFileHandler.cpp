@@ -28,13 +28,29 @@ TEST_CASE("EvaluationLogFileHandler, valid scan file read successfully", "[ReadE
     REQUIRE(returnCode == RETURN_CODE::SUCCESS);
 
     REQUIRE(sut.m_evaluationLog == filename);
-    REQUIRE(sut.m_instrumentType == INSTRUMENT_TYPE::INSTR_GOTHENBURG);
     REQUIRE(sut.m_molecule.m_name == "SO2");
+    REQUIRE(sut.m_instrumentType == INSTRUMENT_TYPE::INSTR_GOTHENBURG);
+    REQUIRE(sut.m_spectrometerModel.modelName == "AVASPEC"); // this should have been retrieved from the data
 
     REQUIRE(sut.m_specieName.size() == 3);
     REQUIRE(sut.m_specieName[0] == "SO2");
     REQUIRE(sut.m_specieName[1] == "O3");
     REQUIRE(sut.m_specieName[2] == "RING");
+
+    // Verify the spectrum information which is written in the file
+    // Notice here that the starttime of the m_specInfo doesn't match the contents of the <scanInformation> section in the file
+    // REQUIRE(sut.m_specInfo.m_startTime == novac::CDateTime(2023, 01, 20, 19, 07, 48));
+    REQUIRE(sut.m_specInfo.m_gps == novac::CGPSData(-39.277530, 175.608730, 1755.00));
+    REQUIRE(sut.m_specInfo.m_compass == 266.0);
+    REQUIRE(sut.m_specInfo.m_coneAngle == 60.0);
+    REQUIRE(sut.m_specInfo.m_device == "2002128M1");
+    REQUIRE(sut.m_specInfo.m_observatory == "geonet");
+    REQUIRE(sut.m_specInfo.m_volcano == "ruapehub");
+    REQUIRE(sut.m_specInfo.m_channel == 0);
+    REQUIRE(sut.m_specInfo.m_interlaceStep == 1);
+    REQUIRE(sut.m_specInfo.m_pitch == 0.0);
+    REQUIRE(sut.m_specInfo.m_temperature == 27.45F);
+    REQUIRE(sut.m_specInfo.m_batteryVoltage == 14.38F);
 
     // Verify the contents of the scan
     REQUIRE(sut.m_scan.size() == 1);
