@@ -5,8 +5,8 @@
 #include <vector>
 #include <SpectralEvaluation/DateTime.h>
 #include <SpectralEvaluation/Calibration/StandardCrossSectionSetup.h>
+#include <SpectralEvaluation/Log.h>
 #include <PPPLib/SpectrometerId.h>
-#include <PPPLib/Logging.h>
 
 namespace Configuration
 {
@@ -29,7 +29,7 @@ public:
         const novac::StandardCrossSectionSetup& standardCrossSections,
         const Configuration::CNovacPPPConfiguration& setup,
         const Configuration::CUserConfiguration& userSettings,
-        ILogger& logger)
+        novac::ILogger& logger)
         : m_standardCrossSections(standardCrossSections), m_setup(setup), m_userSettings(userSettings), m_log(logger)
     {
     }

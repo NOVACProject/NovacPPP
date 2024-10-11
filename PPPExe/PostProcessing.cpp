@@ -1165,7 +1165,7 @@ void CPostProcessing::WriteFluxResult_XML(const std::list<Flux::CFluxResult>& ca
 
     fprintf(f, "<NovacPPPFluxResults>\n");
 
-    for each (const Flux::CFluxResult & fluxResult in calculatedFluxes)
+    for (const Flux::CFluxResult & fluxResult : calculatedFluxes)
     {
         // extract the sources of information about wind-speed, wind-direction and plume-height
         fluxResult.m_windField.GetWindSpeedSource(wsSrc);
@@ -1315,7 +1315,7 @@ void CPostProcessing::WriteFluxResult_Txt(const std::list<Flux::CFluxResult>& ca
     fprintf(f, "#StartTime\tStopTime\tSerial\tInstrumentType\tFlux_kgs\tFluxQuality\tFluxError_Wind_kgs\tFluxError_PlumeHeight_kgs\tWindSpeed_ms\tWindSpeedErr_ms\tWindSpeedSrc\tWindDir_deg\tWindDirErr_deg\tWindDirSrc\tPlumeHeight_m\tPlumeHeightErr_m\tPlumeHeightSrc\t");
     fprintf(f, "Compass\tConeAngle\tTilt\tnSpectra\tPlumeCentre_1\tPlumeCentre_2\tPlumeCompleteness\tScanOffset\n");
 
-    for each (const Flux::CFluxResult & fluxResult in calculatedFluxes)
+    for (const Flux::CFluxResult & fluxResult : calculatedFluxes)
     {
         // extract the instrument type
         if (fluxResult.m_instrumentType == INSTRUMENT_TYPE::INSTR_HEIDELBERG)

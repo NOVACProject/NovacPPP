@@ -72,7 +72,7 @@ Poco::Message PrepareMessage(const novac::LogContext& c, const std::string& mess
 {
     Poco::Message msg;
     msg.setText(message);
-    for each (const auto & p in c.properties)
+    for (const auto & p : c.properties)
     {
         msg.set(p.first, p.second);
     }

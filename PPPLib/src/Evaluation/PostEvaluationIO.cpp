@@ -6,6 +6,8 @@
 #include <SpectralEvaluation/Configuration/RatioEvaluationSettings.h>
 #include <SpectralEvaluation/Evaluation/PlumeSpectrumSelector.h>
 
+#include <cstring>
+
 #ifndef MAX_PATH
 #define MAX_PATH 512
 #endif MAX_PATH
@@ -226,7 +228,7 @@ RETURN_CODE Evaluation::PostEvaluationIO::WriteEvaluationResult(
     string.AppendFormat("\twindspeedsource=%s\n", (const char*)wsSrc);
     string.AppendFormat("\twinddirectionsource=%s\n", (const char*)wdSrc);
     string.AppendFormat("\tplumeheightsource=%s\n", (const char*)phSrc);
-    if (fabs(instrLocation->m_compass) > 360.0)
+    if (std::abs(instrLocation->m_compass) > 360.0)
         string.Append("\tcompasssource=compassreading\n");
     else
         string.Append("\tcompasssource=user\n");

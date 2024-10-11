@@ -499,7 +499,7 @@ void CScanEvaluation::ValidateSetup(novac::LogContext context, const novac::CFit
             throw std::invalid_argument("At least one of the references of the fit window has no data (not read from disk?).");
         }
 
-        for each (const std::string & path in paths)
+        for (const std::string & path : paths)
         {
             if (novac::Equals(path, window.ref[refIdx].m_path))
             {

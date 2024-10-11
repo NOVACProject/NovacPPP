@@ -6,6 +6,8 @@
 
 #include <Poco/Path.h>
 
+#include <string.h>
+
 CContinuationOfProcessing::CContinuationOfProcessing(const Configuration::CUserConfiguration& userSettings)
 {
     ScanStatusLogFileForOldScans(userSettings);
@@ -50,7 +52,7 @@ void CContinuationOfProcessing::ScanStatusLogFileForOldScans(const Configuration
 
 bool CContinuationOfProcessing::IsPreviouslyIgnored(const std::string& pakFileName) const
 {
-    for each (const novac::CString & fileName in this->m_previouslyIgnoredFiles)
+    for (const novac::CString & fileName : this->m_previouslyIgnoredFiles)
     {
         if (Equals(fileName, pakFileName))
         {

@@ -114,7 +114,7 @@ void CFluxStatistics::Clear()
 
 void CFluxStatistics::AttachFluxList(const std::list<CFluxResult>& calculatedFluxes)
 {
-    for each (const CFluxResult & result in calculatedFluxes)
+    for (const CFluxResult & result : calculatedFluxes)
     {
         AttachFlux(result);
     }
