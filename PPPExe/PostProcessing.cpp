@@ -1182,7 +1182,7 @@ void CPostProcessing::WriteFluxResult_XML(const std::list<Flux::CFluxResult>& ca
             fluxResult.m_stopTime.year, fluxResult.m_stopTime.month, fluxResult.m_stopTime.day,
             fluxResult.m_stopTime.hour, fluxResult.m_stopTime.minute, fluxResult.m_stopTime.second);
 
-        fprintf(f, "\t\t<serial>%s</serial>\n", (const char*)fluxResult.m_instrument);
+        fprintf(f, "\t\t<serial>%s</serial>\n", fluxResult.m_instrument.c_str());
 
         // extract the instrument type
         if (fluxResult.m_instrumentType == INSTRUMENT_TYPE::INSTR_HEIDELBERG)
@@ -1198,11 +1198,11 @@ void CPostProcessing::WriteFluxResult_XML(const std::list<Flux::CFluxResult>& ca
         fprintf(f, "\t\t<value>%.2lf</value>\n", fluxResult.m_flux);
 
         // The judged quality of the calculated flux
-        if (fluxResult.m_fluxQualityFlag == FLUX_QUALITY_GREEN)
+        if (fluxResult.m_fluxQualityFlag == FluxQuality::Green)
         {
             fprintf(f, "\t\t<Quality>g</Quality>\n");
         }
-        else if (fluxResult.m_fluxQualityFlag == FLUX_QUALITY_YELLOW)
+        else if (fluxResult.m_fluxQualityFlag == FluxQuality::Yellow)
         {
             fprintf(f, "\t\t<Quality>y</Quality>\n");
         }
@@ -1341,18 +1341,18 @@ void CPostProcessing::WriteFluxResult_Txt(const std::list<Flux::CFluxResult>& ca
             fluxResult.m_stopTime.hour, fluxResult.m_stopTime.minute, fluxResult.m_stopTime.second);
 
         // the type of instrument and the serial-number
-        fprintf(f, "%s\t", (const char*)fluxResult.m_instrument);
+        fprintf(f, "%s\t", fluxResult.m_instrument.c_str());
         fprintf(f, "%s\t", (const char*)typeStr);
 
         // The actual flux!!!
         fprintf(f, "%.2lf\t", fluxResult.m_flux);
 
         // The judged quality of the calculated flux
-        if (fluxResult.m_fluxQualityFlag == FLUX_QUALITY_GREEN)
+        if (fluxResult.m_fluxQualityFlag == FluxQuality::Green)
         {
             fprintf(f, "g\t");
         }
-        else if (fluxResult.m_fluxQualityFlag == FLUX_QUALITY_YELLOW)
+        else if (fluxResult.m_fluxQualityFlag == FluxQuality::Yellow)
         {
             fprintf(f, "y\t");
         }

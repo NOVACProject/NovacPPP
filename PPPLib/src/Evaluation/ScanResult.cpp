@@ -16,7 +16,6 @@ extern novac::CVolcanoInfo g_volcanoes; // <-- A list of all known volcanoes
 CScanResult::CScanResult()
 {
     m_specNum = 0;
-    m_flux.Clear();
     m_geomError = 30.0; // best-case guess, 30%
     m_spectroscopyError = 15.0; // best-case guess, 15%
     m_scatteringError = 30.0; // best-case guess, 30%
@@ -183,7 +182,7 @@ int CScanResult::CalculateOffset(const CMolecule& specie)
     }
 
     // Get the index for the specie for which we want to calculate the offset
-    long specieIndex = GetSpecieIndex(specie.m_name);
+    long specieIndex = GetSpecieIndex(specie.name);
     if (specieIndex == -1)
     { // if the specified specie does not exist
         return 1;
@@ -215,122 +214,10 @@ int CScanResult::CalculateOffset(const CMolecule& specie)
     return 0;
 }
 
-int CScanResult::CalculateFlux(const CMolecule& specie, const Meteorology::CWindField& wind, const Geometry::CPlumeHeight& relativePlumeHeight, double compass, double coneAngle, double tilt)
-{
-    unsigned long i; // iterator
-    CDateTime startTime1, startTime2;
-    Meteorology::CWindField modifiedWind;
-
-    // If this is a not a flux measurement, then don't calculate any flux
-    if (!IsFluxMeasurement())
-        return 1;
-
-    // get the specie index
-    int specieIndex = GetSpecieIndex(specie.m_name);
-    if (specieIndex == -1)
-    {
-        return 1;
-    }
-
-    // pull out the good data points out of the measurement and ignore the bad points
-    // at the same time convert to mg/m2
-    std::vector<double> scanAngle(m_specNum);
-    std::vector<double> scanAngle2(m_specNum);
-    std::vector<double> column(m_specNum);
-    unsigned int nDataPoints = 0;
-    for (i = 0; i < m_specNum; ++i)
-    {
-        if (m_spec[i].IsBad() || m_spec[i].IsDeleted())
-            continue; // this is a bad measurement
-        if (m_specInfo[i].m_flag >= 64)
-            continue; // this is a direct-sun measurement, don't use it to calculate the flux...
-
-        scanAngle[nDataPoints] = m_specInfo[i].m_scanAngle;
-        scanAngle2[nDataPoints] = m_specInfo[i].m_scanAngle2;
-        column[nDataPoints] = specie.Convert_MolecCm2_to_kgM2(m_spec[i].m_referenceResult[specieIndex].m_column);
-        ++nDataPoints;
-    }
-
-    // if there are no good datapoints in the measurement, the flux is assumed to be zero
-    if (nDataPoints < 10)
-    {
-        m_flux.Clear();
-        if (nDataPoints == 0)
-            ShowMessage("Could not calculate flux, no good datapoints in measurement");
-        else
-            ShowMessage("Could not calculate flux, too few good datapoints in measurement");
-        return 1;
-    }
-
-    // Get the times of the scan
-    this->GetSkyStartTime(startTime1);
-    this->GetStartTime(0, startTime2);
-    if (startTime1 < startTime2)
-    {
-        m_flux.m_startTime = startTime1;
-    }
-    else
-    {
-        m_flux.m_startTime = startTime2;
-    }
-    this->GetStopTime(m_specNum - 1, m_flux.m_stopTime);
-
-    // and the serial number of the instrument
-    m_flux.m_instrument.Format(GetSerial());
-
-    // Calculate the flux
-    m_flux.m_flux = Flux::CFluxCalculator::CalculateFlux(scanAngle.data(), scanAngle2.data(), column.data(), specie.Convert_MolecCm2_to_kgM2(m_plumeProperties.offset), nDataPoints, wind, relativePlumeHeight, compass, m_instrumentType, coneAngle, tilt);
-    m_flux.m_windField = wind;
-    m_flux.m_plumeHeight = relativePlumeHeight;
-    m_flux.m_compass = compass;
-    m_flux.m_coneAngle = coneAngle;
-    m_flux.m_tilt = tilt;
-    m_flux.m_numGoodSpectra = nDataPoints;
-
-    // calculate the completeness and centre of the plume
-    CalculatePlumeCentre(specie);
-
-    m_flux.m_scanOffset = m_plumeProperties.offset;
-    m_flux.m_completeness = m_plumeProperties.completeness;
-    m_flux.m_plumeCentre[0] = m_plumeProperties.plumeCenter;
-    m_flux.m_plumeCentre[1] = m_plumeProperties.plumeCenter2;
-    m_flux.m_instrumentType = m_instrumentType;
-
-    // Try to make an estimation of the error in flux from the
-    //  wind field used and from the plume height used
-
-    // 1. the wind field
-    modifiedWind = wind;
-    modifiedWind.SetWindDirection(wind.GetWindDirection() - wind.GetWindDirectionError(), wind.GetWindDirectionSource());
-    double flux1 = Flux::CFluxCalculator::CalculateFlux(scanAngle.data(), scanAngle2.data(), column.data(), specie.Convert_MolecCm2_to_kgM2(m_plumeProperties.offset), nDataPoints, modifiedWind, relativePlumeHeight, compass, m_instrumentType, coneAngle, tilt);
-
-    modifiedWind.SetWindDirection(wind.GetWindDirection() + wind.GetWindDirectionError(), wind.GetWindDirectionSource());
-    double flux2 = Flux::CFluxCalculator::CalculateFlux(scanAngle.data(), scanAngle2.data(), column.data(), specie.Convert_MolecCm2_to_kgM2(m_plumeProperties.offset), nDataPoints, modifiedWind, relativePlumeHeight, compass, m_instrumentType, coneAngle, tilt);
-
-    double fluxErrorDueToWindDirection = std::max(fabs(flux2 - m_flux.m_flux), fabs(flux1 - m_flux.m_flux));
-
-    double fluxErrorDueToWindSpeed = m_flux.m_flux * wind.GetWindSpeedError() / wind.GetWindSpeed();
-
-    m_flux.m_fluxError_Wind = sqrt(fluxErrorDueToWindDirection * fluxErrorDueToWindDirection + fluxErrorDueToWindSpeed * fluxErrorDueToWindSpeed);
-
-    // 2. the plume height
-    m_flux.m_fluxError_PlumeHeight = m_flux.m_flux * relativePlumeHeight.m_plumeAltitudeError / relativePlumeHeight.m_plumeAltitude;
-
-    return 0;
-}
-
-/** Tries to find a plume in the last scan result. If the plume is found
-        this function returns true. The result of the calculations is stored in
-        the member-variables 'm_plumeCentre', 'm_plumeCompleteness' and m_plumeEdge[0] and m_plumeEdge[1] */
 bool CScanResult::CalculatePlumeCentre(const CMolecule& specie)
 {
     return CalculatePlumeCentre(specie, this->m_plumeProperties);
 }
-
-/** Tries to find a plume in the last scan result. If the plume is found
-        this function returns true, and the centre of the plume (in scanAngles)
-        is given in 'plumeCentre' and the widht of the plume (in scanAngles)
-        is given in 'plumeWidth' */
 
 bool CScanResult::CalculatePlumeCentre(const CMolecule& specie, CPlumeInScanProperty& plumeProperties)
 {
@@ -345,7 +232,7 @@ bool CScanResult::CalculatePlumeCentre(const CMolecule& specie, CPlumeInScanProp
         return false;
 
     // get the specie index
-    int specieIndex = GetSpecieIndex(specie.m_name);
+    int specieIndex = GetSpecieIndex(specie.name);
     if (specieIndex == -1)
     {
         return false;
@@ -398,32 +285,6 @@ bool CScanResult::CalculatePlumeCentre(const CMolecule& specie, CPlumeInScanProp
     return ret;
 }
 
-/** Calculates the maximum good column value in the scan, corrected for the offset */
-double CScanResult::GetMaxColumn(const novac::CString& specie) const
-{
-    unsigned long i; // iterator
-    double maxColumn = 0.0;
-
-    // get the specie index
-    int specieIndex = GetSpecieIndex(specie);
-    if (specieIndex == -1)
-    {
-        return 0.0;
-    }
-
-    // Go through the column values and pick out the highest
-    for (i = 0; i < m_specNum; ++i)
-    {
-        if (m_spec[i].IsBad() || m_spec[i].IsDeleted())
-        {
-            continue;
-        }
-        maxColumn = std::max(maxColumn, m_spec[i].m_referenceResult[specieIndex].m_column - m_plumeProperties.offset);
-    }
-
-    return maxColumn;
-}
-
 double CScanResult::GetCalculatedPlumeCentre(int motor) const
 {
     if (motor == 1)
@@ -446,7 +307,7 @@ double CScanResult::GetColumn(unsigned long spectrumNum, unsigned long specieNum
 
 double CScanResult::GetColumn(unsigned long spectrumNum, CMolecule& molec) const
 {
-    int index = this->GetSpecieIndex(molec.m_name);
+    int index = this->GetSpecieIndex(molec.name);
     if (index == -1)
         return NOT_A_NUMBER;
     else

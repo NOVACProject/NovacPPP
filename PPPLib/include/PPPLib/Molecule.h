@@ -1,20 +1,20 @@
 #ifndef NOVAC_PPP_MOLECULE_H
 #define NOVAC_PPP_MOLECULE_H
 
-#include <PPPLib/MFC/CString.h>
+#include <string>
 
 /** The class <b>CMolecule</b> is used to store information on a single
     trace gas species, such as it's molecular weight.
     This is also able to use these numbers to convert between columns in number
     of molecules and in mass.
 */
-enum STANDARD_MOLECULE
+enum class StandardMolecule
 {
-    MOLEC_SO2,
-    MOLEC_O3,
-    MOLEC_BRO,
-    MOLEC_NO2,
-    MOLEC_HCHO
+    SO2,
+    O3,
+    BrO,
+    NO2,
+    HCHO
 };
 
 const double AVOGADROS_NUMBER = 6.02214179e23;
@@ -24,24 +24,25 @@ const double AVOGADROS_NUMBER = 6.02214179e23;
     passing on the molecular weight to convert from molec/cm2 to kg/m2.
 */
 
-class CMolecule
+struct CMolecule
 {
 public:
 
-    CMolecule();
+    CMolecule() = default;
 
-    CMolecule(STANDARD_MOLECULE molec);
+    CMolecule(StandardMolecule molec);
 
     // ----------------------------------------------------------------------
     // ---------------------- PUBLIC DATA -----------------------------------
     // ----------------------------------------------------------------------
 
     /** The trivial name of this gas molecule */
-    novac::CString m_name;
+    std::string name = "SO2";
 
     /** The molecular weight of the molecule
-        In grams per mol (g/mol) or (u/molecule) */
-    double m_molecularWeight;
+        In grams per mol (g/mol) or (u/molecule).
+        Defaults to the molecular weight of SO2. */
+    double molecularWeight = 64.0638;
 
     // ----------------------------------------------------------------------
     // --------------------- PUBLIC METHODS ---------------------------------

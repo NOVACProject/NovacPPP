@@ -241,19 +241,19 @@ void CommandLineParser::ParseCommandLineOptions(
                 const std::string moleculeName = std::string(buffer.data());
                 if (novac::Equals(moleculeName, "BrO"))
                 {
-                    userSettings.m_molecule = MOLEC_BRO;
+                    userSettings.m_molecule = StandardMolecule::BrO;
                 }
                 else if (novac::Equals(moleculeName, "NO2"))
                 {
-                    userSettings.m_molecule = MOLEC_NO2;
+                    userSettings.m_molecule = StandardMolecule::NO2;
                 }
                 else if (novac::Equals(moleculeName, "O3"))
                 {
-                    userSettings.m_molecule = MOLEC_O3;
+                    userSettings.m_molecule = StandardMolecule::O3;
                 }
                 else
                 {
-                    userSettings.m_molecule = MOLEC_SO2;
+                    userSettings.m_molecule = StandardMolecule::SO2;
                 }
             }
             token = tokenizer.NextToken();

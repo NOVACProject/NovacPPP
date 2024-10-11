@@ -48,18 +48,18 @@ public:
     // --------------------- PUBLIC METHODS ---------------------------------
     // ----------------------------------------------------------------------
 
-    /** Calculates the flux from the scan found in the given evaluation log file
-        @param evalLogFileName - the name of the .txt-file that contains
-            the result of the evaluation.
-        @param windDataBase - a database with information about the wind. The
-            parameters for the wind will be taken from this database. The function
-            fails if no acceptable wind-field could be found
-        @param plumeheight - information about the altitude of the plume. This should
-            be in meters above sea level.
+    /** Calculates the flux from the scan found in the given evaluation log file.
+        NOTICE: This assumes that the column values in the scan are in molecules / cm2.
+        @param evalLogFileName - the name of the .txt-file that contains the result of the evaluation.
+            The function will fail if this file does not contain any, or multiple scans.
+        @param windDataBase - a database with information about the wind.
+            The parameters for the wind will be taken from this database.
+            The function fails if no acceptable wind-field could be found
+        @param plumeheight - information about the altitude of the plume.
+            This should be in meters above sea level.
         @param fluxResult - will on successful calculation of the flux be filled with
             the result of the calculations.
-        @return true on success.
-      */
+        @return true on success. */
     bool CalculateFlux(
         novac::LogContext context,
         const std::string& evalLogFileName,
@@ -67,10 +67,46 @@ public:
         const Geometry::CPlumeHeight& plumeAltitude,
         CFluxResult& fluxResult);
 
+
+    /** Calculate the flux in this scan, using the supplied compass direction and coneAngle.
+        NOTICE: This assumes that the column values in the scan are in molecules / cm2.
+        The result is saved in result.m_flux .
+        @param specie - the name of the spece to calculate the flux for
+        @param wind - the wind speed and wind direction to use in the calculation
+        @param relativePlumeHeight - the height of the plume, in meters above the instrument
+            that should be used to calculate this flux.
+        @param compass - the compass direction of the instrument
+        @param coneAngle - the cone-angle of the instrument
+        @param tilt - the tilt of the instrument.
+        @return true if all is ok and the flux could be calculated. */
+    bool CalculateFlux(
+        novac::LogContext context,
+        Evaluation::CScanResult& result,
+        const CMolecule& specie,
+        const Meteorology::CWindField& wind,
+        const Geometry::CPlumeHeight& relativePlumeHeight,
+        double compass,
+        double coneAngle = 90.0,
+        double tilt = 0.0);
+
     /** Calculates the flux using the supplied data.
-        Automatically decides which algorithm to use based on the given cone angle.
-        (Moved from Common.h where it previously resided in the NovacPPP) */
-    static double CalculateFlux(const double* scanAngle, const double* scanAngle2, const double* column, double offset, int nDataPoints, const Meteorology::CWindField& wind, const Geometry::CPlumeHeight& relativePlumeHeight, double compass, INSTRUMENT_TYPE type, double coneAngle = 90.0, double tilt = 0.0);
+    *   The angles here must be in degrees
+    *   The columns, and the offset, must be in molecules / cm2.
+    *    Automatically decides which algorithm to use based on the given cone angle.
+    *    (Moved from Common.h where it previously resided in the NovacPPP) */
+    double CalculateFlux(
+        novac::LogContext context,
+        const double* scanAngle,
+        const double* scanAngle2,
+        const double* column,
+        double offset,
+        int nDataPoints,
+        const Meteorology::CWindField& wind,
+        const Geometry::CPlumeHeight& relativePlumeHeight,
+        double compass,
+        INSTRUMENT_TYPE type,
+        double coneAngle = 90.0,
+        double tilt = 0.0);
 
 private:
     // ----------------------------------------------------------------------

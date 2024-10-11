@@ -90,7 +90,7 @@ public:
 
     /** The molecule of main interest.
         This is the one the fluxes will be calculated for if the processing mode is 'flux' */
-    STANDARD_MOLECULE m_molecule;
+    StandardMolecule m_molecule;
 #define str_molecule "molecule"
 
     // ------------------------------------------------------------------------

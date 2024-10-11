@@ -304,7 +304,7 @@ TEST_CASE("molecule O3 overrides default", "[CommandLineParser][Configuration]")
     std::string setExePath;
     std::vector<std::string>arguments = { "--molecule=O3" };
     Configuration::CUserConfiguration userSettings;
-    REQUIRE(userSettings.m_molecule == STANDARD_MOLECULE::MOLEC_SO2); // check assumption here
+    REQUIRE(userSettings.m_molecule == StandardMolecule::SO2); // check assumption here
     novac::CVolcanoInfo volcanoes;
     novac::ConsoleLog logger;
 
@@ -312,6 +312,6 @@ TEST_CASE("molecule O3 overrides default", "[CommandLineParser][Configuration]")
     CommandLineParser::ParseCommandLineOptions(arguments, userSettings, volcanoes, setExePath, logger);
 
     // Assert
-    REQUIRE(userSettings.m_molecule == STANDARD_MOLECULE::MOLEC_O3);
+    REQUIRE(userSettings.m_molecule == StandardMolecule::O3);
 }
 }

@@ -118,7 +118,7 @@ bool CPostEvaluationController::EvaluateScan(
     }
 
     // TODO: Make use of this really useful index...
-    const int specieIndex = lastResult->GetSpecieIndex(CMolecule(m_userSettings.m_molecule).m_name);
+    const int specieIndex = lastResult->GetSpecieIndex(CMolecule(m_userSettings.m_molecule).name);
 
     // 9. Get the mode of the evaluation
     lastResult->CheckMeasurementMode();

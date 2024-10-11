@@ -37,7 +37,7 @@ TEST_CASE("ReadProcessingFile gives expected configuration", "[ProcessingFileRea
 #endif // _MSC_VER
 
         REQUIRE(PROCESSING_MODE::PROCESSING_MODE_FLUX == resultingConfiguration.m_processingMode);
-        REQUIRE(STANDARD_MOLECULE::MOLEC_SO2 == resultingConfiguration.m_molecule);
+        REQUIRE(StandardMolecule::SO2 == resultingConfiguration.m_molecule);
 
         REQUIRE(novac::CDateTime(2017, 1, 29, 12, 50, 51) == resultingConfiguration.m_fromDate);
         REQUIRE(novac::CDateTime(2017, 3, 01, 23, 50, 51) == resultingConfiguration.m_toDate);

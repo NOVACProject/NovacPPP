@@ -42,6 +42,19 @@ public:
     // ---------------------- PUBLIC DATA -----------------------------------
     // ----------------------------------------------------------------------
 
+    /** The calculated flux and the parameters used to calculate the flux */
+    Flux::CFluxResult m_flux;
+
+    /** This contains the parameters of the plume that is seen in this scan,
+        such as the completeness or the centre angle of the plume. */
+    novac::CPlumeInScanProperty m_plumeProperties;
+
+    /** The type of the instrument used for this scan */
+    INSTRUMENT_TYPE m_instrumentType;
+
+    /** Flag to signal if this is a wind measurement, a scan, or something else. */
+    MEASUREMENT_MODE m_measurementMode;
+
     // ----------------------------------------------------------------------
     // --------------------- PUBLIC METHODS ---------------------------------
     // ----------------------------------------------------------------------
@@ -97,20 +110,6 @@ public:
       @return 0 on success. @return 1 - if any error occurs. */
     int CalculateOffset(const CMolecule& specie);
 
-    /** Calculate the flux in this scan, using the supplied compass direction
-            and coneAngle.
-        The result is saved in the private parameter 'm_flux', whose vale can be
-        retrieved by a call to 'GetFlux()'
-        @param specie - the name of the spece to calculate the flux for
-        @param wind - the wind speed and wind direction to use in the calculation
-        @param relativePlumeHeight - the height of the plume, in meters above the instrument
-            that should be used to calculate this flux.
-        @param compass - the compass direction of the instrument
-        @param coneAngle - the cone-angle of the instrument
-        @param tilt - the tilt of the instrument.
-        @return 0 if all is ok. @return 1 if any error occurs. */
-    int CalculateFlux(const CMolecule& specie, const Meteorology::CWindField& wind, const Geometry::CPlumeHeight& relativePlumeHeight, double compass, double coneAngle = 90.0, double tilt = 0.0);
-
     /** Tries to find a plume in the last scan result. If the plume is found
             this function returns true, and the centre of the plume (in scanAngles)
             is given in 'plumeCentre', the width of the plume (in scanAngles)
@@ -156,12 +155,6 @@ public:
     /** Returns true if this is a composition mode measurement */
     bool IsCompositionMeasurement() const;
 
-    /** Calculates the maximum good column value in the scan,
-        corrected for the offset.
-        NB!! The function 'CalculateOffset' must have been called
-        before this function is called. */
-    double GetMaxColumn(const novac::CString& specie) const;
-
     /** Returns the calculated flux */
     double GetFlux() const { return m_flux.m_flux; }
 
@@ -169,7 +162,7 @@ public:
 
     /** Returns true if the automatic judgment considers this flux
         measurement to be a good measurement */
-    bool IsFluxOk() const { return (m_flux.m_fluxQualityFlag != FLUX_QUALITY_RED); }
+    bool IsFluxOk() const { return (m_flux.m_fluxQualityFlag != FluxQuality::Red); }
 
     /** Set the flux to the given value. ONLY USED FOR READING EVALUATION-LOGS */
     void SetFlux(double flux) { this->m_flux.m_flux = flux; }
@@ -365,11 +358,6 @@ public:
     /** returns the electronic offset in spectrum number 'spectrumNum' */
     float GetElectronicOffset(unsigned long spectrumNum) const { return (IsValidSpectrumIndex(spectrumNum)) ? m_specInfo[spectrumNum].m_offset : 0; }
 
-    /** returns true if the spectra have been evaluated for the supplied specie.
-        @param specie - a string containing the name of the specie to
-            search for, e.g. "SO2" (case insensitive)*/
-    bool IsEvaluatedSpecie(const novac::CString& specie) const { return (-1 != GetSpecieIndex(specie)); }
-
     /** returns the number of species that were used in the evaluation of a
         given spectrum */
     int GetSpecieNum(unsigned long spectrumNum) const { return (IsValidSpectrumIndex(spectrumNum)) ? (int)m_spec[spectrumNum].m_referenceResult.size() : 0; }
@@ -406,10 +394,6 @@ private:
     // --------------------- PRIVATE DATA -----------------------------------
     // ----------------------------------------------------------------------
 
-    /** The calculated flux and the parameters used to
-         calculate the flux */
-    Flux::CFluxResult m_flux;
-
     /** The estimated error (in percent) in the geometrical setup for
         this flux-calculation. */
     double m_geomError;
@@ -422,19 +406,8 @@ private:
         to incertainties in cross-sections, slit-functions, stray-light etc. */
     double m_spectroscopyError;
 
-    /** This contains the parameters of the plume that is seen
-        in this scan, such as the completeness or the centre angle of
-        the plume. */
-    novac::CPlumeInScanProperty m_plumeProperties;
-
     /** The number of evaluations */
     unsigned long m_specNum;
-
-    /** The type of the instrument used for this scan */
-    INSTRUMENT_TYPE m_instrumentType;
-
-    /** Flag to signal if this is a wind measurement, a scan, or something else. */
-    MEASUREMENT_MODE m_measurementMode;
 
     // ----------------------------------------------------------------------
     // -------------------- PRIVATE METHODS ---------------------------------

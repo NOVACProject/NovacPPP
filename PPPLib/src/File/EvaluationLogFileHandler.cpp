@@ -369,6 +369,7 @@ RETURN_CODE CEvaluationLogFileHandler::ReadEvaluationLog()
             {
                 ResetScanInformation();
                 ParseScanInformation(m_specInfo, flux, f);
+                newResult.m_skySpecInfo = m_specInfo;
                 continue;
             }
 
@@ -740,7 +741,6 @@ void CEvaluationLogFileHandler::ParseScanInformation(novac::CSpectrumInfo& scanI
 {
     char szLine[8192];
     char* pt = nullptr;
-    int tmpInt[3];
     double tmpDouble;
     char instrumentType[64];
 
@@ -780,6 +780,7 @@ void CEvaluationLogFileHandler::ParseScanInformation(novac::CSpectrumInfo& scanI
         pt = strstr(szLine, "date=");
         if (nullptr != pt)
         {
+            int tmpInt[3];
             if (3 == sscanf(pt + 5, "%d.%d.%d", &tmpInt[0], &tmpInt[1], &tmpInt[2]))
             {
                 scanInfo.m_startTime.year = (unsigned short)tmpInt[2];
@@ -795,7 +796,14 @@ void CEvaluationLogFileHandler::ParseScanInformation(novac::CSpectrumInfo& scanI
         pt = strstr(szLine, "starttime=");
         if (nullptr != pt)
         {
-            if (3 == sscanf(pt + 10, "%d.%d.%d", &tmpInt[0], &tmpInt[1], &tmpInt[2]))
+            int tmpInt[4];
+            if (3 == sscanf(pt + strlen("starttime="), "%d.%d.%d", &tmpInt[0], &tmpInt[1], &tmpInt[2]))
+            {
+                scanInfo.m_startTime.hour = (unsigned char)tmpInt[0];
+                scanInfo.m_startTime.minute = (unsigned char)tmpInt[1];
+                scanInfo.m_startTime.second = (unsigned char)tmpInt[2];
+            }
+            else if (3 == sscanf(pt + strlen("starttime="), "%d:%d:%d", &tmpInt[0], &tmpInt[1], &tmpInt[2]))
             {
                 scanInfo.m_startTime.hour = (unsigned char)tmpInt[0];
                 scanInfo.m_startTime.minute = (unsigned char)tmpInt[1];
@@ -807,7 +815,14 @@ void CEvaluationLogFileHandler::ParseScanInformation(novac::CSpectrumInfo& scanI
         pt = strstr(szLine, "stoptime=");
         if (nullptr != pt)
         {
+            int tmpInt[3];
             if (3 == sscanf(pt + 9, "%d.%d.%d", &tmpInt[0], &tmpInt[1], &tmpInt[2]))
+            {
+                scanInfo.m_stopTime.hour = (unsigned char)tmpInt[0];
+                scanInfo.m_stopTime.minute = (unsigned char)tmpInt[1];
+                scanInfo.m_stopTime.second = (unsigned char)tmpInt[2];
+            }
+            else if (3 == sscanf(pt + 9, "%d:%d:%d", &tmpInt[0], &tmpInt[1], &tmpInt[2]))
             {
                 scanInfo.m_stopTime.hour = (unsigned char)tmpInt[0];
                 scanInfo.m_stopTime.minute = (unsigned char)tmpInt[1];
@@ -872,14 +887,10 @@ void CEvaluationLogFileHandler::ParseScanInformation(novac::CSpectrumInfo& scanI
             Remove(scanInfo.m_device, '\n'); // remove remaining strange things in the serial-number
             MakeUpper(scanInfo.m_device);	// Convert the serial-number to all upper case letters
 
-            std::cout << "read serial " << scanInfo.m_device << std::endl;
-
             // Extract the spectrometer-model from the serial-number of the spectrometer
             if (m_spectrometerModel.IsUnknown())
             {
-                std::cout << "guessing model name" << std::endl;
                 m_spectrometerModel = novac::CSpectrometerDatabase::GetInstance().GuessModelFromSerial(scanInfo.m_device);
-                std::cout << "guessed " << m_spectrometerModel.modelName << std::endl;
             }
             scanInfo.m_specModelName = m_spectrometerModel.modelName;
 

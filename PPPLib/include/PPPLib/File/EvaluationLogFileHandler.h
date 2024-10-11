@@ -22,7 +22,7 @@ public:
         novac::SpectrometerModel* spectrometerModel = nullptr);
 
     /** The evaluation log */
-    std::string m_evaluationLog;
+    const std::string m_evaluationLog;
 
     /** The model of the spectrometer which created the scans in this file.
         If this is specified in the constructor, then this will be used when reading the data.

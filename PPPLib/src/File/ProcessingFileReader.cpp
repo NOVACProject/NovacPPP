@@ -134,19 +134,19 @@ void CProcessingFileReader::ReadProcessingFile(const novac::CString& filename, C
             Parse_StringItem(ENDTAG(str_molecule), molecStr);
             if (Equals(molecStr, "BrO"))
             {
-                settings.m_molecule = MOLEC_BRO;
+                settings.m_molecule = StandardMolecule::BrO;
             }
             else if (Equals(molecStr, "NO2"))
             {
-                settings.m_molecule = MOLEC_NO2;
+                settings.m_molecule = StandardMolecule::NO2;
             }
             else if (Equals(molecStr, "O3"))
             {
-                settings.m_molecule = MOLEC_O3;
+                settings.m_molecule = StandardMolecule::O3;
             }
             else
             {
-                settings.m_molecule = MOLEC_SO2;
+                settings.m_molecule = StandardMolecule::SO2;
             }
             continue;
         }
@@ -641,11 +641,11 @@ RETURN_CODE CProcessingFileReader::WriteProcessingFile(const novac::CString& fil
     // the most important molecule
     switch (settings.m_molecule)
     {
-    case MOLEC_SO2:		fprintf(f, "\t<molecule>SO2</molecule>\n"); break;
-    case MOLEC_O3:		fprintf(f, "\t<molecule>O3</molecule>\n"); break;
-    case MOLEC_BRO:		fprintf(f, "\t<molecule>BRO</molecule>\n"); break;
-    case MOLEC_NO2:		fprintf(f, "\t<molecule>NO2</molecule>\n"); break;
-    case MOLEC_HCHO:	fprintf(f, "\t<molecule>HCHO</molecule>\n"); break;
+    case StandardMolecule::SO2:		fprintf(f, "\t<molecule>SO2</molecule>\n"); break;
+    case StandardMolecule::O3:		fprintf(f, "\t<molecule>O3</molecule>\n"); break;
+    case StandardMolecule::BrO:		fprintf(f, "\t<molecule>BRO</molecule>\n"); break;
+    case StandardMolecule::NO2:		fprintf(f, "\t<molecule>NO2</molecule>\n"); break;
+    case StandardMolecule::HCHO:	fprintf(f, "\t<molecule>HCHO</molecule>\n"); break;
     default: fprintf(f, "\t<molecule>Unknown</molecule>\n"); break;
     }
 
