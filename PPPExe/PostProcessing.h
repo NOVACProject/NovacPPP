@@ -60,7 +60,7 @@ public:
         good stratospheric data */
     void DoPostProcessing_Strat();
 
-protected:
+private:
 
     // ----------------------------------------------------------------------
     // ---------------------- PRIVATE DATA ----------------------------------
@@ -110,9 +110,8 @@ protected:
     void ReadWindField();
 
     /** Prepares for the flux calculation by setting up a reasonable
-        set of plume heights. This could also read in a set from file...?
-        @return 0 on success, otherwese non-zero */
-    int PreparePlumeHeights();
+        set of plume heights. This could also read in a set from file...? */
+    void PreparePlumeHeights();
 
     /** Scans through the FTP-server (using the IP,username and password
         found in userSettings) in search for .pak-files
@@ -134,13 +133,6 @@ protected:
         const std::vector<std::string>& pakFileList,
         novac::CList <Evaluation::CExtendedScanResult,
         Evaluation::CExtendedScanResult&>& evalLogFiles);
-
-    /** Runs through the supplied list of .pak files and performs an instrument calibration
-        on each one.
-        @param pakFileList The list of scan files to calibrate.
-        @param instrumentCalibrationFiles Will on successful return be filled with calibrations.
-        TODO: We need to be able to return updated fit-windows as well */
-    void CalibrateInstrumentFromScans(const std::vector<std::string>& pakFileList, std::vector<std::string>& calibrations);
 
     /** Runs through the supplied list of evaluation - logs and performs
         geometry calculations on the ones which does match. The results
@@ -203,5 +195,5 @@ protected:
     /** Creates a reference file by convolving a high-res cross section with a slit-function and resamples it
         to a given wavelength calibration. The instrument serial is provided since the result is
         saved to a local file, for reference. */
-    bool ConvolveReference(novac::CReferenceFile& ref, const novac::CString& instrumentSerial);
+    bool ConvolveReference(novac::LogContext context, novac::CReferenceFile& ref, const novac::CString& instrumentSerial);
 };

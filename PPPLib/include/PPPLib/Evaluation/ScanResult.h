@@ -116,12 +116,12 @@ public:
             is given in 'plumeWidth' and the estimated completeness of the plume
             is given in 'plumeCompleteness' (ranging from 0.0 to 1.0)
             */
-    bool CalculatePlumeCentre(const CMolecule& specie, novac::CPlumeInScanProperty& plumeProperties);
+    bool CalculatePlumeCentre(const CMolecule& specie, novac::CPlumeInScanProperty& plumeProperties, std::string& message);
 
     /** Tries to find a plume in the last scan result. If the plume is found
         this function returns true. The result of the calculations is stored in
         the member-variables 'm_plumeCentre' and 'm_plumeCompleteness' */
-    bool CalculatePlumeCentre(const CMolecule& specie);
+    bool CalculatePlumeCentre(const CMolecule& specie, std::string& message);
 
     /** Checks the kind of measurement that we have here and sets the
         flag 'm_measurementMode' to the appropriate value... */

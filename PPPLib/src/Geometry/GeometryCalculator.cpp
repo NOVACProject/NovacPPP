@@ -392,7 +392,8 @@ bool CGeometryCalculator::CalculateGeometry(const novac::CString& evalLog1, int 
     {
         reader[k].m_scan[index[k]].GetStartTime(0, startTime[k]);
 
-        if (false == reader[k].m_scan[index[k]].CalculatePlumeCentre(CMolecule(m_userSettings.m_molecule), plume[k]))
+        std::string message;
+        if (false == reader[k].m_scan[index[k]].CalculatePlumeCentre(CMolecule(m_userSettings.m_molecule), plume[k], message))
         {
             return false; // <-- cannot see the plume
         }
@@ -614,7 +615,8 @@ bool CGeometryCalculator::CalculatePlumeHeight(const novac::CString& evalLog, in
         return false;
 
     // 4. Get the scan-angles around which the plumes are centred
-    if (false == reader.m_scan[scanIndex].CalculatePlumeCentre(CMolecule(m_userSettings.m_molecule), plume))
+    std::string message;
+    if (false == reader.m_scan[scanIndex].CalculatePlumeCentre(CMolecule(m_userSettings.m_molecule), plume, message))
     {
         return false; // <-- cannot see the plume
     }
@@ -693,7 +695,8 @@ bool CGeometryCalculator::CalculateWindDirection(const novac::CString& evalLog, 
         return false;
 
     // 4. Get the scan-angles around which the plumes are centred
-    if (false == reader.m_scan[scanIndex].CalculatePlumeCentre(CMolecule(m_userSettings.m_molecule), plume))
+    std::string message;
+    if (false == reader.m_scan[scanIndex].CalculatePlumeCentre(CMolecule(m_userSettings.m_molecule), plume, message))
     {
         return false; // <-- cannot see the plume
     }

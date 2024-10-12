@@ -5,6 +5,8 @@
 #include <Poco/Message.h>
 #include <Poco/Logger.h>
 
+#include <sstream>
+
 extern std::string s_exePath;
 extern std::string s_exeFileName;
 
@@ -55,28 +57,16 @@ void PocoLogger::Debug(const std::string& message)
     Poco::Logger& log = Poco::Logger::get("NovacPPP");
     log.debug(message);
 }
-
-Poco::Message PrepareMessage(const novac::LogContext& c, const std::string& message)
-{
-    Poco::Message msg;
-    msg.setText(message);
-    for (const auto & p : c.properties)
-    {
-        msg.set(p.first, p.second);
-    }
-
-    return msg;
-}
-
 void PocoLogger::Debug(const novac::LogContext& c, const std::string& message)
 {
     Poco::Logger& log = Poco::Logger::get("NovacPPP");
-
-    Poco::Message msg = PrepareMessage(c, message);
-    msg.setPriority(Poco::Message::PRIO_DEBUG);
-    log.log(msg);
+    if (log.debug())
+    {
+        std::stringstream s;
+        s << c << message;
+        log.debug(s.str());
+    }
 }
-
 
 void PocoLogger::Information(const std::string& message)
 {
@@ -86,10 +76,12 @@ void PocoLogger::Information(const std::string& message)
 void PocoLogger::Information(const novac::LogContext& c, const std::string& message)
 {
     Poco::Logger& log = Poco::Logger::get("NovacPPP");
-
-    Poco::Message msg = PrepareMessage(c, message);
-    msg.setPriority(Poco::Message::PRIO_INFORMATION);
-    log.log(msg);
+    if (log.information())
+    {
+        std::stringstream s;
+        s << c << message;
+        log.information(s.str());
+    }
 }
 
 void PocoLogger::Error(const std::string& message)
@@ -100,10 +92,12 @@ void PocoLogger::Error(const std::string& message)
 void PocoLogger::Error(const novac::LogContext& c, const std::string& message)
 {
     Poco::Logger& log = Poco::Logger::get("NovacPPP");
-
-    Poco::Message msg = PrepareMessage(c, message);
-    msg.setPriority(Poco::Message::PRIO_FATAL);
-    log.log(msg);
+    if (log.error())
+    {
+        std::stringstream s;
+        s << c << message;
+        log.error(s.str());
+    }
 }
 
 Common::Common()

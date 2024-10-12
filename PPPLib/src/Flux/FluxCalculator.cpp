@@ -115,9 +115,10 @@ bool CFluxCalculator::CalculateFlux(
     }
 
     // Check that the completeness is higher than our limit...
-    if (!result.CalculatePlumeCentre(CMolecule(m_userSettings.m_molecule)))
+    std::string message;
+    if (!result.CalculatePlumeCentre(CMolecule(m_userSettings.m_molecule), message))
     {
-        m_log.Information(context, "Scan does not see the plume, no flux can be calculated");
+        m_log.Information(context, message + " Scan does not see the plume, no flux can be calculated");
         return false;
     }
 
@@ -488,7 +489,12 @@ bool CFluxCalculator::CalculateFlux(
     }
 
     // calculate the completeness and centre of the plume
-    result.CalculatePlumeCentre(specie);
+    std::string message;
+    if (!result.CalculatePlumeCentre(specie, message))
+    {
+        m_log.Information(context, message + " Scan does not see the plume, no flux can be calculated");
+        return false;
+    }
 
     fluxResult.m_scanOffset = result.m_plumeProperties.offset;
     fluxResult.m_completeness = result.m_plumeProperties.completeness;

@@ -13,14 +13,17 @@
 #include <PPPLib/File/ProcessingFileReader.h>
 #include "PostProcessing.h"
 
-#include <iostream>
 #include <algorithm>
+#include <iostream>
+#include <sstream>
 #include <thread>
 #include <Poco/Path.h>
 #include <Poco/Logger.h>
 #include <Poco/FileChannel.h>
 #include <Poco/SplitterChannel.h>
 #include <Poco/ConsoleChannel.h>
+#include <Poco/PatternFormatter.h>
+#include <Poco/FormattingChannel.h>
 #include <Poco/Util/Application.h>
 #include "Common/Common.h"
 
@@ -102,36 +105,51 @@ protected:
             s_exeFileName = executable.getFileName();
 
             // Setup the logging
+            Poco::AutoPtr<Poco::PatternFormatter> patternFormatter(new Poco::PatternFormatter);
+            patternFormatter->setProperty("pattern", "%Y-%m-%d %H:%M:%S: %t");
+
             Poco::AutoPtr<Poco::SplitterChannel> splitterChannel(new Poco::SplitterChannel());
             splitterChannel->addChannel(new Poco::ConsoleChannel());
-            Poco::Logger::root().setChannel(new Poco::ConsoleChannel());
+
+            Poco::AutoPtr<Poco::FormattingChannel> formattingChannel(new Poco::FormattingChannel(patternFormatter, splitterChannel));
+
+            Poco::Logger::root().setChannel(formattingChannel);
             Poco::Logger& log = Poco::Logger::get("NovacPPP");
 
             // Get the options from the command line
-            std::cout << " Getting command line arguments" << std::endl;
+            ShowMessage("Getting command line arguments");
             Configuration::CommandLineParser::ParseCommandLineOptions(arguments, g_userSettings, g_volcanoes, s_exePath, g_logger);
             ShowMessage(novac::CString::FormatString(" Executing %s in '%s'", s_exeFileName.c_str(), s_exePath.c_str()));
 
             // Read the configuration files
-            std::cout << " Loading configuration" << std::endl;
+            ShowMessage("Loading configuration");
             Common common;
             LoadConfigurations(common.m_exePath, g_setup, g_userSettings);
 
             splitterChannel->addChannel(new Poco::FileChannel(g_userSettings.m_outputDirectory.std_str() + "StatusLog.txt"));
-            log.setChannel(splitterChannel);
+            log.setChannel(formattingChannel);
 
             // Start calculating the fluxes, this is the old button handler
-            std::cout << " Setup done: starting calculations" << std::endl;
+            ShowMessage("Setup done: starting calculations");
             StartProcessing();
         }
         catch (Poco::FileNotFoundException& e)
         {
-            std::cout << e.displayText() << std::endl;
+            ShowMessage("FileNotFoundException: " + e.displayText());
+            return 1;
+        }
+        catch (std::invalid_argument& e)
+        {
+            std::stringstream msg;
+            msg << "Invalid argument exception caught: " << e.what();
+            ShowMessage(msg.str());
             return 1;
         }
         catch (std::exception& e)
         {
-            std::cout << e.what() << std::endl;
+            std::stringstream msg;
+            msg << "General exception caught: " << e.what();
+            ShowMessage(msg.str());
             return 1;
         }
 
@@ -304,15 +322,23 @@ void CalculateAllFluxes(CContinuationOfProcessing continuation)
     }
     catch (Poco::FileNotFoundException& e)
     {
-        std::cout << e.displayText() << std::endl;
-
+        ShowMessage("File not found exception: " + e.displayText());
+        ShowMessage("-- Exit post processing --");
+        return;
+    }
+    catch (std::invalid_argument& e)
+    {
+        std::stringstream msg;
+        msg << "Invalid argument exception caught: " << e.what();
+        ShowMessage(msg.str());
         ShowMessage("-- Exit post processing --");
         return;
     }
     catch (std::exception& e)
     {
-        std::cout << e.what() << std::endl;
-
+        std::stringstream msg;
+        msg << "General exception caught: " << e.what();
+        ShowMessage(msg.str());
         ShowMessage("-- Exit post processing --");
         return;
     }

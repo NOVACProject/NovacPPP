@@ -94,11 +94,7 @@ void CPostProcessing::DoPostProcessing_Flux()
     ReadWindField();
 
     // Prepare for the flux-calculation by compiling a set of pausible plume heights
-    if (PreparePlumeHeights())
-    {
-        m_log.Information("Exiting post processing");
-        return;
-    }
+    PreparePlumeHeights();
 
     // --------------- DOING THE EVALUATIONS -----------
 
@@ -112,8 +108,8 @@ void CPostProcessing::DoPostProcessing_Flux()
         std::vector<std::string> pakFileList;
         if (m_userSettings.m_LocalDirectory.GetLength() > 3)
         {
-            messageToUser.Format("Searching for .pak - files in directory %s", (const char*)m_userSettings.m_LocalDirectory);
-            m_log.Information(messageToUser.std_str());
+            novac::LogContext context("directory", m_userSettings.m_LocalDirectory.std_str());
+            m_log.Information(context, "Searching for .pak files");
 
             const bool includeSubDirs = (m_userSettings.m_includeSubDirectories_Local > 0);
             Filesystem::FileSearchCriterion limits;
@@ -121,10 +117,17 @@ void CPostProcessing::DoPostProcessing_Flux()
             limits.endTime = m_userSettings.m_toDate;
             limits.fileExtension = ".pak";
             Filesystem::SearchDirectoryForFiles(m_userSettings.m_LocalDirectory, includeSubDirs, pakFileList, &limits);
+
+            std::stringstream msg;
+            msg << pakFileList.size() << " .pak files found";
+            m_log.Information(context, msg.str());
         }
 
         if (m_userSettings.m_FTPDirectory.GetLength() > 9)
         {
+            novac::LogContext context("ftpDirectory", m_userSettings.m_FTPDirectory.std_str());
+            m_log.Information(context, "Searching for .pak files on Ftp server");
+
             CheckForSpectraOnFTPServer(pakFileList);
         }
         if (pakFileList.size() == 0)
@@ -406,6 +409,8 @@ void EvaluateScansThread(
         novac::CString evalLog[MAX_FIT_WINDOWS];
         CPlumeInScanProperty scanProperties[MAX_FIT_WINDOWS];
 
+        novac::LogContext context("file", novac::GetFileName(fileName));
+
         // evaluate the .pak-file in all the specified fit-windows and retrieve the name of the 
         // eval-logs. If any of the fit-windows fails then the scan is not inserted.
         bool evaluationSucceeded = true;
@@ -422,7 +427,7 @@ void EvaluateScansThread(
         }
         catch (std::exception& ex)
         {
-            log.Error(ex.what());
+            log.Error(context, ex.what());
             evaluationSucceeded = false;
         }
 
@@ -431,16 +436,11 @@ void EvaluateScansThread(
             // If we made it this far then the measurement is ok, insert it into the list!
             AddResultToList(fileName, evalLog, scanProperties[userSettings.m_mainFitWindow], userSettings, processingStats);
 
-            // Tell the user what is happening
-            novac::CString messageToUser;
-            messageToUser.Format(" + Inserted scan %s into list of evaluation logs", fileName.c_str());
-            log.Information(messageToUser.std_str());
+            log.Information(context, "Inserted scan into list of evaluation logs");
         }
         else
         {
-            novac::CString messageToUser;
-            messageToUser.Format(" - No flux calculated for scan %s ", fileName.c_str());
-            log.Information(messageToUser.std_str());
+            log.Information(context, "No flux calculated for scan.");
         }
     }
 }
@@ -485,7 +485,7 @@ int CPostProcessing::CheckInstrumentCalibrationSettings() const
     {
         std::stringstream message;
         message << "The high resolution solar spectrum file could not be found. File given: '" << m_userSettings.m_highResolutionSolarSpectrumFile << "'" << std::endl;
-        ShowError(message.str());
+        m_log.Error(message.str());
         returnCode = 1;
     }
 
@@ -494,7 +494,7 @@ int CPostProcessing::CheckInstrumentCalibrationSettings() const
     {
         std::stringstream message;
         message << "The calibration intervals lie outside of the allowed interval [0, 86400]" << std::endl;
-        ShowError(message.str());
+        m_log.Error(message.str());
         returnCode = 1;
     }
 
@@ -505,14 +505,14 @@ int CPostProcessing::CheckInstrumentCalibrationSettings() const
         {
             std::stringstream message;
             message << "No initial calibration file defined for instrument " << (const char*)m_setup.m_instrument[instrumentIdx].m_serial << std::endl;
-            ShowError(message.str());
+            m_log.Error(message.str());
             returnCode = 1;
         }
         if (!novac::IsExistingFile(m_setup.m_instrument[instrumentIdx].m_instrumentCalibration.m_initialCalibrationFile))
         {
             std::stringstream message;
             message << "Cannot locate the initial calibration file defined for instrument " << (const char*)m_setup.m_instrument[instrumentIdx].m_serial << std::endl;
-            ShowError(message.str());
+            m_log.Error(message.str());
             returnCode = 1;
         }
 
@@ -522,7 +522,7 @@ int CPostProcessing::CheckInstrumentCalibrationSettings() const
         {
             std::stringstream message;
             message << "Cannot locate the initial instrument line shape file defined for instrument " << (const char*)m_setup.m_instrument[instrumentIdx].m_serial << std::endl;
-            ShowError(message.str());
+            m_log.Error(message.str());
             returnCode = 1;
         }
     }
@@ -575,8 +575,7 @@ void CPostProcessing::PrepareEvaluation()
 {
     m_log.Information("--- Reading References --- ");
 
-    CDateTime fromTime, toTime; //  these are not used but must be passed onto GetFitWindow...
-    novac::CString errorMessage;
+    novac::LogContext context;
 
     // this is true if we failed to prepare the evaluation...
     bool failure = false;
@@ -584,29 +583,36 @@ void CPostProcessing::PrepareEvaluation()
     // Loop through each of the configured instruments
     for (int instrumentIndex = 0; instrumentIndex < m_setup.NumberOfInstruments(); ++instrumentIndex)
     {
+        auto instrumentContext = context.With("device", m_setup.m_instrument[instrumentIndex].m_serial.std_str());
+
         // For each instrument, loop through the fit-windows that are defined
         int fitWindowNum = m_setup.m_instrument[instrumentIndex].m_eval.NumberOfFitWindows();
         for (int fitWindowIndex = 0; fitWindowIndex < fitWindowNum; ++fitWindowIndex)
         {
             novac::CFitWindow window;
+            CDateTime fromTime, toTime; //  these are not used but must be passed onto GetFitWindow...
+            if (m_setup.m_instrument[instrumentIndex].m_eval.GetFitWindow(fitWindowIndex, window, fromTime, toTime))
+            {
+                m_log.Error(instrumentContext, "Failed to get fit window from configuration.");
+                failure = true;
+                continue;
+            }
 
-            // get the fit window
-            m_setup.m_instrument[instrumentIndex].m_eval.GetFitWindow(fitWindowIndex, window, fromTime, toTime);
+            auto windowContext = instrumentContext.With("window", window.name);
 
             // For each reference in the fit-window, read it in and make sure that it exists...
             for (int referenceIndex = 0; referenceIndex < window.nRef; ++referenceIndex)
             {
+                auto referenceContext = instrumentContext.With("file", window.ref[referenceIndex].m_path);
 
                 if (window.ref[referenceIndex].m_path.empty())
                 {
                     // The reference file was not given in the configuration. Try to generate a configuration
                     //  from the cross section, slit-function and wavelength calibration. These three must then 
                     //  exist or the evaluation fails.
-                    if (!ConvolveReference(window.ref[referenceIndex], m_setup.m_instrument[instrumentIndex].m_serial))
+                    if (!ConvolveReference(referenceContext, window.ref[referenceIndex], m_setup.m_instrument[instrumentIndex].m_serial))
                     {
-                        errorMessage.Format("Failed to create reference for fit window '%s' for spectrometer %s.",
-                            window.ref[referenceIndex].m_specieName.c_str(), (const char*)m_setup.m_instrument[instrumentIndex].m_serial);
-                        m_log.Information(errorMessage.std_str());
+                        m_log.Error(referenceContext, "Failed to create reference");
                         failure = true;
                         continue;
                     }
@@ -624,8 +630,7 @@ void CPostProcessing::PrepareEvaluation()
                         }
                         else
                         {
-                            errorMessage.Format("Cannot find reference file %s", window.ref[referenceIndex].m_path.c_str());
-                            m_log.Information(errorMessage.std_str());
+                            m_log.Information(referenceContext, "Cannot find reference file.");
                             failure = true;
                             continue;
                         }
@@ -634,8 +639,7 @@ void CPostProcessing::PrepareEvaluation()
                     // Read in the cross section
                     if (window.ref[referenceIndex].ReadCrossSectionDataFromFile())
                     {
-                        errorMessage.Format("Failed to read cross section file: %s", window.ref[referenceIndex].m_path.c_str());
-                        m_log.Information(errorMessage.std_str());
+                        m_log.Error(referenceContext, "Failed to read cross section file from disk");
                         failure = true;
                         continue;
                     }
@@ -646,6 +650,7 @@ void CPostProcessing::PrepareEvaluation()
                     {
                         if (window.ref[referenceIndex].m_isFiltered == false)
                         {
+                            m_log.Information(referenceContext, "High pass filtering reference.");
                             if (novac::Equals(window.ref[referenceIndex].m_specieName, "ring"))
                             {
                                 HighPassFilter_Ring(*window.ref[referenceIndex].m_data);
@@ -668,9 +673,10 @@ void CPostProcessing::PrepareEvaluation()
             // If the window also contains a fraunhofer-reference then read it too.
             if (window.fraunhoferRef.m_path.size() > 4)
             {
+                auto referenceContext = instrumentContext.With("file", window.fraunhoferRef.m_path);
+
                 if (!IsExistingFile(window.fraunhoferRef.m_path))
                 {
-
                     // the file does not exist, try to change it to include the path of the configuration-directory...
                     std::string fileName = Filesystem::GetAbsolutePathFromRelative(window.fraunhoferRef.m_path, this->m_exePath);
 
@@ -680,8 +686,7 @@ void CPostProcessing::PrepareEvaluation()
                     }
                     else
                     {
-                        errorMessage.Format("Cannot find reference file %s", window.fraunhoferRef.m_path.c_str());
-                        m_log.Information(errorMessage.std_str());
+                        m_log.Error(referenceContext, "Cannot find Fraunhofer reference file.");
                         failure = true;
                         continue;
                     }
@@ -689,8 +694,7 @@ void CPostProcessing::PrepareEvaluation()
 
                 if (window.fraunhoferRef.ReadCrossSectionDataFromFile())
                 {
-                    errorMessage.Format("Failed to read fraunhofer-reference file: %s", window.fraunhoferRef.m_path.c_str());
-                    m_log.Information(errorMessage.std_str());
+                    m_log.Error(referenceContext, "Failed to read Fraunhofer reference file.");
                     failure = true;
                     continue;
                 }
@@ -802,7 +806,7 @@ void CPostProcessing::ReadWindField()
     throw std::logic_error("Invalid wind field file option, failed to read winf field.");
 }
 
-int CPostProcessing::PreparePlumeHeights()
+void CPostProcessing::PreparePlumeHeights()
 {
     // we need to construct a default plume height to use, if there's nothing else...
     Geometry::CPlumeHeight plumeHeight;
@@ -839,8 +843,6 @@ int CPostProcessing::PreparePlumeHeights()
     }
 
     m_plumeDataBase.InsertPlumeHeight(plumeHeight);
-
-    return 0;
 }
 
 void CPostProcessing::CalculateGeometries(novac::CList <Evaluation::CExtendedScanResult, Evaluation::CExtendedScanResult&>& evalLogFiles, novac::CList <Geometry::CGeometryResult*, Geometry::CGeometryResult*>& geometryResults)
@@ -1806,21 +1808,20 @@ void CPostProcessing::UploadResultsToFTP()
     return;
 }
 
-bool CPostProcessing::ConvolveReference(novac::CReferenceFile& ref, const novac::CString& instrumentSerial)
+bool CPostProcessing::ConvolveReference(novac::LogContext context, novac::CReferenceFile& ref, const novac::CString& instrumentSerial)
 {
     // Make sure the high-res section do exist.
     if (!IsExistingFile(ref.m_crossSectionFile))
     {
-        std::string fullPath = Filesystem::GetAbsolutePathFromRelative(ref.m_crossSectionFile, this->m_exePath);
+        const std::string fullPath = Filesystem::GetAbsolutePathFromRelative(ref.m_crossSectionFile, this->m_exePath);
         if (Filesystem::IsExistingFile(fullPath))
         {
             ref.m_crossSectionFile = fullPath;
         }
         else
         {
-            novac::CString errorMessage;
-            errorMessage.Format("Cannot find given cross section file '%s.", ref.m_crossSectionFile.c_str());
-            m_log.Information(errorMessage.std_str());
+            auto fileContext = context.With("crossSectionFile", ref.m_crossSectionFile);
+            m_log.Error(fileContext, "Cannot find given cross section file.");
             return false; // failed to find the file
         }
     }
@@ -1835,9 +1836,8 @@ bool CPostProcessing::ConvolveReference(novac::CReferenceFile& ref, const novac:
         }
         else
         {
-            novac::CString errorMessage;
-            errorMessage.Format("Cannot find given slit-function file '%s.", ref.m_slitFunctionFile.c_str());
-            m_log.Information(errorMessage.std_str());
+            auto fileContext = context.With("slitFunctionFile", ref.m_slitFunctionFile);
+            m_log.Error(context, "Cannot find given slit function file.");
             return false; // failed to find the file
         }
     }
@@ -1852,14 +1852,14 @@ bool CPostProcessing::ConvolveReference(novac::CReferenceFile& ref, const novac:
         }
         else
         {
-            novac::CString errorMessage;
-            errorMessage.Format("Cannot find given wavelength calibration file '%s.", ref.m_wavelengthCalibrationFile.c_str());
-            m_log.Information(errorMessage.std_str());
+            auto fileContext = context.With("wavelengthCalibrationFile", ref.m_wavelengthCalibrationFile);
+            m_log.Error(fileContext, "Cannot find given wavelength calibration file");
             return false; // failed to find the file
         }
     }
 
     // Now do the convolution
+    m_log.Information(context, "Convolving reference.");
     if (ref.ConvolveReference())
     {
         return false;

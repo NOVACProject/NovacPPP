@@ -34,8 +34,7 @@ bool CPostEvaluationController::EvaluateScan(
 
     const std::string pakFileNameStr((const char*)pakFileName);
 
-    novac::LogContext context;
-    context = context.With("file", novac::GetFileName(pakFileNameStr));
+    novac::LogContext context("file", novac::GetFileName(pakFileNameStr));
 
     // ------------------ Read the scan file -----------------------
     // --- this to make sure that the spectra in the file are ok ---
@@ -172,9 +171,10 @@ bool CPostEvaluationController::IsGoodEnoughToCalculateFlux(LogContext context, 
         return false;
     }
 
-    if (!result->CalculatePlumeCentre(CMolecule(m_userSettings.m_molecule)))
+    std::string message;
+    if (!result->CalculatePlumeCentre(CMolecule(m_userSettings.m_molecule), message))
     {
-        m_log.Information(context, "Scan does not see the plume, no flux will be calculated.");
+        m_log.Information(context, message + " Scan does not see the plume, no flux will be calculated.");
         return false;
     }
 

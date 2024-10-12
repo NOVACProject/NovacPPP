@@ -224,18 +224,19 @@ std::unique_ptr<CScanResult> CScanEvaluation::EvaluateOpenedScan(
             }
             else
             {
-                novac::CString errMsg;
-                errMsg.Format("Faulty spectrum found in %s", scan.GetFileName().c_str());
+                novac::CString errMsg = "Faulty spectrum found in pak file.";
                 switch (scan.m_lastError)
                 {
-                case  novac::CSpectrumIO::ERROR_CHECKSUM_MISMATCH:
-                    errMsg.AppendFormat(", Checksum mismatch. Spectrum ignored"); break;
-                case  novac::CSpectrumIO::ERROR_DECOMPRESS:
-                    errMsg.AppendFormat(", Decompression error. Spectrum ignored"); break;
+                case novac::CSpectrumIO::ERROR_CHECKSUM_MISMATCH:
+                    errMsg.Append(", Checksum mismatch. Spectrum ignored");
+                    break;
+                case novac::CSpectrumIO::ERROR_DECOMPRESS:
+                    errMsg.Append(", Decompression error. Spectrum ignored");
+                    break;
                 default:
-                    ShowMessage(", Unknown error. Spectrum ignored");
+                    errMsg.Append(", Unknown error. Spectrum ignored");
                 }
-                ShowMessage(errMsg);
+                m_log.Error(logContext, errMsg.std_str());
                 // remember that this spectrum is corrupted
                 result->MarkAsCorrupted(curSpectrumIndex);
                 continue;
@@ -296,8 +297,7 @@ std::unique_ptr<CScanResult> CScanEvaluation::EvaluateOpenedScan(
         // e. Evaluate the spectrum
         if (eval->Evaluate(current))
         {
-            message.Format("Failed to evaluate spectrum %d out of %d in scan from spectrometer %s.",
-                current.ScanIndex(), current.SpectraPerScan(), current.m_info.m_device.c_str());
+            message.Format("Failed to evaluate spectrum %d out of %d in scan.", current.ScanIndex(), current.SpectraPerScan());
             if (eval->m_lastError.size() > 0)
             {
                 message.AppendFormat("(%s)", eval->m_lastError.c_str());
@@ -499,7 +499,7 @@ void CScanEvaluation::ValidateSetup(novac::LogContext context, const novac::CFit
             throw std::invalid_argument("At least one of the references of the fit window has no data (not read from disk?).");
         }
 
-        for (const std::string & path : paths)
+        for (const std::string& path : paths)
         {
             if (novac::Equals(path, window.ref[refIdx].m_path))
             {

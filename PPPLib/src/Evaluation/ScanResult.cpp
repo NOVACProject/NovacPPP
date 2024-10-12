@@ -214,12 +214,12 @@ int CScanResult::CalculateOffset(const CMolecule& specie)
     return 0;
 }
 
-bool CScanResult::CalculatePlumeCentre(const CMolecule& specie)
+bool CScanResult::CalculatePlumeCentre(const CMolecule& specie, std::string& message)
 {
-    return CalculatePlumeCentre(specie, this->m_plumeProperties);
+    return CalculatePlumeCentre(specie, this->m_plumeProperties, message);
 }
 
-bool CScanResult::CalculatePlumeCentre(const CMolecule& specie, CPlumeInScanProperty& plumeProperties)
+bool CScanResult::CalculatePlumeCentre(const CMolecule& specie, CPlumeInScanProperty& plumeProperties, std::string& message)
 {
     unsigned long i; // iterator
     double offset = m_plumeProperties.offset;
@@ -265,21 +265,12 @@ bool CScanResult::CalculatePlumeCentre(const CMolecule& specie, CPlumeInScanProp
     plumeProperties.offset = CalculatePlumeOffset(column, badEval, m_specNum);
 
     // Estimate the completeness of the plume (this will call on FindPlume we don't need to do that here...)
-    std::string message;
     bool ret = CalculatePlumeCompleteness(scanAngle, phi, column, columnError, badEval, offset, m_specNum, m_plumeProperties, &message);
-
-    // Calculate the centre of the plume
-    // bool ret = FindPlume(scanAngle, phi, column, columnError, badEval, m_specNum, m_plumeProperties);
 
     if (ret)
     {
         // Remember the calculated value of the plume centre
         plumeProperties = m_plumeProperties;
-    }
-    else
-    {
-        // If there's no plume, then the flux is probably not very good
-        ShowMessage(message);
     }
 
     return ret;
