@@ -3,6 +3,9 @@
 #include <vector>
 #include <PPPLib/MFC/CList.h>
 #include <PPPLib/MFC/CString.h>
+#include <PPPLib/Configuration/UserConfiguration.h>
+
+#include <SpectralEvaluation/Log.h>
 
 namespace Communication
 {
@@ -10,6 +13,11 @@ namespace Communication
 class CFTPServerConnection
 {
 public:
+
+    CFTPServerConnection(novac::ILogger& log, const Configuration::CUserConfiguration& userSettings)
+        : m_log(log), m_userSettings(userSettings)
+    {
+    }
 
     // -----------------------------------------------------------
     // ---------------------- PUBLIC DATA ------------------------
@@ -49,6 +57,9 @@ private:
     // ---------------------- PRIVATE DATA -----------------------
     // -----------------------------------------------------------
 
+    novac::ILogger& m_log;
+
+    const Configuration::CUserConfiguration& m_userSettings;
 
     // -----------------------------------------------------------
     // --------------------- PRIVATE METHODS ---------------------

@@ -1,21 +1,9 @@
 #include "Common.h"
 
-#include <algorithm>
-#include <iostream>
-#include <time.h>
-
 #include <Poco/File.h>
-#include <Poco/DirectoryIterator.h>
 #include <Poco/DateTime.h>
 #include <Poco/Message.h>
 #include <Poco/Logger.h>
-
-// include the global settings
-#include <PPPLib/VolcanoInfo.h>
-
-#include <SpectralEvaluation/DateTime.h>
-
-extern novac::CVolcanoInfo g_volcanoes; // <-- the list of volcanoes
 
 extern std::string s_exePath;
 extern std::string s_exeFileName;
@@ -132,72 +120,11 @@ void Common::GetFileName(novac::CString& fileName)
     fileName = fileName.Right(length - position - 1);
 }
 
-/** Take out the directory from a long path name.
-    @param fileName - the complete path of the file */
-void Common::GetDirectory(novac::CString& fileName)
-{
-    int position = fileName.ReverseFind('\\');
-    if (position >= 0)
-    {
-        fileName = fileName.Left(position + 1);
-    }
-}
-
 void Common::CopyFile(const novac::CString& oldName, const novac::CString& newName)
 {
     Poco::File oldFile(oldName.std_str());
 
     oldFile.copyTo(newName.std_str());
-}
-
-long Common::RetrieveFileSize(novac::CString& fileName)
-{
-    Poco::File file(fileName.std_str());
-    return static_cast<long>(file.getSize());
-}
-
-
-/** Compares two files to see if their contents are the same */
-bool Common::AreIdenticalFiles(const novac::CString& fileName1, const novac::CString& fileName2)
-{
-    if (Equals(fileName1, fileName2))
-        return true; // a file is always identical to itself
-
-    FILE* f1 = fopen(fileName1, "r");
-    if (f1 == NULL)
-        return false;
-
-    FILE* f2 = fopen(fileName2, "r");
-    if (f2 == NULL)
-        return false;
-
-    while (1)
-    {
-        int c1 = fgetc(f1);
-        int c2 = fgetc(f2);
-
-        if (c1 == EOF)
-        {
-            fclose(f1); fclose(f2);
-            if (c2 == EOF)
-            {
-                return true;
-            }
-            else
-            {
-                return false;
-            }
-        }
-
-        if (c1 != c2)
-            return false;
-    }
-
-
-    fclose(f1); fclose(f2);
-
-    // should never reach this point...
-    return false;
 }
 
 /** If there's a file with the given input name, then it will be renamed to

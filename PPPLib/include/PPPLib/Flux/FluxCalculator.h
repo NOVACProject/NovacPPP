@@ -4,6 +4,7 @@
 #include <PPPLib/Evaluation/ScanResult.h>
 #include <PPPLib/PPPLib.h>
 #include <PPPLib/Configuration/NovacPPPConfiguration.h>
+#include <PPPLib/Configuration/UserConfiguration.h>
 #include <PPPLib/Meteorology/WindDataBase.h>
 #include <PPPLib/Geometry/PlumeHeight.h>
 

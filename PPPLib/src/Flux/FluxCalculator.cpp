@@ -1,17 +1,12 @@
 #include <PPPLib/Flux/FluxCalculator.h>
-#include <PPPLib/Logging.h>
-#include <PPPLib/Configuration/NovacPPPConfiguration.h>
+
 #include <SpectralEvaluation/File/File.h>
 #include <SpectralEvaluation/Flux/Flux.h>
 
-// ... support for handling the evaluation-log files...
 #include <PPPLib/File/EvaluationLogFileHandler.h>
-
-// This is the settings for how to do the procesing
-#include <PPPLib/Configuration/UserConfiguration.h>
-
 #include <PPPLib/File/Filesystem.h>
 #include <PPPLib/MFC/CFileUtils.h>
+
 #include <Poco/Path.h>
 #include <cmath>
 #include <limits>

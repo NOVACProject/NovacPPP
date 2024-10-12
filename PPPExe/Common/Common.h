@@ -1,8 +1,8 @@
 #pragma once
 
 #include <PPPLib/PPPLib.h>
-#include <PPPLib/Logging.h>
 #include <PPPLib/MFC/CString.h>
+#include <SpectralEvaluation/Log.h>
 
 
 // ---------------------------------------------------------------
@@ -41,15 +41,6 @@ public:
     // ------------------------- FILE -------------------------------------
     // --------------------------------------------------------------------
 
-    /** Get file size in bytes.
-        @param - The file name (including path)
-        @return - The file size (in bytes)
-    */
-    static long RetrieveFileSize(novac::CString& fileName);
-
-    /** Compares two files to see if their contents are the same */
-    static bool AreIdenticalFiles(const novac::CString& fileName1, const novac::CString& fileName2);
-
     /** If there's a file with the given input name, then it will be renamed to
         PATH\\FILENAME_creationDate_creationTime.FILEENDING */
     static bool ArchiveFile(const novac::CString& fileName);
@@ -62,10 +53,6 @@ public:
         The path separator can be either '/' or '\'.
         @param fileName path of the file, will be set to only contain the filename, without the path . */
     static void GetFileName(novac::CString& fileName);
-
-    /** Take out the directory from a long path name.
-        @param fileName - the complete path of the file */
-    static void GetDirectory(novac::CString& fileName);
 
     /** Copies the file to the new file location */
     static void CopyFile(const novac::CString& oldName, const novac::CString& newName);

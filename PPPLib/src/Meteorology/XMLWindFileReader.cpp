@@ -40,7 +40,7 @@ void CXMLWindFileReader::ReadWindFile(const novac::CString& fileName, Meteorolog
     // 0. If the file is on the server, then download it first
     if (Equals(fileName.Left(6), "ftp://"))
     {
-        Communication::CFTPServerConnection ftp;
+        Communication::CFTPServerConnection ftp(m_log, m_userSettings);
 
         novac::CString tmpFileName;
         tmpFileName.Format(fileName);
@@ -117,7 +117,7 @@ void CXMLWindFileReader::ReadWindDirectory(const novac::CString& directory, Mete
     {
         // If the directory is on the server, then this is how to check the files
         std::unique_ptr<Communication::CFTPServerConnection> ftp;
-        ftp.reset(new Communication::CFTPServerConnection());
+        ftp.reset(new Communication::CFTPServerConnection(m_log, m_userSettings));
 
         // Make sure that the directory does end with a trailing '/'
         ftpDir.Format(directory);
@@ -171,7 +171,7 @@ void CXMLWindFileReader::ReadWindDirectory(const novac::CString& directory, Mete
             if (Filesystem::IsExistingFile(localFileName))
             {
                 userMessage.Format("File %s is already downloaded", (const char*)localFileName);
-                ShowMessage(userMessage);
+                m_log.Information(userMessage.std_str());
             }
             else
             {
