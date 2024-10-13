@@ -191,7 +191,7 @@ bool ScanIsMeasuredInConfiguredTimeOfDayForCalibration(const novac::CDateTime& s
     return true;
 }
 
-std::map<SpectrometerId, std::vector<CPostCalibration::BasicScanInfo>> CPostCalibration::SortScanFilesByInstrument(const std::vector<std::string>& scanFileList)
+std::map<SpectrometerId, std::vector<CPostCalibration::BasicScanInfo>> CPostCalibration::SortScanFilesByInstrument(novac::ILogger& log, const std::vector<std::string>& scanFileList)
 {
     std::map<SpectrometerId, std::vector<CPostCalibration::BasicScanInfo>> result;
 
@@ -207,21 +207,18 @@ std::map<SpectrometerId, std::vector<CPostCalibration::BasicScanInfo>> CPostCali
         CString fileName = scanFile.c_str();
         if (!CFileUtils::GetInfoFromFileName(fileName, startTime, serial, channel, mode))
         {
-            CScanFileHandler scan;
-            if (!scan.CheckScanFile(scanFile))
+            novac::LogContext context("file", scanFile);
+            CScanFileHandler scan(log);
+            if (!scan.CheckScanFile(context, scanFile))
             {
-                std::stringstream message;
-                message << "Could not read pak-file '" << scanFile << "'";
-                ShowMessage(message.str());
+                log.Error(context, "Could not read pak file");
                 continue;
             }
 
             CSpectrum skySpec;
             if (scan.GetSky(skySpec))
             {
-                std::stringstream message;
-                message << "Could not read a sky spectrum from pak-file '" << scanFile << "'";
-                ShowMessage(message.str());
+                log.Error(context, "Could not read the sky spectrum from pak file");
                 continue;
             }
 
@@ -259,7 +256,7 @@ std::map<SpectrometerId, std::vector<CPostCalibration::BasicScanInfo>> CPostCali
 
 int CPostCalibration::RunInstrumentCalibration(const std::vector<std::string>& scanFileList, CPostCalibrationStatistics& statistics)
 {
-    auto sortedScanFileList = SortScanFilesByInstrument(scanFileList);
+    auto sortedScanFileList = SortScanFilesByInstrument(m_log, scanFileList);
     {
         std::stringstream message;
         message << "Located pak files from " << sortedScanFileList.size() << " devices";
@@ -336,8 +333,10 @@ bool CPostCalibration::RunInstrumentCalibration(const std::string& scanFile, CPo
 {
     try
     {
-        CScanFileHandler scan;
-        if (!scan.CheckScanFile(scanFile))
+        novac::ConsoleLog log;
+        novac::LogContext context;
+        CScanFileHandler scan(log);
+        if (!scan.CheckScanFile(context, scanFile))
         {
             std::stringstream message;
             message << "Could not read recieved pak-file '" << scanFile << "' . Will not perform calibration.";
@@ -367,7 +366,7 @@ bool CPostCalibration::RunInstrumentCalibration(const std::string& scanFile, CPo
         // Use the WavelengthCalibrationController, which is also used when the 
         //  user performs the instrument calibrations using the CCalibratePixelToWavelengthDialog.
         // This makes sure we get the same behavior in the dialog and here.
-        NovacProgramWavelengthCalibrationController calibrationController;
+        NovacProgramWavelengthCalibrationController calibrationController(m_log);
         RunCalibration(calibrationController, scanFile, m_userSettings, instrument->m_instrumentCalibration);
 
         // Save new instrument calibration.

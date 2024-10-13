@@ -700,6 +700,7 @@ void CPostProcessing::PrepareEvaluation()
                 }
                 if (window.fitType == novac::FIT_TYPE::FIT_HP_DIV || window.fitType == novac::FIT_TYPE::FIT_HP_SUB)
                 {
+                    m_log.Information(referenceContext, "High pass filtering Fraunhofer reference.");
                     HighPassFilter_Ring(*window.fraunhoferRef.m_data);
                 }
                 else

@@ -67,7 +67,7 @@ private:
     };
 
     /** Arranges the provided list of scan files by the instrument which performed the measurement */
-    static std::map<SpectrometerId, std::vector<BasicScanInfo>> SortScanFilesByInstrument(const std::vector<std::string>& scanFileList);
+    static std::map<SpectrometerId, std::vector<BasicScanInfo>> SortScanFilesByInstrument(novac::ILogger& log, const std::vector<std::string>& scanFileList);
 
     void CreateEvaluationSettings(const SpectrometerId& spectrometer, const CPostCalibrationStatistics& statistics);
 

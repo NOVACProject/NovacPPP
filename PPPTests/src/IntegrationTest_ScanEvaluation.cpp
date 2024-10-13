@@ -96,8 +96,7 @@ TEST_CASE("EvaluateScan, Invalid fit window - throws Exception (Ruahepu, Avantes
     // Arrange
     const std::string filename = GetTestDataDirectory() + "2002128M1/2002128M1_230120_0148_0.pak";
     novac::ConsoleLog logger;
-
-    novac::CScanFileHandler scan;
+    novac::CScanFileHandler scan(logger);
     VerifyScanCanBeRead(scan, filename);
     Configuration::CUserConfiguration userSettings;
     const Configuration::CDarkSettings* darkSettings = nullptr;
@@ -158,8 +157,7 @@ TEST_CASE("EvaluateScan, scan with saturated sky spectrum expected result - case
     // Arrange
     const std::string filename = GetTestDataDirectory() + "2002128M1/2002128M1_230120_0148_0.pak";
     novac::ConsoleLog logger;
-
-    novac::CScanFileHandler scan;
+    novac::CScanFileHandler scan(logger);
     VerifyScanCanBeRead(scan, filename);
     Configuration::CUserConfiguration userSettings;
     const Configuration::CDarkSettings* darkSettings = nullptr;
@@ -189,8 +187,7 @@ TEST_CASE("EvaluateScan, scan with clearly visible plume expected result - case 
     const std::string filename = GetTestDataDirectory() + "2002128M1/2002128M1_230120_1907_0.pak";
 
     novac::ConsoleLog logger;
-
-    novac::CScanFileHandler scan;
+    novac::CScanFileHandler scan(logger);
     VerifyScanCanBeRead(scan, filename);
     Configuration::CUserConfiguration userSettings;
     const Configuration::CDarkSettings* darkSettings = nullptr;
@@ -281,7 +278,7 @@ TEST_CASE("EvaluateScan, scan with clearly visible plume and calibrated referenc
 
     novac::ConsoleLog logger;
 
-    novac::CScanFileHandler scan;
+    novac::CScanFileHandler scan(logger);
     VerifyScanCanBeRead(scan, filename);
     Configuration::CUserConfiguration userSettings;
     const Configuration::CDarkSettings* darkSettings = nullptr;

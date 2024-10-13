@@ -12,7 +12,8 @@ static std::string GetTestDataDirectory()
 
 void VerifyScanCanBeRead(novac::CScanFileHandler& scan, const std::string filename)
 {
-    bool readOk = scan.CheckScanFile(filename); // TODO: Add unit tests to this as well
+    novac::LogContext context("file", filename);
+    bool readOk = scan.CheckScanFile(context, filename); // TODO: Add unit tests to this as well
     if (!readOk)
     {
         printf(scan.m_lastErrorMessage.c_str());
@@ -32,7 +33,8 @@ TEST_CASE("IsGoodEnoughToEvaluate gives expected configuration", "[EvaluationUti
     SECTION("Scan with saturated sky spectrum in fit region - Returns expected reason")
     {
         const std::string filename = GetTestDataDirectory() + "2002128M1/2002128M1_230120_0148_0.pak";
-        novac::CScanFileHandler scan;
+        novac::ConsoleLog log;
+        novac::CScanFileHandler scan(log);
         VerifyScanCanBeRead(scan, filename);
 
         fitWindow.fitLow = 464;
@@ -47,7 +49,8 @@ TEST_CASE("IsGoodEnoughToEvaluate gives expected configuration", "[EvaluationUti
     SECTION("Scan with ok spectrum - Returns true and no failure reason")
     {
         const std::string filename = GetTestDataDirectory() + "2002128M1/2002128M1_230120_0148_0.pak";
-        novac::CScanFileHandler scan;
+        novac::ConsoleLog log;
+        novac::CScanFileHandler scan(log);
         VerifyScanCanBeRead(scan, filename);
 
         // setup a fit region where the scan is not saturated

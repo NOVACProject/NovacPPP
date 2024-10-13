@@ -13,6 +13,11 @@ public:
     NotFoundException(std::string msg) : std::exception(), message(msg) {}
 
     const std::string message;
+
+    virtual char const* what() const override
+    {
+        return message.c_str();
+    }
 };
 
 /** General exception signalling that we failed to read/write a file */
@@ -22,6 +27,11 @@ public:
     FileIoException(std::string msg) : std::exception(), message(msg) {}
 
     const std::string message;
+
+    virtual char const* what() const override
+    {
+        return message.c_str();
+    }
 };
 
 }

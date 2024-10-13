@@ -28,7 +28,7 @@ bool CPostEvaluationController::EvaluateScan(
 
     // The CScanFileHandler is a structure for reading the 
     //  spectral information from the scan-file
-    CScanFileHandler scan;
+    CScanFileHandler scan(m_log);
 
     /** ------------- The process to evaluate a scan --------------- */
 
@@ -38,7 +38,7 @@ bool CPostEvaluationController::EvaluateScan(
 
     // ------------------ Read the scan file -----------------------
     // --- this to make sure that the spectra in the file are ok ---
-    if (!scan.CheckScanFile(pakFileNameStr))
+    if (!scan.CheckScanFile(context, pakFileNameStr))
     {
         std::stringstream message;
         message << "Could not read received pak file: '" << pakFileNameStr << "'";
