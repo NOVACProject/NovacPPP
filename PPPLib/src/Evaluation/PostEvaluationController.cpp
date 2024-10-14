@@ -128,7 +128,7 @@ bool CPostEvaluationController::EvaluateScan(
     PostEvaluationIO::AppendToPakFileSummaryFile(m_userSettings.m_outputDirectory.std_str(), lastResult, &scan, &instrLocation, &fitWindow, windField);
 
     // 10. Append the result to the log file of the corresponding scanningInstrument
-    if (RETURN_CODE::SUCCESS != PostEvaluationIO::WriteEvaluationResult(m_log, m_userSettings.m_outputDirectory.std_str(), spectrometerModel, lastResult, &scan, &instrLocation, &fitWindow, windField, txtFileName))
+    if (RETURN_CODE::SUCCESS != PostEvaluationIO::WriteEvaluationResult(m_log, context, m_userSettings.m_outputDirectory.std_str(), spectrometerModel, lastResult, &scan, &instrLocation, &fitWindow, windField, txtFileName))
     {
         errorMessage.Format("Failed to write evaluation log file %s. No result produced", txtFileName);
         m_log.Error(context, errorMessage.std_str());
@@ -150,15 +150,13 @@ bool CPostEvaluationController::EvaluateScan(
         lastResult->GetCalculatedPlumeProperties(*plumeProperties);
     }
 
-    PostEvaluationIO::CreatePlumespectrumFile(m_log, m_userSettings.m_outputDirectory.std_str(), lastResult, fitWindowName, scan, spectrometerModel, plumeProperties, specieIndex);
+    PostEvaluationIO::CreatePlumespectrumFile(m_log, context, m_userSettings.m_outputDirectory.std_str(), lastResult, fitWindowName, scan, spectrometerModel, plumeProperties, specieIndex);
 
     return true;
 }
 
 bool CPostEvaluationController::IsGoodEnoughToCalculateFlux(LogContext context, std::unique_ptr<CScanResult>& result) const
 {
-    novac::CString errorMessage;
-
     if (MEASUREMENT_MODE::MODE_FLUX != result->GetMeasurementMode())
     {
         m_log.Information(context, "Scan is not a flux measurement, no flux will be calculated.");

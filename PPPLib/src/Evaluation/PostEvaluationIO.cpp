@@ -118,6 +118,7 @@ bool Evaluation::PostEvaluationIO::GetArchivingfileName(
 
 RETURN_CODE Evaluation::PostEvaluationIO::WriteEvaluationResult(
     novac::ILogger& log,
+    novac::LogContext context,
     const std::string& outputDirectory,
     novac::SpectrometerModel spectrometerModel,
     const std::unique_ptr<CScanResult>& result,
@@ -371,6 +372,7 @@ RETURN_CODE Evaluation::PostEvaluationIO::WriteEvaluationResult(
 
 void Evaluation::PostEvaluationIO::CreatePlumespectrumFile(
     novac::ILogger& log,
+    novac::LogContext context,
     const std::string& outputDirectory,
     const std::unique_ptr<Evaluation::CScanResult>& result,
     const novac::CString& fitWindowName,
@@ -390,14 +392,15 @@ void Evaluation::PostEvaluationIO::CreatePlumespectrumFile(
     {
         novac::CString userMessage;
         userMessage.Format("Could not create directory for archiving plume spectra: %s", outputDirectoryStr.c_str());
-        log.Error(userMessage.std_str());
+        log.Error(context, userMessage.std_str());
     }
     else
     {
         Configuration::RatioEvaluationSettings plumeCalculationSettings;
 
-        novac::PlumeSpectrumSelector spectrumSelector;
+        novac::PlumeSpectrumSelector spectrumSelector(log);
         spectrumSelector.CreatePlumeSpectrumFile(
+            context,
             scan,
             *result,
             *plumeProperties,

@@ -12,6 +12,7 @@
 #include <PPPLib/PostProcessingStatistics.h>
 
 #include <cstdint>
+#include <sstream>
 
 using namespace Evaluation;
 using namespace novac;
@@ -54,13 +55,15 @@ std::unique_ptr<CScanResult> CScanEvaluation::EvaluateScan(
 
     if (adjustedFitWindow.fraunhoferRef.m_path.size() > 4)
     {
-        m_log.Information(context, "Determining shift from FraunhoferReference");
+        m_log.Debug(context, "Determining shift from FraunhoferReference");
         this->m_lastErrorMessage.clear();
 
         int result = adjustedFitWindow.fraunhoferRef.ReadCrossSectionDataFromFile();
         if (result != 0)
         {
-            throw InvalidReferenceException("Failed to read reference spectrum");
+            std::stringstream msg;
+            msg << "Failed to read Fraunhofer reference spectrum file: " << adjustedFitWindow.fraunhoferRef.m_path;
+            throw InvalidReferenceException(msg.str());
         }
 
         // If we have a solar-spectrum that we can use to determine the shift
@@ -116,17 +119,12 @@ std::unique_ptr<CScanResult> CScanEvaluation::EvaluateScan(
             eval.reset(newEval);
         }
     }
-    else
+
+    if (eval == nullptr)
     {
-        //  3) do none of the above
+        // The options above didn't apply, use the default.
         eval.reset(new CEvaluationBase(adjustedFitWindow, m_log));
     }
-
-    if (nullptr == eval)
-    {
-        return nullptr;
-    }
-
 
     // Make the real evaluation of the scan
     auto result = EvaluateOpenedScan(context, scan, eval, spectrometerModel, darkSettings);

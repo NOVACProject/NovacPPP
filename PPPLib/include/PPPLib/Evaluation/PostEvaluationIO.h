@@ -39,6 +39,7 @@ public:
         @return SUCCESS if operation completed sucessfully. */
     static RETURN_CODE WriteEvaluationResult(
         novac::ILogger& log,
+        novac::LogContext context,
         const std::string& outputDirectory,
         novac::SpectrometerModel spectrometerModel,
         const std::unique_ptr<CScanResult>& result,
@@ -52,6 +53,7 @@ public:
         and which spectra are judged to be _out_ of the plume. Useful for determining plume composition at a later stage */
     static void CreatePlumespectrumFile(
         novac::ILogger& log,
+        novac::LogContext context,
         const std::string& outputDirectory,
         const std::unique_ptr<CScanResult>& result,
         const novac::CString& fitWindowName,

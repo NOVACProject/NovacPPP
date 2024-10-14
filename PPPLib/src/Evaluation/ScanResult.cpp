@@ -265,15 +265,15 @@ bool CScanResult::CalculatePlumeCentre(const CMolecule& specie, CPlumeInScanProp
     plumeProperties.offset = CalculatePlumeOffset(column, badEval, m_specNum);
 
     // Estimate the completeness of the plume (this will call on FindPlume we don't need to do that here...)
-    bool ret = CalculatePlumeCompleteness(scanAngle, phi, column, columnError, badEval, offset, m_specNum, m_plumeProperties, &message);
+    bool success = CalculatePlumeCompleteness(scanAngle, phi, column, columnError, badEval, offset, m_specNum, m_plumeProperties, &message);
 
-    if (ret)
+    if (success)
     {
         // Remember the calculated value of the plume centre
         plumeProperties = m_plumeProperties;
     }
 
-    return ret;
+    return success;
 }
 
 double CScanResult::GetCalculatedPlumeCentre(int motor) const

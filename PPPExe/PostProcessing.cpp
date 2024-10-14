@@ -387,7 +387,7 @@ void CPostProcessing::EvaluateScans(
     // copy out the result
     s_evalLogs.CopyTo(evalLogFiles);
 
-    messageToUser.Format("All %ld scans evaluated.", s_nFilesToProcess);
+    messageToUser.Format("All %ld scans evaluated. Final number of results: %ld", s_nFilesToProcess, evalLogFiles.GetSize());
     m_log.Information(messageToUser.std_str());
 }
 
@@ -846,7 +846,9 @@ void CPostProcessing::PreparePlumeHeights()
     m_plumeDataBase.InsertPlumeHeight(plumeHeight);
 }
 
-void CPostProcessing::CalculateGeometries(novac::CList <Evaluation::CExtendedScanResult, Evaluation::CExtendedScanResult&>& evalLogFiles, novac::CList <Geometry::CGeometryResult*, Geometry::CGeometryResult*>& geometryResults)
+void CPostProcessing::CalculateGeometries(
+    novac::CList <Evaluation::CExtendedScanResult, Evaluation::CExtendedScanResult&>& evalLogFiles,
+    novac::CList <Geometry::CGeometryResult*, Geometry::CGeometryResult*>& geometryResults)
 {
     novac::CString serial1, serial2, messageToUser;
     CDateTime startTime1, startTime2;
