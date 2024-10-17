@@ -103,8 +103,8 @@ TEST_CASE("EvaluateScan, Invalid fit window - throws Exception (Ruahepu, Avantes
     novac::SpectrometerModel spectrometerModel = novac::CSpectrometerDatabase::GetInstance().SpectrometerModel_AVASPEC();
 
     novac::LogContext context;
-    context = context.With("file", novac::GetFileName(filename));
-    context = context.With("model", spectrometerModel.modelName);
+    context = context.With(novac::LogContext::FileName, novac::GetFileName(filename));
+    context = context.With(novac::LogContext::DeviceModel, spectrometerModel.modelName);
 
     novac::CFitWindow fitWindow;
 
@@ -169,8 +169,8 @@ TEST_CASE("EvaluateScan, scan with saturated sky spectrum expected result - case
     novac::SpectrometerModel spectrometerModel = novac::CSpectrometerDatabase::GetInstance().SpectrometerModel_AVASPEC();
 
     novac::LogContext context;
-    context = context.With("file", novac::GetFileName(filename));
-    context = context.With("model", spectrometerModel.modelName);
+    context = context.With(novac::LogContext::FileName, novac::GetFileName(filename));
+    context = context.With(novac::LogContext::DeviceModel, spectrometerModel.modelName);
 
     Evaluation::CScanEvaluation sut(userSettings, logger);
 
@@ -195,8 +195,8 @@ TEST_CASE("EvaluateScan, scan with clearly visible plume expected result - case 
     novac::SpectrometerModel spectrometerModel = novac::CSpectrometerDatabase::GetInstance().SpectrometerModel_AVASPEC();
 
     novac::LogContext context;
-    context = context.With("file", novac::GetFileName(filename));
-    context = context.With("model", spectrometerModel.modelName);
+    context = context.With(novac::LogContext::FileName, novac::GetFileName(filename));
+    context = context.With(novac::LogContext::DeviceModel, spectrometerModel.modelName);
 
     SECTION("Default settings")
     {
@@ -286,8 +286,8 @@ TEST_CASE("EvaluateScan, scan with clearly visible plume and calibrated referenc
     novac::SpectrometerModel spectrometerModel = novac::CSpectrometerDatabase::GetInstance().SpectrometerModel_AVASPEC();
 
     novac::LogContext context;
-    context = context.With("file", novac::GetFileName(filename));
-    context = context.With("model", spectrometerModel.modelName);
+    context = context.With(novac::LogContext::FileName, novac::GetFileName(filename));
+    context = context.With(novac::LogContext::DeviceModel, spectrometerModel.modelName);
 
     SECTION("Calibrated references with Polynomial fit and Fraunhofer Reference")
     {

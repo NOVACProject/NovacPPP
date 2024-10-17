@@ -158,7 +158,7 @@ static bool DownloadAFile(
     const std::string& fullRemoteFileName,
     const std::string& localFileName)
 {
-    context = context.With("file", fullRemoteFileName);
+    context = context.With(novac::LogContext::FileName, fullRemoteFileName);
 
     try
     {
@@ -597,7 +597,7 @@ int CFTPServerConnection::DownloadFileFromFTP(
     // Download the file
     if (!DownloadAFile(m_log, context, ftp, remoteFileName.std_str(), localFileName.std_str()))
     {
-        m_log.Error(context.With("file", remoteFileName.std_str()), "Failed to download remote file from FTP server.");
+        m_log.Error(context.With(novac::LogContext::FileName, remoteFileName.std_str()), "Failed to download remote file from FTP server.");
     }
 
     // disconnect
@@ -664,7 +664,7 @@ int CFTPServerConnection::UploadResults(
 
         if (!UploadAFile(ftp, localFile, remoteFile.std_str()))
         {
-            m_log.Error(context.With("file", localFile), "Failed to upload local file to FTP server");
+            m_log.Error(context.With(novac::LogContext::FileName, localFile), "Failed to upload local file to FTP server");
         }
     }
 

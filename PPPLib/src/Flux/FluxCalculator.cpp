@@ -51,7 +51,7 @@ bool CFluxCalculator::CalculateFlux(
         m_log.Error(context, "Failed to read instrument information from the name of the evaluation log.");
     }
 
-    context = context.With("instrument", serial.std_str());
+    context = context.With(novac::LogContext::Device, serial.std_str());
 
     // Find the location of this instrument
     Configuration::CInstrumentLocation instrLocation;

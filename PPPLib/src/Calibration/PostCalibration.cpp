@@ -207,7 +207,7 @@ std::map<SpectrometerId, std::vector<CPostCalibration::BasicScanInfo>> CPostCali
         CString fileName = scanFile.c_str();
         if (!CFileUtils::GetInfoFromFileName(fileName, startTime, serial, channel, mode))
         {
-            novac::LogContext context("file", scanFile);
+            novac::LogContext context(novac::LogContext::FileName, scanFile);
             CScanFileHandler scan(log);
             if (!scan.CheckScanFile(context, scanFile))
             {

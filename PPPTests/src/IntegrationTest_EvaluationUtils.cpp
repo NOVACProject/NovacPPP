@@ -12,7 +12,7 @@ static std::string GetTestDataDirectory()
 
 void VerifyScanCanBeRead(novac::CScanFileHandler& scan, const std::string filename)
 {
-    novac::LogContext context("file", filename);
+    novac::LogContext context(novac::LogContext::FileName, filename);
     bool readOk = scan.CheckScanFile(context, filename); // TODO: Add unit tests to this as well
     if (!readOk)
     {

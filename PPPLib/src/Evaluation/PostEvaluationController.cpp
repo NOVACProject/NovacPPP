@@ -34,7 +34,7 @@ bool CPostEvaluationController::EvaluateScan(
 
     const std::string pakFileNameStr((const char*)pakFileName);
 
-    novac::LogContext context("file", novac::GetFileName(pakFileNameStr));
+    novac::LogContext context(novac::LogContext::FileName, novac::GetFileName(pakFileNameStr));
 
     // ------------------ Read the scan file -----------------------
     // --- this to make sure that the spectra in the file are ok ---
@@ -62,7 +62,7 @@ bool CPostEvaluationController::EvaluateScan(
 
     // TODO: Should the model name be required?
     const SpectrometerModel spectrometerModel = CSpectrometerDatabase::GetInstance().GetModel(instrLocation.m_spectrometerModel);
-    context = context.With("model", spectrometerModel.modelName);
+    context = context.With(novac::LogContext::DeviceModel, spectrometerModel.modelName);
 
     // Check if we have already evaluated this scan. Only if this is a re-run of
     // an old processing...

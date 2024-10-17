@@ -109,7 +109,7 @@ void CPostProcessing::DoPostProcessing_Flux()
         std::vector<std::string> pakFileList;
         if (m_userSettings.m_LocalDirectory.GetLength() > 3)
         {
-            novac::LogContext localContext = context.With("directory", m_userSettings.m_LocalDirectory.std_str());
+            novac::LogContext localContext = context.With(novac::LogContext::Directory, m_userSettings.m_LocalDirectory.std_str());
             m_log.Information(localContext, "Searching for .pak files");
 
             const bool includeSubDirs = (m_userSettings.m_includeSubDirectories_Local > 0);
@@ -221,7 +221,7 @@ void CPostProcessing::DoPostProcessing_InstrumentCalibration()
     std::vector<std::string> pakFileList;
     if (m_userSettings.m_LocalDirectory.GetLength() > 3)
     {
-        novac::LogContext localContext = context.With("directory", m_userSettings.m_LocalDirectory.std_str());
+        novac::LogContext localContext = context.With(novac::LogContext::Directory, m_userSettings.m_LocalDirectory.std_str());
         m_log.Information(localContext, "Searching for .pak files");
 
         const bool includeSubDirs = (m_userSettings.m_includeSubDirectories_Local > 0);
@@ -287,7 +287,7 @@ void CPostProcessing::DoPostProcessing_Strat()
     std::vector<std::string> pakFileList;
     if (m_userSettings.m_LocalDirectory.GetLength() > 3)
     {
-        novac::LogContext localContext = context.With("directory", m_userSettings.m_LocalDirectory.std_str());
+        novac::LogContext localContext = context.With(novac::LogContext::Directory, m_userSettings.m_LocalDirectory.std_str());
         m_log.Information(localContext, "Searching for .pak files");
 
         const bool includeSubDirs = (m_userSettings.m_includeSubDirectories_Local > 0);
@@ -418,7 +418,7 @@ void EvaluateScansThread(
         novac::CString evalLog[MAX_FIT_WINDOWS];
         CPlumeInScanProperty scanProperties[MAX_FIT_WINDOWS];
 
-        novac::LogContext context("file", novac::GetFileName(fileName));
+        novac::LogContext context(novac::LogContext::FileName, novac::GetFileName(fileName));
 
         // evaluate the .pak-file in all the specified fit-windows and retrieve the name of the 
         // eval-logs. If any of the fit-windows fails then the scan is not inserted.
@@ -592,7 +592,7 @@ void CPostProcessing::PrepareEvaluation()
     // Loop through each of the configured instruments
     for (int instrumentIndex = 0; instrumentIndex < m_setup.NumberOfInstruments(); ++instrumentIndex)
     {
-        auto instrumentContext = context.With("device", m_setup.m_instrument[instrumentIndex].m_serial.std_str());
+        auto instrumentContext = context.With(novac::LogContext::Device, m_setup.m_instrument[instrumentIndex].m_serial.std_str());
 
         // For each instrument, loop through the fit-windows that are defined
         int fitWindowNum = m_setup.m_instrument[instrumentIndex].m_eval.NumberOfFitWindows();
@@ -612,7 +612,7 @@ void CPostProcessing::PrepareEvaluation()
             // For each reference in the fit-window, read it in and make sure that it exists...
             for (int referenceIndex = 0; referenceIndex < window.nRef; ++referenceIndex)
             {
-                auto referenceContext = instrumentContext.With("file", window.ref[referenceIndex].m_path);
+                auto referenceContext = instrumentContext.With(novac::LogContext::FileName, window.ref[referenceIndex].m_path);
 
                 if (window.ref[referenceIndex].m_path.empty())
                 {
@@ -682,7 +682,7 @@ void CPostProcessing::PrepareEvaluation()
             // If the window also contains a fraunhofer-reference then read it too.
             if (window.fraunhoferRef.m_path.size() > 4)
             {
-                auto referenceContext = instrumentContext.With("file", window.fraunhoferRef.m_path);
+                auto referenceContext = instrumentContext.With(novac::LogContext::FileName, window.fraunhoferRef.m_path);
 
                 if (!IsExistingFile(window.fraunhoferRef.m_path))
                 {
@@ -743,7 +743,7 @@ void CPostProcessing::ReadWindField(novac::LogContext context)
         // If the user has given a file-name, then try to use that one
         if (m_userSettings.m_windFieldFile.GetLength() > 3)
         {
-            auto fileContext = context.With("filename", m_userSettings.m_windFieldFile.std_str());
+            auto fileContext = context.With(novac::LogContext::FileName, m_userSettings.m_windFieldFile.std_str());
 
             m_log.Information(fileContext, "Reading wind field from file");
 
@@ -994,7 +994,7 @@ void CPostProcessing::CalculateGeometries(
 
                     messageToUser.Format(" + Calculated a plume altitude of %.0lf +- %.0lf masl and wind direction of %.0lf +- %.0lf degrees by combining measurements two instruments",
                         result.m_plumeAltitude, result.m_plumeAltitudeError, result.m_windDirection, result.m_windDirectionError);
-                    m_log.Information(context.With("device", serial1.std_str()).With("device2", serial2.std_str()).With("time", startTime1.ToString()), messageToUser.std_str());
+                    m_log.Information(context.With("device1", serial1.std_str()).With("device2", serial2.std_str()).WithTimestamp(startTime1), messageToUser.std_str());
 
                     successfullyCombined = true;
                 }
@@ -1051,7 +1051,7 @@ void CPostProcessing::CalculateGeometries(
                 // tell the user   
                 messageToUser.Format(" + Calculated a wind direction of %.0lf +- %.0lf degrees from a scan",
                     result.m_windDirection, result.m_windDirectionError);
-                m_log.Information(context.With("device", serial1.std_str()).With("time", result.m_averageStartTime.ToString()), messageToUser.std_str());
+                m_log.Information(context.With(novac::LogContext::Device, serial1.std_str()).WithTimestamp( result.m_averageStartTime), messageToUser.std_str());
             }
             else
             {
@@ -1098,7 +1098,7 @@ void CPostProcessing::CalculateFluxes(novac::LogContext context, const std::vect
         const novac::CString& evalLog = scanResult.m_evalLogFile[m_userSettings.m_mainFitWindow];
         const CPlumeInScanProperty& plume = scanResult.m_scanProperties;
 
-        novac::LogContext fileContext = context.With("file", evalLog.std_str());
+        novac::LogContext fileContext = context.With(novac::LogContext::FileName, evalLog.std_str());
 
         // if the completeness is too low then ignore this scan.
         if (plume.completeness < (m_userSettings.m_completenessLimitFlux + 0.01))
@@ -1567,7 +1567,7 @@ void CPostProcessing::CalculateDualBeamWindSpeeds(novac::LogContext context, con
         }
         catch (PPPLib::NotFoundException& ex)
         {
-            novac::LogContext fileContext = context.With("file", fileNameAndPath.std_str());
+            novac::LogContext fileContext = context.With(novac::LogContext::FileName, fileNameAndPath.std_str());
             m_log.Information(fileContext, ex.message);
         }
     }
@@ -1593,7 +1593,7 @@ void CPostProcessing::CalculateDualBeamWindSpeeds(novac::LogContext context, con
         fileName = novac::CString(fileNameAndPath);
         Common::GetFileName(fileName);
 
-        novac::LogContext fileContext = context.With("file", fileName.std_str());
+        novac::LogContext fileContext = context.With(novac::LogContext::FileName, fileName.std_str());
         fileContext = fileContext.With("mode", "dualBeamWindSpeed");
 
         try
@@ -1868,7 +1868,7 @@ void CPostProcessing::LocateEvaluationLogFiles(novac::LogContext context, const 
 {
     std::vector<std::string> evalLogFiles;
 
-    context = context.With("directory", directory);
+    context = context.With(novac::LogContext::Directory, directory);
     m_log.Information(context, "Searching for evaluation log files in directory.");
 
     const bool includeSubDirs = (m_userSettings.m_includeSubDirectories_Local > 0);
