@@ -31,7 +31,7 @@ public:
             information found in the wind field files.
         @throws std::FileIoException if the file could not be downloaded or the directory structure could not be created.
         @throws std::invalid_argument if the file could not be found (or downloaded). */
-    void ReadWindFile(const novac::CString& fileName, Meteorology::CWindDataBase& dataBase);
+    void ReadWindFile(novac::LogContext context, const novac::CString& fileName, Meteorology::CWindDataBase& dataBase);
 
     /** Reads in all the wind-field files that are found in a given directory
         The directory can be on the local computer or on the FTP-server
@@ -43,7 +43,7 @@ public:
         @param dateTo - if not null then only file which contain a wind field before (and including)
             the date 'dateTo' will be read in.
         @return 0 on success */
-    void ReadWindDirectory(const novac::CString& directory, Meteorology::CWindDataBase& dataBase, const novac::CDateTime* dateFrom = NULL, const novac::CDateTime* dateTo = NULL);
+    void ReadWindDirectory(novac::LogContext context, const novac::CString& directory, Meteorology::CWindDataBase& dataBase, const novac::CDateTime* dateFrom = NULL, const novac::CDateTime* dateTo = NULL);
 
     /** Writes an wind-field file in the NPPP-format
         @return 0 on success */

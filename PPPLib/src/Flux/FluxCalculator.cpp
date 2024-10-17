@@ -35,11 +35,9 @@ bool CFluxCalculator::CalculateFlux(
 {
     novac::CString errorMessage, serial;
 
-    context = context.With("file", novac::GetFileName(evalLogFileName));
-
     if (!Filesystem::IsExistingFile(evalLogFileName))
     {
-        m_log.Error(context, "Recieved evaluation-log with illegal path. Could not calculate flux.");
+        m_log.Error(context, "Recieved evaluation log which could not be found. Could not calculate flux.");
         return false;
     }
 

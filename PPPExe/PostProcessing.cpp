@@ -80,9 +80,10 @@ CPostProcessing::CPostProcessing(ILogger& logger, Configuration::CNovacPPPConfig
 
 void CPostProcessing::DoPostProcessing_Flux()
 {
-    novac::CList <Evaluation::CExtendedScanResult, Evaluation::CExtendedScanResult&> evalLogFiles;
-    novac::CList <Geometry::CGeometryResult*, Geometry::CGeometryResult*> geometryResults;
+    std::vector<Evaluation::CExtendedScanResult> evalLogFiles;
     novac::CString messageToUser, windFileName;
+
+    novac::LogContext context;
 
     m_log.Information("--- Prepairing to perform Flux Calculations --- ");
     // --------------- PREPARING FOR THE PROCESSING -----------
@@ -91,10 +92,10 @@ void CPostProcessing::DoPostProcessing_Flux()
     CheckProcessingSettings();
 
     // Prepare for the flux-calculation by reading in the wind-field
-    ReadWindField();
+    ReadWindField(context);
 
     // Prepare for the flux-calculation by compiling a set of pausible plume heights
-    PreparePlumeHeights();
+    PreparePlumeHeights(context);
 
     // --------------- DOING THE EVALUATIONS -----------
 
@@ -104,12 +105,12 @@ void CPostProcessing::DoPostProcessing_Flux()
         PrepareEvaluation();
 
         // 1. Find all .pak files in the directory.
-        m_log.Information("--- Locating Pak Files --- ");
+        m_log.Information(context, "--- Locating Pak Files --- ");
         std::vector<std::string> pakFileList;
         if (m_userSettings.m_LocalDirectory.GetLength() > 3)
         {
-            novac::LogContext context("directory", m_userSettings.m_LocalDirectory.std_str());
-            m_log.Information(context, "Searching for .pak files");
+            novac::LogContext localContext = context.With("directory", m_userSettings.m_LocalDirectory.std_str());
+            m_log.Information(localContext, "Searching for .pak files");
 
             const bool includeSubDirs = (m_userSettings.m_includeSubDirectories_Local > 0);
             Filesystem::FileSearchCriterion limits;
@@ -120,57 +121,57 @@ void CPostProcessing::DoPostProcessing_Flux()
 
             std::stringstream msg;
             msg << pakFileList.size() << " .pak files found";
-            m_log.Information(context, msg.str());
+            m_log.Information(localContext, msg.str());
         }
 
         if (m_userSettings.m_FTPDirectory.GetLength() > 9)
         {
-            novac::LogContext context("ftpDirectory", m_userSettings.m_FTPDirectory.std_str());
-            m_log.Information(context, "Searching for .pak files on Ftp server");
+            novac::LogContext localContext = context.With("ftpDirectory", m_userSettings.m_FTPDirectory.std_str());
+            m_log.Information(localContext, "Searching for .pak files on Ftp server");
 
-            CheckForSpectraOnFTPServer(pakFileList);
+            CheckForSpectraOnFTPServer(localContext, pakFileList);
         }
         if (pakFileList.size() == 0)
         {
-            m_log.Information("No spectrum files found. Exiting");
+            m_log.Information(context, "No spectrum files found. Exiting");
             return;
         }
 
         // Evaluate the scans. This at the same time generates a list of evaluation-log
         // files with the evaluated results
-        m_log.Information("--- Running Evaluations --- ");
+        m_log.Information(context, "--- Running Evaluations --- ");
         EvaluateScans(pakFileList, evalLogFiles);
-        messageToUser.Format("%d evaluation log files accepted", evalLogFiles.GetCount());
-        m_log.Information(messageToUser.std_str());
+        messageToUser.Format("%d evaluation log files accepted", evalLogFiles.size());
+        m_log.Information(context, messageToUser.std_str());
     }
     else
     {
         // Don't evaluate the scans, just read the log-files and calculate fluxes from there.
-        LocateEvaluationLogFiles(m_userSettings.m_outputDirectory, evalLogFiles);
+        LocateEvaluationLogFiles(context, std::string(m_userSettings.m_outputDirectory.c_str()), evalLogFiles);
     }
 
     // Sort the evaluation-logs in order of increasing start-time, this to make
     // the looking for matching files in 'CalculateGeometries' faster
     m_log.Information("Evaluation done. Sorting the evaluation log files");
     SortEvaluationLogs(evalLogFiles);
-    m_log.Information("Sort done.");
+    m_log.Information(context, "Sort done.");
 
-    // 3. Loop through list with output text files from evaluation and calculate
-    //      the geometries
-    CalculateGeometries(evalLogFiles, geometryResults);
+    // 3. Loop through list with output text files from evaluation and calculate the geometries
+    std::vector<Geometry::CGeometryResult> geometryResults;
+    CalculateGeometries(context, evalLogFiles, geometryResults);
 
     // 4.1 write the calculations to file, for later checking or other uses...
-    WriteCalculatedGeometriesToFile(geometryResults);
+    WriteCalculatedGeometriesToFile(context, geometryResults);
 
     // 4.2 Insert the calculated geometries into the plume height database
-    InsertCalculatedGeometriesIntoDataBase(geometryResults);
+    InsertCalculatedGeometriesIntoDataBase(context, geometryResults);
 
     // 5. Calculate the wind-speeds from the wind-speed measurements
     //  the plume heights are taken from the database
-    CalculateDualBeamWindSpeeds(evalLogFiles);
+    CalculateDualBeamWindSpeeds(context, evalLogFiles);
 
     // 6. Calculate flux from evaluation text files
-    CalculateFluxes(evalLogFiles);
+    CalculateFluxes(context, evalLogFiles);
 
     // 7. Write the statistics
     novac::CString statFileName;
@@ -186,50 +187,42 @@ void CPostProcessing::DoPostProcessing_Flux()
     // 9. Upload the results to the FTP-server
     if (m_userSettings.m_uploadResults)
     {
-        UploadResultsToFTP();
-    }
-
-    // ------------ Clean up -----------
-    while (geometryResults.GetSize() != 0)
-    {
-        auto p = geometryResults.GetTailPosition();
-        Geometry::CGeometryResult* g = geometryResults.GetAt(p);
-        delete g;
-        geometryResults.RemoveTail();
+        UploadResultsToFTP(context);
     }
 }
 
 void CPostProcessing::DoPostProcessing_InstrumentCalibration()
 {
-    m_log.Information("--- Prepairing to perform Instrument Calibrations --- ");
+    novac::LogContext context("mode", "instrumentCalibration");
+
+    m_log.Information(context, "--- Prepairing to perform Instrument Calibrations --- ");
 
     m_log.Information("--- Validating settings --- ");
     if (CheckInstrumentCalibrationSettings())
     {
-        m_log.Information("Exiting post processing");
+        m_log.Information(context, "Exiting post processing");
         return;
     }
 
     novac::StandardCrossSectionSetup standardCrossSections{ m_exePath };
     if (standardCrossSections.NumberOfReferences() == 0)
     {
-        m_log.Information("The StandardReferences folder is either missing or contains no references. No references can be created.");
+        m_log.Information(context, "The StandardReferences folder is either missing or contains no references. No references can be created.");
         return;
     }
     else if (!IsExistingFile(standardCrossSections.FraunhoferReferenceFileName()))
     {
-        m_log.Information("Cannot locate the Fraunhofer reference in the StandardReferences folder. The file is either missing or path is invalid. No Fraunhofer reference can be created.");
+        m_log.Information(context, "Cannot locate the Fraunhofer reference in the StandardReferences folder. The file is either missing or path is invalid. No Fraunhofer reference can be created.");
     }
 
 
     // 1. Find all .pak files in the directory.
-    m_log.Information("--- Locating Pak Files --- ");
+    m_log.Information(context, "--- Locating Pak Files --- ");
     std::vector<std::string> pakFileList;
     if (m_userSettings.m_LocalDirectory.GetLength() > 3)
     {
-        CString messageToUser;
-        messageToUser.Format("Searching for .pak - files in directory %s", (const char*)m_userSettings.m_LocalDirectory);
-        m_log.Information(messageToUser.std_str());
+        novac::LogContext localContext = context.With("directory", m_userSettings.m_LocalDirectory.std_str());
+        m_log.Information(localContext, "Searching for .pak files");
 
         const bool includeSubDirs = (m_userSettings.m_includeSubDirectories_Local > 0);
         Filesystem::FileSearchCriterion limits;
@@ -237,19 +230,26 @@ void CPostProcessing::DoPostProcessing_InstrumentCalibration()
         limits.endTime = m_userSettings.m_toDate;
         limits.fileExtension = ".pak";
         Filesystem::SearchDirectoryForFiles(m_userSettings.m_LocalDirectory, includeSubDirs, pakFileList, &limits);
+
+        std::stringstream msg;
+        msg << pakFileList.size() << " .pak files found";
+        m_log.Information(localContext, msg.str());
     }
 
     if (m_userSettings.m_FTPDirectory.GetLength() > 9)
     {
-        CheckForSpectraOnFTPServer(pakFileList);
+        novac::LogContext localContext = context.With("ftpDirectory", m_userSettings.m_FTPDirectory.std_str());
+        m_log.Information(localContext, "Searching for .pak files on Ftp server");
+
+        CheckForSpectraOnFTPServer(localContext, pakFileList);
     }
     if (pakFileList.size() == 0)
     {
-        m_log.Information("No spectrum files found. Exiting");
+        m_log.Information(context, "No spectrum files found. Exiting");
         return;
     }
 
-    m_log.Information("--- Running Calibrations --- ");
+    m_log.Information(context, "--- Running Calibrations --- ");
 
     novac::CPostCalibration calibrationController{ standardCrossSections, m_setup, m_userSettings, m_log };
     novac::CPostCalibrationStatistics calibrationStatistics;
@@ -261,17 +261,19 @@ void CPostProcessing::DoPostProcessing_InstrumentCalibration()
     {
         CString messageToUser;
         messageToUser.Format("%d instrument calibrations performed", numberOfCalibrations);
-        m_log.Information(messageToUser.std_str());
+        m_log.Information(context, messageToUser.std_str());
     }
 }
 
 void CPostProcessing::DoPostProcessing_Strat()
 {
-    novac::CList <Evaluation::CExtendedScanResult, Evaluation::CExtendedScanResult&> evalLogFiles;
+    std::vector<Evaluation::CExtendedScanResult> evalLogFiles;
     novac::CString messageToUser, statFileName;
     Stratosphere::CStratosphereCalculator strat(m_log, m_setup, m_userSettings);
 
     // --------------- PREPARING FOR THE PROCESSING -----------
+
+    novac::LogContext context("mode", "stratosphere");
 
     // Checks that the evaluation is ok and that all settings makes sense.
     CheckProcessingSettings();
@@ -285,8 +287,8 @@ void CPostProcessing::DoPostProcessing_Strat()
     std::vector<std::string> pakFileList;
     if (m_userSettings.m_LocalDirectory.GetLength() > 3)
     {
-        messageToUser.Format("Searching for .pak - files in directory %s", (const char*)m_userSettings.m_LocalDirectory);
-        m_log.Information(messageToUser.std_str());
+        novac::LogContext localContext = context.With("directory", m_userSettings.m_LocalDirectory.std_str());
+        m_log.Information(localContext, "Searching for .pak files");
 
         const bool includeSubDirs = (m_userSettings.m_includeSubDirectories_Local > 0);
         Filesystem::FileSearchCriterion limits;
@@ -294,21 +296,28 @@ void CPostProcessing::DoPostProcessing_Strat()
         limits.endTime = m_userSettings.m_toDate;
         limits.fileExtension = ".pak";
         Filesystem::SearchDirectoryForFiles(m_userSettings.m_LocalDirectory, includeSubDirs, pakFileList, &limits);
+
+        std::stringstream msg;
+        msg << pakFileList.size() << " .pak files found";
+        m_log.Information(localContext, msg.str());
     }
     if (m_userSettings.m_FTPDirectory.GetLength() > 9)
     {
-        CheckForSpectraOnFTPServer(pakFileList);
+        novac::LogContext localContext = context.With("ftpDirectory", m_userSettings.m_FTPDirectory.std_str());
+        m_log.Information(localContext, "Searching for .pak files on Ftp server");
+
+        CheckForSpectraOnFTPServer(localContext, pakFileList);
     }
     if (pakFileList.size() == 0)
     {
-        m_log.Information("No spectrum files found. Exiting");
+        m_log.Information(context, "No spectrum files found. Exiting");
         return;
     }
 
     // Evaluate the scans. This at the same time generates a list of evaluation-log
     // files with the evaluated results
     EvaluateScans(pakFileList, evalLogFiles);
-    messageToUser.Format("%d evaluation log files accepted", evalLogFiles.GetCount());
+    messageToUser.Format("%d evaluation log files accepted", evalLogFiles.size());
     m_log.Information(messageToUser.std_str());
 
     // Sort the evaluation-logs in order of increasing start-time, this to make
@@ -327,11 +336,12 @@ void CPostProcessing::DoPostProcessing_Strat()
     m_processingStats.WriteStatToFile(statFileName);
 }
 
-void CPostProcessing::CheckForSpectraOnFTPServer(std::vector<std::string>& fileList)
+void CPostProcessing::CheckForSpectraOnFTPServer(novac::LogContext context, std::vector<std::string>& fileList)
 {
     Communication::CFTPServerConnection serverDownload(m_log, m_userSettings);
 
     int ret = serverDownload.DownloadDataFromFTP(
+        context,
         m_userSettings.m_FTPDirectory,
         m_userSettings.m_FTPUsername,
         m_userSettings.m_FTPPassword,
@@ -339,11 +349,11 @@ void CPostProcessing::CheckForSpectraOnFTPServer(std::vector<std::string>& fileL
 
     if (ret == 0)
     {
-        m_log.Information("Successfully downloaded all data files.");
+        m_log.Information(context, "Successfully downloaded all data files.");
     }
     else
     {
-        m_log.Information("Error happened when downloading data from FTP.");
+        m_log.Information(context, "Error happened when downloading data from FTP.");
     }
 }
 
@@ -354,8 +364,7 @@ volatile unsigned long s_nFilesToProcess;
 
 void CPostProcessing::EvaluateScans(
     const std::vector<std::string>& pakFileList,
-    novac::CList <Evaluation::CExtendedScanResult,
-    Evaluation::CExtendedScanResult&>& evalLogFiles)
+    std::vector<Evaluation::CExtendedScanResult>& evalLogFiles)
 {
     s_nFilesToProcess = (long)pakFileList.size();
     novac::CString messageToUser;
@@ -387,7 +396,7 @@ void CPostProcessing::EvaluateScans(
     // copy out the result
     s_evalLogs.CopyTo(evalLogFiles);
 
-    messageToUser.Format("All %ld scans evaluated. Final number of results: %ld", s_nFilesToProcess, evalLogFiles.GetSize());
+    messageToUser.Format("All %ld scans evaluated. Final number of results: %ld", s_nFilesToProcess, evalLogFiles.size());
     m_log.Information(messageToUser.std_str());
 }
 
@@ -459,11 +468,11 @@ void AddResultToList(
 
     // Create a new Extended scan result and add it to the end of the list
     Evaluation::CExtendedScanResult newResult;
-    newResult.m_pakFile.Format(pakFileName);
+    newResult.m_pakFile = pakFileName.std_str();
     for (int fitWindowIndex = 0; fitWindowIndex < userSettings.m_nFitWindowsToUse; ++fitWindowIndex)
     {
-        newResult.m_evalLogFile[fitWindowIndex].Format(evalLog[fitWindowIndex]);
-        newResult.m_fitWindowName[fitWindowIndex].Format(userSettings.m_fitWindowsToUse[fitWindowIndex]);
+        newResult.m_evalLogFile[fitWindowIndex] = evalLog[fitWindowIndex].std_str();
+        newResult.m_fitWindowName[fitWindowIndex] = userSettings.m_fitWindowsToUse[fitWindowIndex].std_str();
     }
     novac::CFileUtils::GetInfoFromFileName(evalLog[0], newResult.m_startTime, serial, channel, mode);
     newResult.m_scanProperties = scanProperties;
@@ -721,7 +730,7 @@ void CPostProcessing::PrepareEvaluation()
     }
 }
 
-void CPostProcessing::ReadWindField()
+void CPostProcessing::ReadWindField(novac::LogContext context)
 {
     m_log.Information("--- Reading Wind information --- ");
 
@@ -734,15 +743,14 @@ void CPostProcessing::ReadWindField()
         // If the user has given a file-name, then try to use that one
         if (m_userSettings.m_windFieldFile.GetLength() > 3)
         {
-            novac::LogContext context;
-            context = context.With("filename", m_userSettings.m_windFieldFile.std_str());
+            auto fileContext = context.With("filename", m_userSettings.m_windFieldFile.std_str());
 
-            m_log.Information(context, "Reading wind field from file");
+            m_log.Information(fileContext, "Reading wind field from file");
 
-            reader.ReadWindFile(m_userSettings.m_windFieldFile, m_windDataBase);
+            reader.ReadWindFile(fileContext, m_userSettings.m_windFieldFile, m_windDataBase);
 
             messageToUser.Format("Parsed %d wind data items", m_windDataBase.GetDataBaseSize());
-            m_log.Information(context, messageToUser.std_str());
+            m_log.Information(fileContext, messageToUser.std_str());
 
             name1.Format("%sParsedWindField.wxml", (const char*)common.m_exePath);
             m_windDataBase.WriteToFile(name1);
@@ -767,7 +775,7 @@ void CPostProcessing::ReadWindField()
             messageToUser.Format("Reading wind field from file: %s", (const char*)path1);
             m_log.Information(messageToUser.std_str());
 
-            reader.ReadWindFile(path1, m_windDataBase);
+            reader.ReadWindFile(context, path1, m_windDataBase);
 
             return;
         }
@@ -777,7 +785,7 @@ void CPostProcessing::ReadWindField()
             messageToUser.Format("Reading wind field from file: %s", (const char*)path2);
             m_log.Information(messageToUser.std_str());
 
-            reader.ReadWindFile(path2, m_windDataBase);
+            reader.ReadWindFile(context, path2, m_windDataBase);
 
             return;
         }
@@ -787,7 +795,7 @@ void CPostProcessing::ReadWindField()
             messageToUser.Format("Reading wind field from file: %s", (const char*)path3);
             m_log.Information(messageToUser.std_str());
 
-            reader.ReadWindFile(path3, m_windDataBase);
+            reader.ReadWindFile(context, path3, m_windDataBase);
 
             return;
         }
@@ -799,7 +807,7 @@ void CPostProcessing::ReadWindField()
     // If the user has specified a directory of files...
     if (m_userSettings.m_windFieldFileOption == 1)
     {
-        reader.ReadWindDirectory(m_userSettings.m_windFieldFile, m_windDataBase, &m_userSettings.m_fromDate, &m_userSettings.m_toDate);
+        reader.ReadWindDirectory(context, m_userSettings.m_windFieldFile, m_windDataBase, &m_userSettings.m_fromDate, &m_userSettings.m_toDate);
         return;
     }
 
@@ -807,7 +815,7 @@ void CPostProcessing::ReadWindField()
     throw std::logic_error("Invalid wind field file option, failed to read winf field.");
 }
 
-void CPostProcessing::PreparePlumeHeights()
+void CPostProcessing::PreparePlumeHeights(novac::LogContext context)
 {
     // we need to construct a default plume height to use, if there's nothing else...
     Geometry::CPlumeHeight plumeHeight;
@@ -843,12 +851,17 @@ void CPostProcessing::PreparePlumeHeights()
         plumeHeight.m_plumeAltitudeError = g_volcanoes.GetPeakAltitude(m_userSettings.m_volcano) / 2.0;
     }
 
+    std::stringstream msg;
+    msg << "Prepared default plume height of: " << plumeHeight.m_plumeAltitude << " +- " << plumeHeight.m_plumeAltitudeError << " masl ";
+    m_log.Information(context, msg.str());
+
     m_plumeDataBase.InsertPlumeHeight(plumeHeight);
 }
 
 void CPostProcessing::CalculateGeometries(
-    novac::CList <Evaluation::CExtendedScanResult, Evaluation::CExtendedScanResult&>& evalLogFiles,
-    novac::CList <Geometry::CGeometryResult*, Geometry::CGeometryResult*>& geometryResults)
+    novac::LogContext context,
+    std::vector<Evaluation::CExtendedScanResult>& evalLogs,
+    std::vector<Geometry::CGeometryResult>& geometryResults)
 {
     novac::CString serial1, serial2, messageToUser;
     CDateTime startTime1, startTime2;
@@ -863,23 +876,15 @@ void CPostProcessing::CalculateGeometries(
     Configuration::CInstrumentLocation location[2];
 
     // Tell the user what's happening
-    m_log.Information("Begin to calculate plume heights from scans");
+    m_log.Information(context, "Begin to calculate plume heights from scans");
 
     // Loop through list with output text files from evaluation and apply geometrical corrections
-    auto pos1 = evalLogFiles.GetHeadPosition();
-    while (pos1 != nullptr)
+    for (size_t pos1 = 0; pos1 < evalLogs.size(); ++pos1)
     {
-        const novac::CString& evalLog1 = evalLogFiles.GetAt(pos1).m_evalLogFile[m_userSettings.m_mainFitWindow];
-        const CPlumeInScanProperty& plume1 = evalLogFiles.GetNext(pos1).m_scanProperties;
+        const novac::CString& evalLog1 = evalLogs[pos1].m_evalLogFile[m_userSettings.m_mainFitWindow];
+        const CPlumeInScanProperty& plume1 = evalLogs[pos1].m_scanProperties;
 
         ++nFilesChecked1; // for debugging...
-
-        // if this is the last file in the list, then
-        // quit. There's nothing more to compare to...
-        if (pos1 == nullptr)
-        {
-            break;
-        }
 
         // if this scan does not see a large enough portion of the plume, then ignore it...
         if (plume1.completeness < m_userSettings.m_calcGeometry_CompletenessLimit)
@@ -900,13 +905,11 @@ void CPostProcessing::CalculateGeometries(
         //  use the fact that the list of eval-logs is sorted by increasing start-time
         //  thus we start at the eval-log next after this one and compare with all
         //  eval-logs until the difference in start-time is too big.
-        auto pos2 = pos1;
-        evalLogFiles.GetNext(pos2);
         bool successfullyCombined = false; // this is true if evalLog1 was combined with (at least one) other eval-log to make a geomery calculation.
-        while (pos2 != nullptr)
+        for (size_t pos2 = pos1 + 1; pos2 < evalLogs.size(); ++pos2)
         {
-            const novac::CString& evalLog2 = evalLogFiles.GetAt(pos2).m_evalLogFile[m_userSettings.m_mainFitWindow];
-            const CPlumeInScanProperty& plume2 = evalLogFiles.GetNext(pos2).m_scanProperties;
+            const novac::CString& evalLog2 = evalLogs[pos2].m_evalLogFile[m_userSettings.m_mainFitWindow];
+            const CPlumeInScanProperty& plume2 = evalLogs[pos2].m_scanProperties;
 
             ++nFilesChecked2; // for debugging...
 
@@ -924,8 +927,7 @@ void CPostProcessing::CalculateGeometries(
             double timeDifference = fabs(CDateTime::Difference(startTime1, startTime2));
             if (timeDifference > m_userSettings.m_calcGeometry_MaxTimeDifference)
             {
-                pos2 = nullptr;
-                continue;
+                break;
             }
 
             // If this is not a flux-measurement, then there's no use in trying to use it...
@@ -965,46 +967,39 @@ void CPostProcessing::CalculateGeometries(
             ++nCalculationsMade;
 
             // If the files have passed these tests then make a geometry-calculation
-            Geometry::CGeometryResult* result = new Geometry::CGeometryResult();
+            Geometry::CGeometryResult result;
             Geometry::CGeometryCalculator geometryCalculator(m_log, m_userSettings);
-            if (geometryCalculator.CalculateGeometry(plume1, startTime1, plume2, startTime2, location, *result))
+            if (geometryCalculator.CalculateGeometry(plume1, startTime1, plume2, startTime2, location, result))
             {
                 // Check the quality of the measurement before we insert it...
-                if (result->m_plumeAltitudeError > m_userSettings.m_calcGeometry_MaxPlumeAltError)
+                if (result.m_plumeAltitudeError > m_userSettings.m_calcGeometry_MaxPlumeAltError)
                 {
-                    ++nTooLargeAbsoluteError;
-                    delete result; // too bad, continue.
+                    ++nTooLargeAbsoluteError; // too bad, continue.
                 }
-                else if ((result->m_plumeAltitudeError > 0.5 * result->m_plumeAltitude) || (result->m_windDirectionError > m_userSettings.m_calcGeometry_MaxWindDirectionError))
+                else if ((result.m_plumeAltitudeError > 0.5 * result.m_plumeAltitude) || (result.m_windDirectionError > m_userSettings.m_calcGeometry_MaxWindDirectionError))
                 {
-                    ++nTooLargeRelativeError;
-                    delete result; // too bad, continue.
+                    ++nTooLargeRelativeError;  // too bad, continue.
                 }
-                else if (result->m_windDirectionError > m_userSettings.m_calcGeometry_MaxWindDirectionError)
+                else if (result.m_windDirectionError > m_userSettings.m_calcGeometry_MaxWindDirectionError)
                 {
-                    delete result; // too bad, continue.
+                    // ... too bad, continue.
                 }
                 else
                 {
                     // remember which instruments were used
-                    result->m_instr1.Format(serial1);
-                    result->m_instr2.Format(serial2);
+                    result.m_instr1.Format(serial1);
+                    result.m_instr2.Format(serial2);
 
-                    geometryResults.AddTail(result);
+                    geometryResults.push_back(result);
 
-                    messageToUser.Format(" + Calculated a plume altitude of %.0lf +- %.0lf meters and wind direction of %.0lf +- %.0lf degrees by combining measurements from %s and %s",
-                        result->m_plumeAltitude, result->m_plumeAltitudeError, result->m_windDirection, result->m_windDirectionError, (const char*)serial1, (const char*)serial2);
-                    m_log.Information(messageToUser.std_str());
+                    messageToUser.Format(" + Calculated a plume altitude of %.0lf +- %.0lf masl and wind direction of %.0lf +- %.0lf degrees by combining measurements two instruments",
+                        result.m_plumeAltitude, result.m_plumeAltitudeError, result.m_windDirection, result.m_windDirectionError);
+                    m_log.Information(context.With("device", serial1.std_str()).With("device2", serial2.std_str()).With("time", startTime1.ToString()), messageToUser.std_str());
 
                     successfullyCombined = true;
                 }
             }
-            else
-            {
-                // something went wrong... delete the 'info'
-                delete result;
-            }
-        } // end while(pos2 != nullptr)
+        } // end for (size_t pos2 = pos1 + 1;
 
         // if it was not possible to combine this scan with any other to generate an
         // estimated plume height and wind direction we might still be able to use it to calculate
@@ -1021,70 +1016,68 @@ void CPostProcessing::CalculateGeometries(
             }
             catch (PPPLib::NotFoundException& ex)
             {
-                m_log.Information(ex.message);
+                m_log.Information(context, ex.message);
                 continue;
             }
 
-            Geometry::CGeometryResult* result = new Geometry::CGeometryResult();
+            Geometry::CGeometryResult result;
 
             // Get the altitude of the plume at this moment. First look into the
             // general database. Then have a look in the list of geometry-results
             // that we just generated to see if there's anything better there...
             m_plumeDataBase.GetPlumeHeight(startTime1, plumeHeight);
-            auto gp = geometryResults.GetTailPosition();
-            while (gp != nullptr)
+            for (auto it = geometryResults.rbegin(); it != geometryResults.rend(); ++it)
             {
-                const Geometry::CGeometryResult* oldResult = geometryResults.GetPrev(gp);
-                if (fabs(CDateTime::Difference(oldResult->m_averageStartTime, startTime1)) < m_userSettings.m_calcGeometryValidTime)
+                const Geometry::CGeometryResult& oldResult = *it;
+                if (std::abs(CDateTime::Difference(oldResult.m_averageStartTime, startTime1)) < m_userSettings.m_calcGeometryValidTime)
                 {
-                    if ((oldResult->m_plumeAltitudeError < plumeHeight.m_plumeAltitudeError) && (oldResult->m_plumeAltitude > NOT_A_NUMBER))
+                    if ((oldResult.m_plumeAltitudeError < plumeHeight.m_plumeAltitudeError) && (oldResult.m_plumeAltitude > NOT_A_NUMBER))
                     {
-                        plumeHeight.m_plumeAltitude = oldResult->m_plumeAltitude;
-                        plumeHeight.m_plumeAltitudeError = oldResult->m_plumeAltitudeError;
-                        plumeHeight.m_plumeAltitudeSource = oldResult->m_calculationType;
+                        plumeHeight.m_plumeAltitude = oldResult.m_plumeAltitude;
+                        plumeHeight.m_plumeAltitudeError = oldResult.m_plumeAltitudeError;
+                        plumeHeight.m_plumeAltitudeSource = oldResult.m_calculationType;
                     }
                 }
             }
 
             // Try to calculate the wind-direction
             Geometry::CGeometryCalculator geometryCalculator(m_log, m_userSettings);
-            if (geometryCalculator.CalculateWindDirection(evalLog1, 0, plumeHeight, location[0], *result))
+            if (geometryCalculator.CalculateWindDirection(evalLog1, 0, plumeHeight, location[0], result))
             {
                 // Success!!
-                result->m_instr1.Format(serial1);
-                geometryResults.AddTail(result);
+                result.m_instr1.Format(serial1);
+                geometryResults.push_back(result);
 
                 // tell the user   
-                messageToUser.Format(" + Calculated a wind direction of %.0lf +- %.0lf degrees from a scan by instrument %s",
-                    result->m_windDirection, result->m_windDirectionError, (const char*)serial1);
-                m_log.Information(messageToUser.std_str());
+                messageToUser.Format(" + Calculated a wind direction of %.0lf +- %.0lf degrees from a scan",
+                    result.m_windDirection, result.m_windDirectionError);
+                m_log.Information(context.With("device", serial1.std_str()).With("time", result.m_averageStartTime.ToString()), messageToUser.std_str());
             }
             else
             {
-                delete result;
                 continue;
             }
         }
-    } // end while(pos1 != nullptr)
+    } // end for (size_t pos1 = 0; pos1 < evalLogs.size(); ++pos1)
 
     // Tell the user what we have done
-    if (geometryResults.GetCount() == 0)
+    if (geometryResults.size() == 0)
     {
-        m_log.Information("No plume heights could be calculated");
+        m_log.Information(context, "No plume heights could be calculated");
     }
     else
     {
-        messageToUser.Format("Done calculating geometries. Plume height calculated on %d occasions", geometryResults.GetCount());
-        m_log.Information(messageToUser.std_str());
+        messageToUser.Format("Done calculating geometries. Plume height calculated on %d occasions", geometryResults.size());
+        m_log.Information(context, messageToUser.std_str());
     }
     messageToUser.Format("nFilesChecked1 = %ld, nFilesChecked2 = %ld, nCalculationsMade = %ld", nFilesChecked1, nFilesChecked2, nCalculationsMade);
-    m_log.Information(messageToUser.std_str());
+    m_log.Information(context, messageToUser.std_str());
 }
 
-void CPostProcessing::CalculateFluxes(novac::CList <Evaluation::CExtendedScanResult, Evaluation::CExtendedScanResult&>& evalLogFiles)
+void CPostProcessing::CalculateFluxes(novac::LogContext context, const std::vector<Evaluation::CExtendedScanResult>& evalLogFiles)
 {
     CDateTime scanStartTime;
-    novac::CString serial, messageToUser;
+    novac::CString serial;
     Geometry::CPlumeHeight plumeHeight; // the altitude of the plume, in meters above sea level
     MEASUREMENT_MODE measMode;
     int channel;
@@ -1099,21 +1092,20 @@ void CPostProcessing::CalculateFluxes(novac::CList <Evaluation::CExtendedScanRes
     // Loop through the list of evaluation log files. For each of them, find
     // the best available wind-speed, wind-direction and plume height and
     // calculate the flux.
-    auto pos = evalLogFiles.GetHeadPosition();
-    while (pos != nullptr)
+    for(const auto& scanResult : evalLogFiles)
     {
         // Get the name of this eval-log
-        const novac::CString& evalLog = evalLogFiles.GetAt(pos).m_evalLogFile[m_userSettings.m_mainFitWindow];
-        const CPlumeInScanProperty& plume = evalLogFiles.GetNext(pos).m_scanProperties;
+        const novac::CString& evalLog = scanResult.m_evalLogFile[m_userSettings.m_mainFitWindow];
+        const CPlumeInScanProperty& plume = scanResult.m_scanProperties;
 
-        novac::LogContext context;
-        context = context.With("file", evalLog.std_str());
+        novac::LogContext fileContext = context.With("file", evalLog.std_str());
 
         // if the completeness is too low then ignore this scan.
         if (plume.completeness < (m_userSettings.m_completenessLimitFlux + 0.01))
         {
+            novac::CString messageToUser;
             messageToUser.Format("Scan has completeness = %.2lf which is less than limit of %.2lf. Rejected!", plume.completeness, m_userSettings.m_completenessLimitFlux);
-            m_log.Information(context, messageToUser.std_str());
+            m_log.Information(fileContext, messageToUser.std_str());
             continue;
         }
 
@@ -1127,24 +1119,27 @@ void CPostProcessing::CalculateFluxes(novac::CList <Evaluation::CExtendedScanRes
         // Extract a plume height at this time of day
         m_plumeDataBase.GetPlumeHeight(scanStartTime, plumeHeight);
 
-        m_log.Information("Calculating flux");
+        m_log.Information(fileContext, "Calculating flux");
 
         // Calculate the flux. This also takes care of writing
         // the results to file
         Flux::CFluxResult fluxResult;
-        if (fluxCalc.CalculateFlux(context, evalLog.std_str(), m_windDataBase, plumeHeight, fluxResult))
+        if (fluxCalc.CalculateFlux(fileContext, evalLog.std_str(), m_windDataBase, plumeHeight, fluxResult))
         {
+            novac::CString messageToUser;
+            messageToUser.Format("Calculated flux of %lf [kg/s] for scan.");
+            m_log.Information(fileContext, messageToUser.std_str());
             calculatedFluxes.push_back(fluxResult);
         }
     }
 
     // Now we can write the final fluxes to file
-    m_log.Information("Writing flux log");
+    m_log.Information(context, "Writing flux log");
     WriteFluxResult_XML(calculatedFluxes);
     WriteFluxResult_Txt(calculatedFluxes);
 
     // Also write the statistics for the flux
-    m_log.Information("Writing flux statistics");
+    m_log.Information(context, "Writing flux statistics");
     stat.AttachFluxList(calculatedFluxes);
 
     novac::CString fluxStatFileName;
@@ -1413,9 +1408,9 @@ void CPostProcessing::WriteFluxResult_Txt(const std::list<Flux::CFluxResult>& ca
     fclose(f);
 }
 
-void CPostProcessing::WriteCalculatedGeometriesToFile(novac::CList <Geometry::CGeometryResult*, Geometry::CGeometryResult*>& geometryResults)
+void CPostProcessing::WriteCalculatedGeometriesToFile(novac::LogContext context, const std::vector<Geometry::CGeometryResult>& geometryResults)
 {
-    if (geometryResults.GetCount() == 0)
+    if (geometryResults.size() == 0)
         return; // nothing to write...
 
     FILE* f = nullptr;
@@ -1427,7 +1422,7 @@ void CPostProcessing::WriteCalculatedGeometriesToFile(novac::CList <Geometry::CG
         f = fopen(geomLogFile, "a");
         if (f == nullptr)
         {
-            m_log.Information("Could not open geometry log file for writing. Writing of results failed. ");
+            m_log.Information(context, "Could not open geometry log file for writing. Writing of results failed. ");
             return;
         }
     }
@@ -1436,91 +1431,87 @@ void CPostProcessing::WriteCalculatedGeometriesToFile(novac::CList <Geometry::CG
         f = fopen(geomLogFile, "w");
         if (f == nullptr)
         {
-            m_log.Information("Could not open geometry log file for writing. Writing of results failed. ");
+            m_log.Information(context, "Could not open geometry log file for writing. Writing of results failed. ");
             return;
         }
         fprintf(f, "Date\tTime\tDifferenceInStartTime_minutes\tInstrument1\tInstrument2\tPlumeAltitude_masl\tPlumeHeightError_m\tWindDirection_deg\tWindDirectionError_deg\tPlumeCentre1_deg\tPlumeCentreError1_deg\tPlumeCentre2_deg\tPlumeCentreError2_deg\n");
     }
 
-    auto pos = geometryResults.GetHeadPosition();
-    while (pos != nullptr)
+    for (const auto& result : geometryResults)
     {
-        Geometry::CGeometryResult* result = geometryResults.GetNext(pos);
         // write the file
-        if (result->m_calculationType == Meteorology::MET_GEOMETRY_CALCULATION)
+        if (result.m_calculationType == Meteorology::MET_GEOMETRY_CALCULATION)
         {
-            fprintf(f, "%04d.%02d.%02d\t", result->m_averageStartTime.year, result->m_averageStartTime.month, result->m_averageStartTime.day);
-            fprintf(f, "%02d:%02d:%02d\t", result->m_averageStartTime.hour, result->m_averageStartTime.minute, result->m_averageStartTime.second);
-            fprintf(f, "%.1lf\t", result->m_startTimeDifference / 60.0);
-            fprintf(f, "%s\t%s\t", (const char*)result->m_instr1, (const char*)result->m_instr2);
-            fprintf(f, "%.0lf\t%.0lf\t", result->m_plumeAltitude, result->m_plumeAltitudeError);
-            fprintf(f, "%.0lf\t%.0lf\t", result->m_windDirection, result->m_windDirectionError);
+            fprintf(f, "%04d.%02d.%02d\t", result.m_averageStartTime.year, result.m_averageStartTime.month, result.m_averageStartTime.day);
+            fprintf(f, "%02d:%02d:%02d\t", result.m_averageStartTime.hour, result.m_averageStartTime.minute, result.m_averageStartTime.second);
+            fprintf(f, "%.1lf\t", result.m_startTimeDifference / 60.0);
+            fprintf(f, "%s\t%s\t", (const char*)result.m_instr1, (const char*)result.m_instr2);
+            fprintf(f, "%.0lf\t%.0lf\t", result.m_plumeAltitude, result.m_plumeAltitudeError);
+            fprintf(f, "%.0lf\t%.0lf\t", result.m_windDirection, result.m_windDirectionError);
 
-            fprintf(f, "%.1f\t%.1f\t", result->m_plumeCentre1, result->m_plumeCentreError1);
-            fprintf(f, "%.1f\t%.1f\n", result->m_plumeCentre2, result->m_plumeCentreError2);
+            fprintf(f, "%.1f\t%.1f\t", result.m_plumeCentre1, result.m_plumeCentreError1);
+            fprintf(f, "%.1f\t%.1f\n", result.m_plumeCentre2, result.m_plumeCentreError2);
         }
         else
         {
-            fprintf(f, "%04d.%02d.%02d\t", result->m_averageStartTime.year, result->m_averageStartTime.month, result->m_averageStartTime.day);
-            fprintf(f, "%02d:%02d:%02d\t", result->m_averageStartTime.hour, result->m_averageStartTime.minute, result->m_averageStartTime.second);
+            fprintf(f, "%04d.%02d.%02d\t", result.m_averageStartTime.year, result.m_averageStartTime.month, result.m_averageStartTime.day);
+            fprintf(f, "%02d:%02d:%02d\t", result.m_averageStartTime.hour, result.m_averageStartTime.minute, result.m_averageStartTime.second);
             fprintf(f, "0\t");
-            fprintf(f, "%s\t\t", (const char*)result->m_instr1);
-            fprintf(f, "%.0lf\t%.0lf\t", result->m_plumeAltitude, result->m_plumeAltitudeError);
-            fprintf(f, "%.0lf\t%.0lf\t", result->m_windDirection, result->m_windDirectionError);
+            fprintf(f, "%s\t\t", (const char*)result.m_instr1);
+            fprintf(f, "%.0lf\t%.0lf\t", result.m_plumeAltitude, result.m_plumeAltitudeError);
+            fprintf(f, "%.0lf\t%.0lf\t", result.m_windDirection, result.m_windDirectionError);
 
-            fprintf(f, "%.1f\t%.1f\t", result->m_plumeCentre1, result->m_plumeCentreError1);
+            fprintf(f, "%.1f\t%.1f\t", result.m_plumeCentre1, result.m_plumeCentreError1);
             fprintf(f, "0\t0\n");
         }
     }
     fclose(f);
 }
 
-void CPostProcessing::InsertCalculatedGeometriesIntoDataBase(novac::CList <Geometry::CGeometryResult*, Geometry::CGeometryResult*>& geometryResults)
+void CPostProcessing::InsertCalculatedGeometriesIntoDataBase(novac::LogContext context, const std::vector<Geometry::CGeometryResult>& geometryResults)
 {
     Meteorology::CWindField windField;
     CDateTime validFrom, validTo;
     Configuration::CInstrumentLocation location;
 
-    auto pos = geometryResults.GetHeadPosition();
-    while (pos != nullptr)
+    for (const auto& result : geometryResults)
     {
-        Geometry::CGeometryResult* result = geometryResults.GetNext(pos);
-
-        if (result->m_plumeAltitude > 0.0)
+        if (result.m_plumeAltitude > 0.0)
         {
             // insert the plume height into the plume height database
-            this->m_plumeDataBase.InsertPlumeHeight(*result);
+            this->m_plumeDataBase.InsertPlumeHeight(result);
         }
 
-        if (result->m_windDirection > NOT_A_NUMBER)
+        if (result.m_windDirection > NOT_A_NUMBER)
         {
             try
             {
                 // get the location of the instrument at the time of the measurement
-                location = m_setup.GetInstrumentLocation(result->m_instr1.std_str(), result->m_averageStartTime);
+                location = m_setup.GetInstrumentLocation(result.m_instr1.std_str(), result.m_averageStartTime);
 
                 // get the time-interval that the measurement is valid for
-                validFrom = CDateTime(result->m_averageStartTime);
+                validFrom = CDateTime(result.m_averageStartTime);
                 validFrom.Decrement(m_userSettings.m_calcGeometryValidTime);
-                validTo = CDateTime(result->m_averageStartTime);
+                validTo = CDateTime(result.m_averageStartTime);
                 validTo.Increment(m_userSettings.m_calcGeometryValidTime);
 
                 // insert the wind-direction into the wind database
-                m_windDataBase.InsertWindDirection(validFrom, validTo, result->m_windDirection, result->m_windDirectionError, result->m_calculationType, nullptr);
+                m_windDataBase.InsertWindDirection(validFrom, validTo, result.m_windDirection, result.m_windDirectionError, result.m_calculationType, nullptr);
             }
             catch (PPPLib::NotFoundException& ex)
             {
-                m_log.Information(ex.message);
+                m_log.Information(context, ex.message);
             }
         }
     }
 }
 
-void CPostProcessing::CalculateDualBeamWindSpeeds(novac::CList <Evaluation::CExtendedScanResult, Evaluation::CExtendedScanResult&>& evalLogs)
+void CPostProcessing::CalculateDualBeamWindSpeeds(novac::LogContext context, const std::vector<Evaluation::CExtendedScanResult>& evalLogs)
 {
-    novac::CList <novac::CString, novac::CString&> masterList; // list of wind-measurements from the master channel
-    novac::CList <novac::CString, novac::CString&> slaveList;  // list of wind-measurements from the slave channel
-    novac::CList <novac::CString, novac::CString&> heidelbergList;  // list of wind-measurements from the Heidelbergensis
+    std::vector<std::string> masterList; // list of wind-measurements from the master channel
+    std::vector<std::string> slaveList;  // list of wind-measurements from the slave channel
+    std::vector<std::string> heidelbergList;  // list of wind-measurements from the Heidelbergensis
+
     CDateTime validFrom, validTo;
 
     novac::CString serial, serial2, fileName, fileName2, nonsenseString;
@@ -1535,13 +1526,12 @@ void CPostProcessing::CalculateDualBeamWindSpeeds(novac::CList <Evaluation::CExt
 
     // -------------------------------- step 1. -------------------------------------
     // search through 'evalLogs' for dual-beam measurements from master and from slave
-    auto logPosition = evalLogs.GetHeadPosition();
-    while (logPosition != nullptr)
+    for (const auto& scanResult : evalLogs)
     {
+        const novac::CString& fileNameAndPath = scanResult.m_evalLogFile[m_userSettings.m_mainFitWindow];
+
         try
         {
-            const novac::CString& fileNameAndPath = evalLogs.GetNext(logPosition).m_evalLogFile[m_userSettings.m_mainFitWindow];
-
             // to know the start-time of the measurement, we need to 
             // extract just the file-name, i.e. remove the path
             fileName = novac::CString(fileNameAndPath);
@@ -1559,35 +1549,36 @@ void CPostProcessing::CalculateDualBeamWindSpeeds(novac::CList <Evaluation::CExt
                 if (location.m_instrumentType == INSTRUMENT_TYPE::INSTR_HEIDELBERG)
                 {
                     // this is a heidelberg instrument
-                    heidelbergList.AddTail(novac::CString(fileNameAndPath));
+                    heidelbergList.push_back(fileNameAndPath.std_str());
                 }
                 else
                 {
                     // this is a gothenburg instrument
                     if (channel == 0)
                     {
-                        masterList.AddTail(novac::CString(fileNameAndPath));
+                        masterList.push_back(fileNameAndPath.std_str());
                     }
                     else if (channel == 1)
                     {
-                        slaveList.AddTail(novac::CString(fileNameAndPath));
+                        slaveList.push_back(fileNameAndPath.std_str());
                     }
                 }
             }
         }
         catch (PPPLib::NotFoundException& ex)
         {
-            m_log.Information(ex.message);
+            novac::LogContext fileContext = context.With("file", fileNameAndPath.std_str());
+            m_log.Information(fileContext, ex.message);
         }
     }
     if (nWindMeasFound == 0)
     {
-        m_log.Information("No dual-beam wind speed measurements found.");
+        m_log.Information(context, "No dual-beam wind speed measurements found.");
         return; // if nothing was found...
     }
 
     userMessage.Format("%d dual-beam wind speed measurements found. Calculating wind-speeds", nWindMeasFound);
-    m_log.Information(userMessage.std_str());
+    m_log.Information(context, userMessage.std_str());
 
     // Create the dual-beam log-file
     windLogFile.Format("%s%cDualBeamLog.txt", (const char*)m_userSettings.m_outputDirectory, Poco::Path::separator());
@@ -1597,17 +1588,18 @@ void CPostProcessing::CalculateDualBeamWindSpeeds(novac::CList <Evaluation::CExt
     // -------------------------------- step 2. -------------------------------------
     // loop through each of the measurements from the heidelberg instruments
     // and calculate the wind speed for each measurement
-    auto instrPos = heidelbergList.GetHeadPosition();
-    while (instrPos != nullptr)
+    for (const auto& fileNameAndPath : heidelbergList)
     {
+        fileName = novac::CString(fileNameAndPath);
+        Common::GetFileName(fileName);
+
+        novac::LogContext fileContext = context.With("file", fileName.std_str());
+        fileContext = fileContext.With("mode", "dualBeamWindSpeed");
+
         try
         {
-            const novac::CString& fileNameAndPath = heidelbergList.GetNext(instrPos);
-
             // to know the start-time of the measurement, we need to 
             // extract just the file-name, i.e. remove the path
-            fileName = novac::CString(fileNameAndPath);
-            Common::GetFileName(fileName);
             novac::CFileUtils::GetInfoFromFileName(fileName, startTime, serial, channel, meas_mode);
 
             // Get the plume height at the time of the measurement
@@ -1625,13 +1617,13 @@ void CPostProcessing::CalculateDualBeamWindSpeeds(novac::CList <Evaluation::CExt
                 // insert the newly calculated wind-speed into the database
                 if (windField.GetWindSpeedError() > m_userSettings.m_dualBeam_MaxWindSpeedError)
                 {
-                    userMessage.Format("-Calculated a wind-speed of %.1lf +- %.1lf m/s on %04d.%02d.%02d at %02d:%02d. Error too large, measurement discarded.", windField.GetWindSpeed(), windField.GetWindSpeedError(),
+                    userMessage.Format("Calculated a wind-speed of %.1lf +- %.1lf m/s on %04d.%02d.%02d at %02d:%02d. Error too large, measurement discarded.", windField.GetWindSpeed(), windField.GetWindSpeedError(),
                         startTime.year, startTime.month, startTime.day, startTime.hour, startTime.minute);
                 }
                 else
                 {
                     // tell the user...
-                    userMessage.Format("+Calculated a wind-speed of %.1lf +- %.1lf m/s on %04d.%02d.%02d at %02d:%02d. Measurement accepted", windField.GetWindSpeed(), windField.GetWindSpeedError(),
+                    userMessage.Format("Calculated a wind-speed of %.1lf +- %.1lf m/s on %04d.%02d.%02d at %02d:%02d. Measurement accepted", windField.GetWindSpeed(), windField.GetWindSpeedError(),
                         startTime.year, startTime.month, startTime.day, startTime.hour, startTime.minute);
 
                     // get the time-interval that the measurement is valid for
@@ -1640,40 +1632,36 @@ void CPostProcessing::CalculateDualBeamWindSpeeds(novac::CList <Evaluation::CExt
                     // insert the new wind speed into the database
                     m_windDataBase.InsertWindSpeed(validFrom, validTo, windField.GetWindSpeed(), windField.GetWindSpeedError(), Meteorology::MET_DUAL_BEAM_MEASUREMENT, nullptr);
                 }
-                m_log.Information(userMessage.std_str());
+                m_log.Information(fileContext, userMessage.std_str());
             }
             else
             {
-                userMessage.Format("Failed to calculate wind speed from measurement: %s", (const char*)fileName);
-                m_log.Information(userMessage.std_str());
+                m_log.Information(fileContext, "Failed to calculate wind speed from measurement.");
             }
         }
         catch (PPPLib::NotFoundException& ex)
         {
-            m_log.Information(ex.message);
+            m_log.Information(fileContext, ex.message);
         }
     }
 
     // -------------------------------- step 3. -------------------------------------
     // loop through each of the measurements from a master-channel and try to match them with a measurement
     // from a slave channel...
-    auto masterPos = masterList.GetHeadPosition();
-    while (masterPos != nullptr)
+    for (const auto& fileNameAndPath : masterList)
     {
-        const novac::CString& fileNameAndPath = masterList.GetNext(masterPos);
-
         // extract just the file-name, i.e. remove the path
         fileName = novac::CString(fileNameAndPath);
         Common::GetFileName(fileName);
 
+        novac::LogContext fileContext = context.With("file1", fileName.std_str());
+        fileContext = fileContext.With("mode", "dualBeamWindSpeed");
+
         novac::CFileUtils::GetInfoFromFileName(fileName, startTime, serial, channel, meas_mode);
 
         // now check if we can match this one with a file in the slave-channel
-        auto pos2 = slaveList.GetHeadPosition();
-        while (pos2 != nullptr)
+        for (const auto& fileNameAndPath2 : slaveList)
         {
-            const novac::CString& fileNameAndPath2 = slaveList.GetNext(pos2);
-
             // extract just the file-name, i.e. remove the path
             fileName2 = novac::CString(fileNameAndPath2);
             Common::GetFileName(fileName2);
@@ -1683,6 +1671,7 @@ void CPostProcessing::CalculateDualBeamWindSpeeds(novac::CList <Evaluation::CExt
             if (Equals(serial, serial2) && (startTime == startTime2))
             {
                 // we have found a match!!!
+                novac::LogContext calcContext = fileContext.With("file2", fileName2.std_str());
 
                 // Get the plume height at the time of the measurement
                 m_plumeDataBase.GetPlumeHeight(startTime, plumeHeight);
@@ -1713,38 +1702,35 @@ void CPostProcessing::CalculateDualBeamWindSpeeds(novac::CList <Evaluation::CExt
                         // insert the new wind speed into the database
                         m_windDataBase.InsertWindSpeed(validFrom, validTo, windField.GetWindSpeed(), windField.GetWindSpeedError(), Meteorology::MET_DUAL_BEAM_MEASUREMENT, nullptr);
                     }
-                    m_log.Information(userMessage.std_str());
+                    m_log.Information(calcContext, userMessage.std_str());
 
                 }
                 else
                 {
-                    userMessage.Format("Failed to calculate wind speed from measurement: %s", (const char*)fileName);
-                    m_log.Information(userMessage.std_str());
+                    m_log.Information(calcContext, "Failed to calculate wind speed from measurement.");
                 }
             }
         }
     }
 }
 
-void CPostProcessing::SortEvaluationLogs(novac::CList <Evaluation::CExtendedScanResult, Evaluation::CExtendedScanResult&>& evalLogs)
+void CPostProcessing::SortEvaluationLogs(std::vector<Evaluation::CExtendedScanResult>& evalLogs)
 {
-    novac::CList <Evaluation::CExtendedScanResult, Evaluation::CExtendedScanResult&> left;
-    novac::CList <Evaluation::CExtendedScanResult, Evaluation::CExtendedScanResult&> right;
+    std::vector<Evaluation::CExtendedScanResult> left;
+    std::vector<Evaluation::CExtendedScanResult> right;
 
     // If this list consists of only one element, then we're done
-    if (evalLogs.GetCount() <= 1)
+    if (evalLogs.size() <= 1)
         return;
 
     // Divide the list into two, and sort each one of them
-    auto pos1 = evalLogs.GetHeadPosition();
     int index = 0;
-    while (pos1 != nullptr)
+    for (auto& log : evalLogs)
     {
-        Evaluation::CExtendedScanResult& log = evalLogs.GetNext(pos1);
         if (index % 2 == 0)
-            left.AddTail(log);
+            left.push_back(log);
         else
-            right.AddTail(log);
+            right.push_back(log);
         ++index;
     }
 
@@ -1752,61 +1738,63 @@ void CPostProcessing::SortEvaluationLogs(novac::CList <Evaluation::CExtendedScan
     SortEvaluationLogs(right);
 
     // Merge the two lists into one, sorted list
-    evalLogs.RemoveAll();
-    auto pos3 = left.GetHeadPosition();
-    auto pos2 = right.GetHeadPosition();
-    while (pos3 != nullptr && pos2 != nullptr)
+    evalLogs.clear();
+    auto iteratorLeft = left.begin();
+    auto iteratorRight = right.begin();
+    while (iteratorLeft != left.end() && iteratorRight != right.end())
     {
-        Evaluation::CExtendedScanResult& log1 = left.GetAt(pos3);
-        Evaluation::CExtendedScanResult& log2 = right.GetAt(pos2);
+        Evaluation::CExtendedScanResult& leftItem = *iteratorLeft;
+        Evaluation::CExtendedScanResult& rightItem = *iteratorRight;
 
-        if (log2.m_startTime < log1.m_startTime)
+        if (rightItem.m_startTime < leftItem.m_startTime)
         {
-            evalLogs.AddTail(log2);
-            right.GetNext(pos2);
+            evalLogs.push_back(rightItem);
+            ++iteratorRight;
         }
         else
         {
-            evalLogs.AddTail(log1);
-            left.GetNext(pos3);
+            evalLogs.push_back(leftItem);
+            ++iteratorLeft;
         }
     }
 
-    while (pos3 != nullptr)
+    while (iteratorLeft != left.end())
     {
-        evalLogs.AddTail(left.GetNext(pos3));
+        evalLogs.push_back(*iteratorLeft);
+        ++iteratorLeft;
     }
 
-    while (pos2 != nullptr)
+    while (iteratorRight != right.end())
     {
-        evalLogs.AddTail(right.GetNext(pos2));
+        evalLogs.push_back(*iteratorRight);
+        ++iteratorRight;
     }
 
     return;
 }
 
-void CPostProcessing::UploadResultsToFTP()
+void CPostProcessing::UploadResultsToFTP(novac::LogContext context)
 {
     Communication::CFTPServerConnection connection(m_log, m_userSettings);
     novac::CString fileName;
 
     // Generate a list with all the files we want to upload.
-    novac::CList <novac::CString, novac::CString&> fileList;
+    std::vector<std::string> fileList;
 
     // 1. the geometry log file
     fileName.Format("%s%cGeometryLog.txt", (const char*)m_userSettings.m_outputDirectory, Poco::Path::separator());
-    fileList.AddTail(fileName);
+    fileList.push_back(fileName.std_str());
 
     // 2. the generated wind field
     fileName.Format("%s%cGeneratedWindField.wxml", (const char*)m_userSettings.m_outputDirectory, Poco::Path::separator());
-    fileList.AddTail(fileName);
+    fileList.push_back(fileName.std_str());
 
     // 3. the generated flux log
     fileName.Format("%s%cFluxLog.txt", (const char*)m_userSettings.m_outputDirectory, Poco::Path::separator());
-    fileList.AddTail(fileName);
+    fileList.push_back(fileName.std_str());
 
     // upload the files
-    connection.UploadResults(m_userSettings.m_FTPDirectory, m_userSettings.m_FTPUsername, m_userSettings.m_FTPPassword, fileList);
+    connection.UploadResults(context, m_userSettings.m_FTPDirectory, m_userSettings.m_FTPUsername, m_userSettings.m_FTPPassword, fileList);
 
     return;
 }
@@ -1876,13 +1864,12 @@ bool CPostProcessing::ConvolveReference(novac::LogContext context, novac::CRefer
     return true;
 }
 
-void CPostProcessing::LocateEvaluationLogFiles(const novac::CString& directory, novac::CList <Evaluation::CExtendedScanResult, Evaluation::CExtendedScanResult&>& evaluationLogFiles)
+void CPostProcessing::LocateEvaluationLogFiles(novac::LogContext context, const std::string& directory, std::vector<Evaluation::CExtendedScanResult>& evaluationLogFiles)
 {
     std::vector<std::string> evalLogFiles;
 
-    novac::CString messageToUser;
-    messageToUser.Format("Searching for evaluation log - files in directory %s", (const char*)m_userSettings.m_outputDirectory);
-    m_log.Information(messageToUser.std_str());
+    context = context.With("directory", directory);
+    m_log.Information(context, "Searching for evaluation log files in directory.");
 
     const bool includeSubDirs = (m_userSettings.m_includeSubDirectories_Local > 0);
     Filesystem::FileSearchCriterion limits;
@@ -1892,8 +1879,9 @@ void CPostProcessing::LocateEvaluationLogFiles(const novac::CString& directory, 
     Filesystem::SearchDirectoryForFiles(directory, includeSubDirs, evalLogFiles, &limits);
 
 
+    novac::CString messageToUser;
     messageToUser.Format("%d Evaluation log files found, starting reading", evalLogFiles.size());
-    m_log.Information(messageToUser.std_str());
+    m_log.Information(context, messageToUser.std_str());
 
     size_t nofFailedLogReads = 0;
 
@@ -1917,9 +1905,9 @@ void CPostProcessing::LocateEvaluationLogFiles(const novac::CString& directory, 
         }
         Evaluation::CScanResult scanResult = logReader.m_scan[0];
 
-        evaluationLogFiles.AddTail(result);
+        evaluationLogFiles.push_back(result);
     }
 
     messageToUser.Format("%d Evaluation log files read successfully.", evalLogFiles.size() - nofFailedLogReads);
-    m_log.Information(messageToUser.std_str());
+    m_log.Information(context, messageToUser.std_str());
 }

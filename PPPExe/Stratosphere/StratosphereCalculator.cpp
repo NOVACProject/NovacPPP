@@ -116,7 +116,6 @@ void CStratosphereCalculator::BuildMeasurementList(const std::list <Evaluation::
 {
     std::list<Evaluation::CExtendedScanResult>::const_iterator p = results.begin();
     novac::CString mainFitWindowName = novac::CString(m_userSettings.m_fitWindowsToUse[m_userSettings.m_mainFitWindow]);
-    novac::CString evalLogfileToRead;
     CMolecule specie = CMolecule(m_userSettings.m_molecule);
 
     // loop through all the evaluation log files
@@ -124,21 +123,21 @@ void CStratosphereCalculator::BuildMeasurementList(const std::list <Evaluation::
     {
         const Evaluation::CExtendedScanResult& result = (Evaluation::CExtendedScanResult&)*(p++);
 
-        evalLogfileToRead.Format("");
+        std::string evalLogfileToRead;
         for (int k = 0; k < m_userSettings.m_nFitWindowsToUse; ++k)
         {
             if (Equals(result.m_fitWindowName[k], mainFitWindowName))
             {
-                evalLogfileToRead.Format(result.m_evalLogFile[k]);
+                evalLogfileToRead = result.m_evalLogFile[k];
                 k = 1000;
                 continue;
             }
         }
-        if (evalLogfileToRead.GetLength() < 3)
+        if (evalLogfileToRead.size() < 3)
             continue; // file not found...
 
         // REad the evaluation-log file
-        FileHandler::CEvaluationLogFileHandler reader(m_log, evalLogfileToRead.std_str(), m_userSettings.m_molecule);
+        FileHandler::CEvaluationLogFileHandler reader(m_log, evalLogfileToRead, m_userSettings.m_molecule);
         if (RETURN_CODE::SUCCESS != reader.ReadEvaluationLog())
             continue;
 

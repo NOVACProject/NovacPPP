@@ -33,7 +33,7 @@ CXMLWindFileReader::~CXMLWindFileReader(void)
 {
 }
 
-void CXMLWindFileReader::ReadWindFile(const novac::CString& fileName, Meteorology::CWindDataBase& dataBase)
+void CXMLWindFileReader::ReadWindFile(novac::LogContext context, const novac::CString& fileName, Meteorology::CWindDataBase& dataBase)
 {
     novac::CString localFileName, userMessage;
 
@@ -54,7 +54,7 @@ void CXMLWindFileReader::ReadWindFile(const novac::CString& fileName, Meteorolog
             throw PPPLib::FileIoException(userMessage.c_str());
         }
 
-        if (ftp.DownloadFileFromFTP(fileName, localFileName, m_userSettings.m_FTPUsername, m_userSettings.m_FTPPassword))
+        if (ftp.DownloadFileFromFTP(context, fileName, localFileName, m_userSettings.m_FTPUsername, m_userSettings.m_FTPPassword))
         {
             throw PPPLib::FileIoException("Failed to download wind file from FTP server");
         }
@@ -106,7 +106,7 @@ void CXMLWindFileReader::ReadWindFile(const novac::CString& fileName, Meteorolog
     Close();
 }
 
-void CXMLWindFileReader::ReadWindDirectory(const novac::CString& directory, Meteorology::CWindDataBase& dataBase, const CDateTime* dateFrom, const CDateTime* dateTo)
+void CXMLWindFileReader::ReadWindDirectory(novac::LogContext context, const novac::CString& directory, Meteorology::CWindDataBase& dataBase, const CDateTime* dateFrom, const CDateTime* dateTo)
 {
     novac::CStdioFile file;
     novac::CString localFileName, remoteFileName, userMessage, ftpDir;
@@ -177,7 +177,7 @@ void CXMLWindFileReader::ReadWindDirectory(const novac::CString& directory, Mete
             {
                 remoteFileName.Format("%s%s", (const char*)ftpDir, (const char*)name);
 
-                if (ftp->DownloadFileFromFTP(remoteFileName, localFileName, m_userSettings.m_FTPUsername, m_userSettings.m_FTPPassword))
+                if (ftp->DownloadFileFromFTP(context, remoteFileName, localFileName, m_userSettings.m_FTPUsername, m_userSettings.m_FTPPassword))
                 {
                     throw PPPLib::FileIoException("Failed to download wind file from FTP server");
                 }
@@ -191,7 +191,7 @@ void CXMLWindFileReader::ReadWindDirectory(const novac::CString& directory, Mete
         // If the directory is on the local computer, then this is how to check the files
         char fileToFind[MAX_PATH];
         sprintf(fileToFind, "%s/*.wxml", (const char*)directory);
-        ShowMessage("Searching for wind files in: " + directory);
+        m_log.Information(context, "Searching for wind files in: " + directory.std_str());
 
         // Search for the files
         std::set<std::string> filesFound;
@@ -227,7 +227,7 @@ void CXMLWindFileReader::ReadWindDirectory(const novac::CString& directory, Mete
 
         try
         {
-            ReadWindFile(localFileName, dataBase);
+            ReadWindFile(context, localFileName, dataBase);
         }
         catch (const std::exception& e)
         {
@@ -239,7 +239,7 @@ void CXMLWindFileReader::ReadWindDirectory(const novac::CString& directory, Mete
     if (nFilesRead > 0)
     {
         userMessage.Format("Successfully read in %d wind field files", nFilesRead);
-        ShowMessage(userMessage);
+        m_log.Information(context, userMessage.std_str());
         return;
     }
 

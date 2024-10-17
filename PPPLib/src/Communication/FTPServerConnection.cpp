@@ -81,6 +81,7 @@ static novac::GuardedValue nFTPThreadsRunning;
 
 
 int CFTPServerConnection::DownloadDataFromFTP(
+    novac::LogContext context,
     const novac::CString& serverDir,
     const novac::CString& username,
     const novac::CString& password,
@@ -88,7 +89,6 @@ int CFTPServerConnection::DownloadDataFromFTP(
 {
 
     unsigned int nRounds = 0;
-    novac::LogContext context;
 
     ftpLogin login;
     login.userName = username.std_str();
@@ -107,7 +107,7 @@ int CFTPServerConnection::DownloadDataFromFTP(
     {
         novac::CString userMessage;
         userMessage.Format("Could not create temp directory: %s", (const char*)m_userSettings.m_tempDirectory);
-        m_log.Error(userMessage.std_str());
+        m_log.Error(context, userMessage.std_str());
         return 1;
     }
 
@@ -137,7 +137,7 @@ int CFTPServerConnection::DownloadDataFromFTP(
             {
                 userMessage.Format("  %.0lf MBytes downloaded (<=> %.2lf kBytes/second)", nMbytesDownloaded, 1024 * nMbytesDownloaded / nSecondsPassed);
             }
-            m_log.Information(userMessage.std_str());
+            m_log.Information(context, userMessage.std_str());
         }
 
         std::this_thread::sleep_for(std::chrono::milliseconds{ 500 });
@@ -544,6 +544,7 @@ int CFTPServerConnection::DownloadFileListFromFTP(const novac::CString& serverDi
 }
 
 int CFTPServerConnection::DownloadFileFromFTP(
+    novac::LogContext context,
     const novac::CString& remoteFileName,
     const novac::CString& localFileName,
     const novac::CString& username,
@@ -577,7 +578,6 @@ int CFTPServerConnection::DownloadFileFromFTP(
     directory.Format(remoteFileName.Right(remoteFileName.GetLength() - indexOfSlash[1] - 1));
     login.server = subString.Right(subString.GetLength() - indexOfSlash[0] - 1).std_str();
 
-    novac::LogContext context;
     context = context.With("server", login.server);
 
     // create a new connection
@@ -597,9 +597,7 @@ int CFTPServerConnection::DownloadFileFromFTP(
     // Download the file
     if (!DownloadAFile(m_log, context, ftp, remoteFileName.std_str(), localFileName.std_str()))
     {
-        novac::CString errorMessage;
-        errorMessage.Format("Failed to download remote file %s from FTP server", (const char*)remoteFileName);
-        m_log.Error(context, errorMessage.std_str());
+        m_log.Error(context.With("file", remoteFileName.std_str()), "Failed to download remote file from FTP server.");
     }
 
     // disconnect
@@ -609,10 +607,11 @@ int CFTPServerConnection::DownloadFileFromFTP(
 }
 
 int CFTPServerConnection::UploadResults(
+    novac::LogContext context,
     const novac::CString& server,
     const novac::CString& username,
     const novac::CString& password,
-    novac::CList <novac::CString, novac::CString&>& fileList)
+    const std::vector<std::string>& fileList)
 {
     CDateTime now;
 
@@ -657,20 +656,15 @@ int CFTPServerConnection::UploadResults(
     ftp.setWorkingDirectory(directoryName.std_str());
 
     // Upload the files
-    auto p = fileList.GetHeadPosition();
-    while (p != nullptr)
+    for(std::string localFile : fileList)
     {
-        // Get the local name and path of the file to upload
-        novac::CString& localFile = fileList.GetNext(p);
-
         // Get the file-name to upload the file to...
-        remoteFile.Format(localFile);
+        remoteFile.Format(localFile.c_str());
         CFileUtils::GetFileName(remoteFile);
 
-        if (!UploadAFile(ftp, localFile.std_str(), remoteFile.std_str()))
+        if (!UploadAFile(ftp, localFile, remoteFile.std_str()))
         {
-            errorMessage.Format("Failed to upload local file %s to FTP server", (const char*)localFile);
-            m_log.Error(errorMessage.std_str());
+            m_log.Error(context.With("file", localFile), "Failed to upload local file to FTP server");
         }
     }
 

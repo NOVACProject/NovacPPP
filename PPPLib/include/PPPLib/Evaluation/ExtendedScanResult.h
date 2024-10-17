@@ -28,16 +28,16 @@ struct CExtendedScanResult
 public:
     /** The full path and file-name to the .pak-file containing the spectra
         from which this result was computed. */
-    novac::CString m_pakFile = "";
+    std::string m_pakFile = "";
 
     /** The full path and file-name of the evaluation log file that was generated.
         The file itself contains the result of the evaluation */
-    novac::CString m_evalLogFile[MAX_FIT_WINDOWS];
+    std::string m_evalLogFile[MAX_FIT_WINDOWS];
 
     /** The full name of the fit-window that was used to generate each evaluation
         result, this is typically a name such as 'SO2', 'SO2_low' or 'O4'
          m_fitWindowName[i] is the name of the fit-window behind the result in m_evalLogFile[i]. */
-    novac::CString m_fitWindowName[MAX_FIT_WINDOWS];
+    std::string m_fitWindowName[MAX_FIT_WINDOWS];
 
     /** The date and time that the scan was generated. In UTC, taken from the .pak-file  */
     novac::CDateTime m_startTime;

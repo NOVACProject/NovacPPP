@@ -21,11 +21,13 @@ static std::string GetWindFieldFile()
 TEST_CASE("ReadWindFile gives expected wind profile", "[XMLWindFileReader][File]")
 {
     novac::ConsoleLog logger;
+    novac::LogContext context;
     Configuration::CUserConfiguration userConfiguration;
     Meteorology::CWindDataBase resultingDatabase;
     FileHandler::CXMLWindFileReader sut{ logger, userConfiguration };
 
     sut.ReadWindFile(
+    context,
         GetWindFieldFile(),
         resultingDatabase);
 
