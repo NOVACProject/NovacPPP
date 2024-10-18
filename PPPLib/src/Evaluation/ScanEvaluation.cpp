@@ -56,14 +56,16 @@ std::unique_ptr<CScanResult> CScanEvaluation::EvaluateScan(
     if (adjustedFitWindow.fraunhoferRef.m_path.size() > 4)
     {
         m_log.Debug(context, "Determining shift from FraunhoferReference");
-        this->m_lastErrorMessage.clear();
+        m_lastErrorMessage.clear();
 
-        int result = adjustedFitWindow.fraunhoferRef.ReadCrossSectionDataFromFile();
-        if (result != 0)
+        // Verify setup
+        if (adjustedFitWindow.fraunhoferRef.m_data == nullptr)
         {
-            std::stringstream msg;
-            msg << "Failed to read Fraunhofer reference spectrum file: " << adjustedFitWindow.fraunhoferRef.m_path;
-            throw InvalidReferenceException(msg.str());
+            throw std::logic_error("Expected the Fraunhofer reference to already have been read in when attempting to evaluate the scan.");
+        }
+        else if ((int)adjustedFitWindow.fraunhoferRef.m_data->GetSize() != spectrometerModel.numberOfPixels)
+        {
+            throw std::invalid_argument("The read in Fraunhofer reference has invalid length.");
         }
 
         // If we have a solar-spectrum that we can use to determine the shift
