@@ -8,7 +8,9 @@
 #include <PPPLib/Evaluation/PostEvaluationIO.h>
 #include <SpectralEvaluation/Spectra/SpectrometerModel.h>
 #include <SpectralEvaluation/File/File.h>
+#include <SpectralEvaluation/VectorUtils.h>
 
+#include <chrono>
 #include <sstream>
 
 using namespace Evaluation;
@@ -106,8 +108,10 @@ bool CPostEvaluationController::EvaluateScan(
     }
 
     // 6. Evaluate the scan
+    auto startEvaluation = std::chrono::steady_clock::now();
     CScanEvaluation ev{ m_userSettings, m_log };
     std::unique_ptr<CScanResult> lastResult = ev.EvaluateScan(context, scan, fitWindow, spectrometerModel, &darkSettings);
+    auto stopEvaluation = std::chrono::steady_clock::now();
 
     // 7. Check the reasonability of the evaluation
     if (lastResult == nullptr || lastResult->GetEvaluatedNum() == 0)
@@ -116,8 +120,19 @@ bool CPostEvaluationController::EvaluateScan(
         return false;
     }
 
-    // TODO: Make use of this really useful index...
     const int specieIndex = lastResult->GetSpecieIndex(CMolecule(m_userSettings.m_molecule).name);
+
+    {
+        std::stringstream msg;
+        std::vector<double> columns = novac::GetColumns(*lastResult, specieIndex);
+        std::vector<double> columnErrors = novac::GetColumnErrors(*lastResult, specieIndex);
+        auto minMax = MinMax(columns);
+        msg << "Scan evaluated in " << std::chrono::duration_cast<std::chrono::milliseconds>(stopEvaluation - startEvaluation).count() << " ms.";
+        msg << " " << lastResult->GetEvaluatedNum() << " spectra evaluated.";
+        msg << " Min column : " << minMax.first << ", max column : " << minMax.second;
+        msg << ". Median column error: " << Median(columnErrors);
+        m_log.Information(context, msg.str());
+    }
 
     // 9. Get the mode of the evaluation
     lastResult->CheckMeasurementMode();
