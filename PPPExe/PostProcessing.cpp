@@ -3,9 +3,6 @@
 #include "Common/Common.h"
 #include <SpectralEvaluation/File/File.h>
 
-#undef min
-#undef max
-
 #include <algorithm>
 #include <cmath>
 #include <list>
@@ -32,7 +29,6 @@
 #include <PPPLib/File/EvaluationLogFileHandler.h>
 
 #include <PPPLib/WindMeasurement/WindSpeedCalculator.h>
-
 #include <PPPLib/Meteorology/XMLWindFileReader.h>
 #include <PPPLib/File/Filesystem.h>
 #include <PPPLib/VolcanoInfo.h>
@@ -80,7 +76,7 @@ CPostProcessing::CPostProcessing(ILogger& logger, Configuration::CNovacPPPConfig
 
 void CPostProcessing::DoPostProcessing_Flux()
 {
-    std::vector<Evaluation::CExtendedScanResult> evalLogFiles;
+    std::vector<Evaluation::CExtendedScanResult> evaluatedScanResult;
     novac::CString messageToUser, windFileName;
 
     novac::LogContext context;
@@ -140,25 +136,25 @@ void CPostProcessing::DoPostProcessing_Flux()
         // Evaluate the scans. This at the same time generates a list of evaluation-log
         // files with the evaluated results
         m_log.Information(context, "--- Running Evaluations --- ");
-        EvaluateScans(pakFileList, evalLogFiles);
-        messageToUser.Format("%d evaluation log files accepted", evalLogFiles.size());
+        EvaluateScans(pakFileList, evaluatedScanResult);
+        messageToUser.Format("%d evaluation log files accepted", evaluatedScanResult.size());
         m_log.Information(context, messageToUser.std_str());
     }
     else
     {
         // Don't evaluate the scans, just read the log-files and calculate fluxes from there.
-        LocateEvaluationLogFiles(context, std::string(m_userSettings.m_outputDirectory.c_str()), evalLogFiles);
+        evaluatedScanResult = LocateEvaluationLogFiles(context, m_userSettings.m_outputDirectory.std_str());
     }
 
     // Sort the evaluation-logs in order of increasing start-time, this to make
     // the looking for matching files in 'CalculateGeometries' faster
-    m_log.Information("Evaluation done. Sorting the evaluation log files");
-    SortEvaluationLogs(evalLogFiles);
+    m_log.Information("Evaluation done. Sorting the evaluation results");
+    SortEvaluationLogs(evaluatedScanResult);
     m_log.Information(context, "Sort done.");
 
     // 3. Loop through list with output text files from evaluation and calculate the geometries
     std::vector<Geometry::CGeometryResult> geometryResults;
-    CalculateGeometries(context, evalLogFiles, geometryResults);
+    CalculateGeometries(context, evaluatedScanResult, geometryResults);
 
     // 4.1 write the calculations to file, for later checking or other uses...
     WriteCalculatedGeometriesToFile(context, geometryResults);
@@ -168,10 +164,10 @@ void CPostProcessing::DoPostProcessing_Flux()
 
     // 5. Calculate the wind-speeds from the wind-speed measurements
     //  the plume heights are taken from the database
-    CalculateDualBeamWindSpeeds(context, evalLogFiles);
+    CalculateDualBeamWindSpeeds(context, evaluatedScanResult);
 
     // 6. Calculate flux from evaluation text files
-    CalculateFluxes(context, evalLogFiles);
+    CalculateFluxes(context, evaluatedScanResult);
 
     // 7. Write the statistics
     novac::CString statFileName;
@@ -1864,9 +1860,10 @@ bool CPostProcessing::ConvolveReference(novac::LogContext context, novac::CRefer
     return true;
 }
 
-void CPostProcessing::LocateEvaluationLogFiles(novac::LogContext context, const std::string& directory, std::vector<Evaluation::CExtendedScanResult>& evaluationLogFiles)
+std::vector<Evaluation::CExtendedScanResult> CPostProcessing::LocateEvaluationLogFiles(novac::LogContext context, const std::string& directory) const
 {
-    std::vector<std::string> evalLogFiles;
+    std::vector<std::string> filenames;
+    std::vector<Evaluation::CExtendedScanResult> evaluationLogFiles;
 
     context = context.With(novac::LogContext::Directory, directory);
     m_log.Information(context, "Searching for evaluation log files in directory.");
@@ -1876,38 +1873,59 @@ void CPostProcessing::LocateEvaluationLogFiles(novac::LogContext context, const 
     limits.startTime = m_userSettings.m_fromDate;
     limits.endTime = m_userSettings.m_toDate;
     limits.fileExtension = "_flux.txt";
-    Filesystem::SearchDirectoryForFiles(directory, includeSubDirs, evalLogFiles, &limits);
+    Filesystem::SearchDirectoryForFiles(directory, includeSubDirs, filenames, &limits);
 
 
     novac::CString messageToUser;
-    messageToUser.Format("%d Evaluation log files found, starting reading", evalLogFiles.size());
+    messageToUser.Format("%d Evaluation log files found, starting reading", filenames.size());
     m_log.Information(context, messageToUser.std_str());
 
     size_t nofFailedLogReads = 0;
 
-    for (std::string& f : evalLogFiles)
+    for (const std::string& filename : filenames)
     {
         int channel;
         CDateTime startTime;
         MEASUREMENT_MODE mode;
         novac::CString serial;
-        novac::CFileUtils::GetInfoFromFileName(f, startTime, serial, channel, mode);
+        novac::CFileUtils::GetInfoFromFileName(filename, startTime, serial, channel, mode);
 
-        Evaluation::CExtendedScanResult result;
-        result.m_evalLogFile[0] = f;
-        result.m_startTime = startTime;
-
-        FileHandler::CEvaluationLogFileHandler logReader(m_log, f, m_userSettings.m_molecule);
+        FileHandler::CEvaluationLogFileHandler logReader(m_log, filename, m_userSettings.m_molecule);
         if (RETURN_CODE::SUCCESS != logReader.ReadEvaluationLog() || logReader.m_scan.size() == 0)
         {
             ++nofFailedLogReads;
             continue;
         }
+        if (logReader.m_scan.size() > 1)
+        {
+            m_log.Information(context.With(LogContext::FileName, novac::GetFileName(filename)), "File contained mored than one scan. Only the first will be used.");
+        }
+
         Evaluation::CScanResult scanResult = logReader.m_scan[0];
+
+        if (0 != scanResult.CalculateOffset(CMolecule(m_userSettings.m_molecule)))
+        {
+            m_log.Information(context.With(LogContext::FileName, novac::GetFileName(filename)), "Failed to calculate the offset of the scan, no flux will be calculated.");
+            continue;
+        }
+
+        std::string message;
+        if (!scanResult.CalculatePlumeCentre(CMolecule(m_userSettings.m_molecule), message))
+        {
+            m_log.Information(context.With(LogContext::FileName, novac::GetFileName(filename)), message + " Scan does not see the plume, no flux will be calculated.");
+            continue;
+        }
+
+        Evaluation::CExtendedScanResult result;
+        result.m_evalLogFile[0] = filename;
+        result.m_startTime = startTime;
+        result.m_scanProperties = scanResult.m_plumeProperties;
 
         evaluationLogFiles.push_back(result);
     }
 
-    messageToUser.Format("%d Evaluation log files read successfully.", evalLogFiles.size() - nofFailedLogReads);
+    messageToUser.Format("%d Evaluation log files read successfully. %d scans see the plume.", filenames.size() - nofFailedLogReads, evaluationLogFiles.size());
     m_log.Information(context, messageToUser.std_str());
+
+    return evaluationLogFiles;
 }

@@ -187,7 +187,7 @@ private:
     void UploadResultsToFTP(novac::LogContext context);
 
     /** Locates evaluation log files in the output directory */
-    void LocateEvaluationLogFiles(novac::LogContext context, const std::string& directory, std::vector<Evaluation::CExtendedScanResult>& evaluationLogFiles);
+    std::vector<Evaluation::CExtendedScanResult> LocateEvaluationLogFiles(novac::LogContext context, const std::string& directory) const;
 
     /** Creates a reference file by convolving a high-res cross section with a slit-function and resamples it
         to a given wavelength calibration. The instrument serial is provided since the result is

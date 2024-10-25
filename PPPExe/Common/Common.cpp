@@ -117,6 +117,10 @@ void Common::GetFileName(novac::CString& fileName)
 void Common::CopyFile(const novac::CString& oldName, const novac::CString& newName)
 {
     Poco::File oldFile(oldName.std_str());
+    if (!oldFile.exists())
+    {
+        throw new std::invalid_argument("Cannot copy file: '" + oldName.std_str() + "' as it does not exist");
+    }
 
     oldFile.copyTo(newName.std_str());
 }

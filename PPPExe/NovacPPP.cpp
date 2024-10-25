@@ -128,8 +128,10 @@ protected:
 
             // Read the configuration files
             ShowMessage("Loading configuration");
-            Common common;
-            LoadConfigurations(common.m_exePath, g_setup, g_userSettings);
+            LoadConfigurations(s_exePath, g_setup, g_userSettings);
+
+            // Read the command line options again, in order to make sure the command line arguments override the configuration files.
+            Configuration::CommandLineParser::ParseCommandLineOptions(arguments, g_userSettings, g_volcanoes, s_exePath, g_logger);
 
             splitterChannel->addChannel(new Poco::FileChannel(g_userSettings.m_outputDirectory.std_str() + "StatusLog.txt"));
             log.setChannel(formattingChannel);

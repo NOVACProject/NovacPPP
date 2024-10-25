@@ -163,6 +163,10 @@ bool CPostEvaluationController::EvaluateScan(
     if (plumeProperties != nullptr)
     {
         lastResult->GetCalculatedPlumeProperties(*plumeProperties);
+
+        std::stringstream msg;
+        msg << "Scan sees the plume at scan angle: " << plumeProperties->plumeCenter << " +-" << plumeProperties->plumeCenterError << " [deg]. Completeness: " << plumeProperties->completeness;
+        m_log.Information(context, msg.str());
     }
 
     PostEvaluationIO::CreatePlumespectrumFile(m_log, context, m_userSettings.m_outputDirectory.std_str(), lastResult, fitWindowName, scan, spectrometerModel, plumeProperties, specieIndex);

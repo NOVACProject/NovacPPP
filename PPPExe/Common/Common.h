@@ -54,7 +54,8 @@ public:
         @param fileName path of the file, will be set to only contain the filename, without the path . */
     static void GetFileName(novac::CString& fileName);
 
-    /** Copies the file to the new file location */
+    /** Copies the file to the new file location.
+        @throws std::invalid_argument if the old file does not exist. */
     static void CopyFile(const novac::CString& oldName, const novac::CString& newName);
 
     /** m_exePath will be set to the path where the application resides,
