@@ -14,7 +14,7 @@ public:
 
     const std::string message;
 
-    virtual char const* what() const override
+    virtual char const* what() const noexcept override
     {
         return message.c_str();
     }
@@ -28,7 +28,7 @@ public:
 
     const std::string message;
 
-    virtual char const* what() const override
+    virtual char const* what() const noexcept override
     {
         return message.c_str();
     }

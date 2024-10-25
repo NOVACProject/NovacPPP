@@ -60,6 +60,11 @@ using namespace novac;
 
 class NovacPPPApplication : public Poco::Util::Application
 {
+public:
+    NovacPPPApplication() : Poco::Util::Application(){
+        this->setUnixOptions(false);
+    }
+
 protected:
     void initialize(Poco::Util::Application& application)
     {
@@ -75,14 +80,14 @@ protected:
     void defineOptions(Poco::Util::OptionSet& optionSet)
     {
         Poco::Util::Application::defineOptions(optionSet);
-
-        /* optionSet.addOption(
-                Poco::Util::Option("optionval", "", "Some value")
-                        .required(false)
-                        .repeatable(true)
-                        .argument("<the value>", true)
-                        .callback(Poco::Util::OptionCallback<OptionExample>(this, &OptionExample::handleMyOpt))
-        ); */
+        // 
+        // optionSet.addOption(
+        //         Poco::Util::Option("WorkDir", "W", "The working directory")
+        //                 .required(false)
+        //                 .repeatable(true)
+        //                 .argument("file")
+        //                 .callback(Poco::Util::OptionCallback<NovacPPPApplication>(this, &NovacPPPApplication::handleMyOpt))
+        // );
     }
 
     void handleMyOpt(const std::string& name, const std::string& value)
