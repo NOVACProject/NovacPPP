@@ -14,8 +14,7 @@ namespace novac
 
 CString::CString()
     :m_data{ "" }
-{
-}
+{}
 
 CString::CString(const CString& other)
     : m_data{ other.m_data }
@@ -25,13 +24,11 @@ CString::CString(const CString& other)
 
 CString::CString(const char* other)
     : m_data{ other }
-{
-}
+{}
 
 CString::CString(const std::string& other)
     : m_data{ other }
-{
-}
+{}
 
 void CString::SetData(const char* data)
 {
@@ -395,6 +392,13 @@ void CleanString(const char* in, CString& out)
             out.AppendFormat("%c", in[it]);
         }
     }
+}
+
+CString SimplifyString(const CString& in)
+{
+    CString result;
+    SimplifyString(in, result);
+    return result;
 }
 
 void SimplifyString(const CString& in, CString& out)

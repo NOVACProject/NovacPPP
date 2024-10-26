@@ -140,6 +140,13 @@ void CleanString(const char* in, CString& out);
     3 - accents are removed ('ó' -> 'o') */
 void SimplifyString(const CString& in, CString& out);
 
+/** This function takes a string and simplifies it so that it is more easily readable
+    by a machine. changes made are:
+    1 - Spaces are replaced with '_' (underscore)
+    2 - All characters are converted to lower-case
+    3 - accents are removed ('ó' -> 'o') */
+CString SimplifyString(const CString& in);
+
 /** Compares two strings without regard to case.
     @return 1 if the strings are equal. @return 0 if the strings are not equal. */
 int Equals(const CString& str1, const CString& str2);

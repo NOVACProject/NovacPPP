@@ -541,6 +541,24 @@ void CPostProcessing::CheckProcessingSettings() const
 
     m_log.Information("--- Validating settings --- ");
 
+    // Get the volcano and make sure this is setup correctly.
+    if (m_userSettings.m_volcano < 0)
+    {
+        throw std::invalid_argument("The volcano has not been setup correctly, or no volcano with the given name was found in the settings.");
+    }
+    {
+        novac::CString volcanoName;
+        g_volcanoes.GetVolcanoName(m_userSettings.m_volcano, volcanoName);
+
+        novac::CString messageToUser;
+        messageToUser.Format("Monitoring volcano '%s', located at (lat: %lf, lon: %lf, alt: %lf)", 
+            volcanoName.c_str(),
+            g_volcanoes.GetPeakLatitude(m_userSettings.m_volcano),
+            g_volcanoes.GetPeakLongitude(m_userSettings.m_volcano),
+            g_volcanoes.GetPeakAltitude(m_userSettings.m_volcano));
+        m_log.Information(messageToUser.std_str());
+    }
+
     // Check that no instrument is duplicated in the list of instruments...
     for (int j = 0; j < m_setup.NumberOfInstruments(); ++j)
     {
@@ -826,12 +844,12 @@ void CPostProcessing::PreparePlumeHeights(novac::LogContext context)
     Configuration::CInstrumentLocation location;
     novac::CString volcanoName;
     g_volcanoes.GetVolcanoName(m_userSettings.m_volcano, volcanoName);
-    for (int k = 0; k < m_setup.NumberOfInstruments(); ++k)
+    for (const auto& instrument : m_setup.m_instrument)
     {
-        unsigned long N = m_setup.m_instrument[k].m_location.GetLocationNum();
+        unsigned long N = instrument.m_location.GetLocationNum();
         for (unsigned int j = 0; j < N; ++j)
         {
-            m_setup.m_instrument[k].m_location.GetLocation(j, location);
+            instrument.m_location.GetLocation(j, location);
             if (Equals(volcanoName, location.m_volcano))
             {
                 maxInstrumentAltitude = std::max(maxInstrumentAltitude, double(location.m_altitude));
@@ -840,7 +858,7 @@ void CPostProcessing::PreparePlumeHeights(novac::LogContext context)
     }
     if (maxInstrumentAltitude > 0)
     {
-        plumeHeight.m_plumeAltitudeError = fabs(g_volcanoes.GetPeakAltitude(m_userSettings.m_volcano) - maxInstrumentAltitude) / 2.0;
+        plumeHeight.m_plumeAltitudeError = std::abs(g_volcanoes.GetPeakAltitude(m_userSettings.m_volcano) - maxInstrumentAltitude) / 2.0;
     }
     else
     {
@@ -856,7 +874,7 @@ void CPostProcessing::PreparePlumeHeights(novac::LogContext context)
 
 void CPostProcessing::CalculateGeometries(
     novac::LogContext context,
-    std::vector<Evaluation::CExtendedScanResult>& evalLogs,
+    std::vector<Evaluation::CExtendedScanResult>& scanResults,
     std::vector<Geometry::CGeometryResult>& geometryResults)
 {
     novac::CString serial1, serial2, messageToUser;
@@ -869,16 +887,15 @@ void CPostProcessing::CalculateGeometries(
     unsigned long nTooLongdistance = 0; // this is for debugging purposes...
     unsigned long nTooLargeAbsoluteError = 0; // this is for debugging purposes...
     unsigned long nTooLargeRelativeError = 0; // this is for debugging purposes...
-    Configuration::CInstrumentLocation location[2];
 
     // Tell the user what's happening
     m_log.Information(context, "Begin to calculate plume heights from scans");
 
     // Loop through list with output text files from evaluation and apply geometrical corrections
-    for (size_t pos1 = 0; pos1 < evalLogs.size(); ++pos1)
+    for (size_t pos1 = 0; pos1 < scanResults.size(); ++pos1)
     {
-        const novac::CString& evalLog1 = evalLogs[pos1].m_evalLogFile[m_userSettings.m_mainFitWindow];
-        const CPlumeInScanProperty& plume1 = evalLogs[pos1].m_scanProperties;
+        const novac::CString& evalLog1 = scanResults[pos1].m_evalLogFile[m_userSettings.m_mainFitWindow];
+        const CPlumeInScanProperty& plume1 = scanResults[pos1].m_scanProperties;
 
         ++nFilesChecked1; // for debugging...
 
@@ -902,10 +919,10 @@ void CPostProcessing::CalculateGeometries(
         //  thus we start at the eval-log next after this one and compare with all
         //  eval-logs until the difference in start-time is too big.
         bool successfullyCombined = false; // this is true if evalLog1 was combined with (at least one) other eval-log to make a geomery calculation.
-        for (size_t pos2 = pos1 + 1; pos2 < evalLogs.size(); ++pos2)
+        for (size_t pos2 = pos1 + 1; pos2 < scanResults.size(); ++pos2)
         {
-            const novac::CString& evalLog2 = evalLogs[pos2].m_evalLogFile[m_userSettings.m_mainFitWindow];
-            const CPlumeInScanProperty& plume2 = evalLogs[pos2].m_scanProperties;
+            const novac::CString& evalLog2 = scanResults[pos2].m_evalLogFile[m_userSettings.m_mainFitWindow];
+            const CPlumeInScanProperty& plume2 = scanResults[pos2].m_scanProperties;
 
             ++nFilesChecked2; // for debugging...
 
@@ -920,7 +937,7 @@ void CPostProcessing::CalculateGeometries(
 
             // The time elapsed between the two measurements must not be more than 
             // the user defined time-limit (in seconds)
-            double timeDifference = fabs(CDateTime::Difference(startTime1, startTime2));
+            double timeDifference = std::abs(CDateTime::Difference(startTime1, startTime2));
             if (timeDifference > m_userSettings.m_calcGeometry_MaxTimeDifference)
             {
                 break;
@@ -940,6 +957,7 @@ void CPostProcessing::CalculateGeometries(
             }
 
             // Get the locations of the two instruments
+            Configuration::CInstrumentLocation location[2];
             try
             {
                 location[0] = m_setup.GetInstrumentLocation(serial1.std_str(), startTime1);
@@ -952,8 +970,9 @@ void CPostProcessing::CalculateGeometries(
             }
 
             // make sure that the distance between the instruments is not too long....
-            double instrumentDistance = novac::GpsMath::Distance(location[0].m_latitude, location[0].m_longitude, location[1].m_latitude, location[1].m_longitude);
-            if (instrumentDistance < m_userSettings.m_calcGeometry_MinDistance || instrumentDistance > m_userSettings.m_calcGeometry_MaxDistance)
+            const double instrumentDistance = novac::GpsMath::Distance(location[0].GpsData(), location[1].GpsData());
+            if (instrumentDistance < m_userSettings.m_calcGeometry_MinDistance ||
+                instrumentDistance > m_userSettings.m_calcGeometry_MaxDistance)
             {
                 ++nTooLongdistance;
                 continue;
@@ -988,7 +1007,7 @@ void CPostProcessing::CalculateGeometries(
 
                     geometryResults.push_back(result);
 
-                    messageToUser.Format(" + Calculated a plume altitude of %.0lf +- %.0lf masl and wind direction of %.0lf +- %.0lf degrees by combining measurements two instruments",
+                    messageToUser.Format("Calculated a plume altitude of %.0lf +- %.0lf masl and wind direction of %.0lf +- %.0lf degrees by combining measurements two instruments",
                         result.m_plumeAltitude, result.m_plumeAltitudeError, result.m_windDirection, result.m_windDirectionError);
                     m_log.Information(context.With("device1", serial1.std_str()).With("device2", serial2.std_str()).WithTimestamp(startTime1), messageToUser.std_str());
 
@@ -1006,9 +1025,10 @@ void CPostProcessing::CalculateGeometries(
             Geometry::CPlumeHeight plumeHeight;
 
             // Get the location of the instrument
+            Configuration::CInstrumentLocation location;
             try
             {
-                location[0] = m_setup.GetInstrumentLocation(serial1.std_str(), startTime1);
+                location = m_setup.GetInstrumentLocation(serial1.std_str(), startTime1);
             }
             catch (PPPLib::NotFoundException& ex)
             {
@@ -1038,23 +1058,23 @@ void CPostProcessing::CalculateGeometries(
 
             // Try to calculate the wind-direction
             Geometry::CGeometryCalculator geometryCalculator(m_log, m_userSettings);
-            if (geometryCalculator.CalculateWindDirection(evalLog1, 0, plumeHeight, location[0], result))
+            if (geometryCalculator.CalculateWindDirection(evalLog1, 0, plumeHeight, location, result))
             {
                 // Success!!
                 result.m_instr1.Format(serial1);
                 geometryResults.push_back(result);
 
                 // tell the user   
-                messageToUser.Format(" + Calculated a wind direction of %.0lf +- %.0lf degrees from a scan",
+                messageToUser.Format("Calculated a wind direction of %.0lf +- %.0lf degrees from a scan",
                     result.m_windDirection, result.m_windDirectionError);
-                m_log.Information(context.With(novac::LogContext::Device, serial1.std_str()).WithTimestamp( result.m_averageStartTime), messageToUser.std_str());
+                m_log.Information(context.With(novac::LogContext::Device, serial1.std_str()).WithTimestamp(result.m_averageStartTime), messageToUser.std_str());
             }
             else
             {
                 continue;
             }
         }
-    } // end for (size_t pos1 = 0; pos1 < evalLogs.size(); ++pos1)
+    } // end for (size_t pos1 = 0; pos1 < scanResults.size(); ++pos1)
 
     // Tell the user what we have done
     if (geometryResults.size() == 0)
@@ -1088,7 +1108,7 @@ void CPostProcessing::CalculateFluxes(novac::LogContext context, const std::vect
     // Loop through the list of evaluation log files. For each of them, find
     // the best available wind-speed, wind-direction and plume height and
     // calculate the flux.
-    for(const auto& scanResult : evalLogFiles)
+    for (const auto& scanResult : evalLogFiles)
     {
         // Get the name of this eval-log
         const novac::CString& evalLog = scanResult.m_evalLogFile[m_userSettings.m_mainFitWindow];
