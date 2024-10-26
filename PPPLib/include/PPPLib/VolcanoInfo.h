@@ -51,62 +51,64 @@ public:
     void GetSimpleVolcanoName(unsigned int index, novac::CString& name) const;
     novac::CString GetSimpleVolcanoName(unsigned int index) const;
 
-    /** Retrieves the volcano index from a given name (or code) */
-    int GetVolcanoIndex(const novac::CString& name);
+    /** Retrieves the volcano index from a given name (or code).
+        @throws std::invalid_argument if the volcano does not exist. */
+    unsigned int GetVolcanoIndex(const novac::CString& name);
 
-    /** Retrieves the volcano position from the given index */
-    double GetPeakLatitude(int index);
+    /** Retrieves the volcano position from the given index.
+        @throws std::invalid_argument if there is no volcano with this index. */
+    double GetPeakLatitude(unsigned int index);
     double GetPeakLatitude(const novac::CString& name) { return GetPeakLatitude(GetVolcanoIndex(name)); }
-    double GetPeakLongitude(int index);
+    double GetPeakLongitude(unsigned int index);
     double GetPeakLongitude(const novac::CString& name) { return GetPeakLongitude(GetVolcanoIndex(name)); }
-    double GetPeakAltitude(int index);
+    double GetPeakAltitude(unsigned int index);
     double GetPeakAltitude(const novac::CString& name) { return GetPeakAltitude(GetVolcanoIndex(name)); }
 
     /** Retrieves the time-zone this volcano is in */
-    double GetHoursToGMT(int index);
+    double GetHoursToGMT(unsigned int index);
     double GetHoursToGMT(const novac::CString& name) { return GetHoursToGMT(GetVolcanoIndex(name)); }
 
     /** Retrieves the observatory that monitors this volcano */
-    int GetObservatoryIndex(int index);
+    int GetObservatoryIndex(unsigned int index);
     int GetObservatoryIndex(const novac::CString& name) { return GetObservatoryIndex(GetVolcanoIndex(name)); }
 
 private:
-    class CVolcano
+    struct Volcano
     {
     public:
-        CVolcano();
-        CVolcano(const novac::CString& name, const novac::CString& number, const novac::CString& country, double latitude, double longitude, double altitude, double hoursToGMT = 0.0, int observatory = 1);
-        CVolcano(const novac::CString& name, const novac::CString& simpleName, const novac::CString& number, const novac::CString& country, double latitude, double longitude, double altitude, double hoursToGMT = 0.0, int observatory = 1);
-        ~CVolcano() = default;
+        Volcano() = default;
+        Volcano(const novac::CString& name, const novac::CString& number, const novac::CString& country, double latitude, double longitude, double altitude, double hoursToGMT = 0.0, int observatory = 1);
+        Volcano(const novac::CString& name, const novac::CString& simpleName, const novac::CString& number, const novac::CString& country, double latitude, double longitude, double altitude, double hoursToGMT = 0.0, int observatory = 1);
+        ~Volcano() = default;
 
         /** The name of the volcano */
-        novac::CString m_name;
+        novac::CString m_name = "";
 
         /** The simplified name of the volcano */
-        novac::CString m_simpleName;
+        novac::CString m_simpleName = "";
 
         /** The number of the volcano. This is from the
             Smithsonian's inventory of the worlds volcanoes
             http://www.volcano.si.edu */
-        novac::CString m_number;
+        novac::CString m_number = "";
 
         /** The country where this volcano is located */
-        novac::CString m_country;
+        novac::CString m_country = "";
 
         /** The latitude of the peak(s) */
-        double m_peakLatitude;
+        double m_peakLatitude = 0.0;
 
         /** The longitude of the peak(s) */
-        double m_peakLongitude;
+        double m_peakLongitude = 0.0;
 
         /** The altitude of the peak(s) (masl) */
-        double m_peakHeight;
+        double m_peakHeight = 0.0;
 
         /** The number of hours to GMT, used to calculate the local-time from the GPS-time */
-        double m_hoursToGMT;
+        double m_hoursToGMT = 0.0;
 
         /** The observatory in charge of this volcano */
-        int m_observatory;
+        int m_observatory = 0;
     };
 
     // ----------------------------------------------------------------
@@ -114,7 +116,7 @@ private:
     // ----------------------------------------------------------------
 
     /** The list of volcanoes that belongs to this CVolcanoInfo object */
-    std::vector<CVolcano> m_volcanoes;
+    std::vector<Volcano> m_volcanoes;
 
     // ----------------------------------------------------------------
     // --------------------- PRIVATE METHODS --------------------------
@@ -142,6 +144,10 @@ private:
     void InitializeDatabase_17();
     void InitializeDatabase_18();
     void InitializeDatabase_19();
+
+    // Verifies that the provided index is a valid index into m_volcanoes.
+    // @throws std::invalid_argumetn if it is not.
+    void ValidateVolcanoIndex(unsigned int index) const;
 };
 }
 
