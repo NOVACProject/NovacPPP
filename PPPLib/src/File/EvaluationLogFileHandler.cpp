@@ -1174,7 +1174,7 @@ RETURN_CODE CEvaluationLogFileHandler::WriteEvaluationLog(const std::string& fil
         string.AppendFormat("\tsite=%s\n", m_specInfo.m_site.c_str());
         string.AppendFormat("\tobservatory=%s\n", m_specInfo.m_observatory.c_str());
 
-        string.AppendFormat("\tserial=%s\n", (const char*)scan.GetSerial());
+        string.AppendFormat("\tserial=%s\n", scan.GetSerial().c_str());
 
         string.AppendFormat("\tspectrometer=%s\n", m_specInfo.m_specModelName.c_str());
 

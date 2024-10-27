@@ -219,7 +219,7 @@ public:
     novac::CString GetName(int index) const;
 
     /** Returns the serial-number of the spectrometer that collected this scan */
-    novac::CString GetSerial() const;
+    std::string GetSerial() const;
 
     /** returns the goodness of fit for the fitting of the evaluated
             spectrum number 'index'.

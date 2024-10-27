@@ -14,7 +14,7 @@
     <DebugBreak>on</DebugBreak>
     <DiscoverCommandLine>--list-tests</DiscoverCommandLine>
     <DiscoverTimeout>20000</DiscoverTimeout>
-    <FilenameFilter>.*</FilenameFilter>
+    <FilenameFilter>PPP*.*</FilenameFilter>
     <IncludeHidden>true</IncludeHidden>
     <Logging>debug</Logging>
     <MessageFormat>StatsOnly</MessageFormat>

@@ -333,7 +333,7 @@ RETURN_CODE CFluxCalculator::WriteFluxResult(
     // 20. Find the name of the flux-log file to write to
 
     // 20a. Make the directory
-    serialNumber.Format("%s", (const char*)result->GetSerial());
+    serialNumber.Format("%s", result->GetSerial().c_str());
     directory.Format("%s%s%c%s%c", (const char*)m_userSettings.m_outputDirectory, (const char*)dateStr2,
         Poco::Path::separator(), (const char*)serialNumber, Poco::Path::separator());
     if (Filesystem::CreateDirectoryStructure(directory))
@@ -470,7 +470,7 @@ bool CFluxCalculator::CalculateFlux(
     result.GetStopTime(result.GetEvaluatedNum() - 1, fluxResult.m_stopTime);
 
     // and the serial number of the instrument
-    fluxResult.m_instrument = result.GetSerial().std_str();
+    fluxResult.m_instrument = result.GetSerial();
 
     // Calculate the flux
     fluxResult.m_flux = Flux::CFluxCalculator::CalculateFlux(context, scanAngle.data(), scanAngle2.data(), column.data(), specie.Convert_MolecCm2_to_kgM2(result.m_plumeProperties.offset), numberOfGoodDataPoints, wind, relativePlumeHeight, compass, result.m_instrumentType, coneAngle, tilt);

@@ -158,7 +158,7 @@ RETURN_CODE Evaluation::PostEvaluationIO::WriteEvaluationResult(
     string.AppendFormat("\tsite=%s\n", (const char*)instrLocation->m_locationName);
     // string.AppendFormat("\tobservatory=%s\n",       m_common.SimplifyString(spectrometer.m_scanner.observatory));
 
-    string.AppendFormat("\tserial=%s\n", (const char*)result->GetSerial());
+    string.AppendFormat("\tserial=%s\n", result->GetSerial().c_str());
     string.AppendFormat("\tspectrometer=%s\n", instrLocation->m_spectrometerModel.c_str());
     string.AppendFormat("\tspectrometerMaxIntensity=%lf\n", spectrometerModel.maximumIntensityForSingleReadout);
 
@@ -385,7 +385,7 @@ void Evaluation::PostEvaluationIO::CreatePlumespectrumFile(
         outputDirectory +
         "/" + std::string(fitWindowName) +
         "/PlumeSpectra/" +
-        result->GetSerial().std_str();
+        result->GetSerial();
 
     int ret = Filesystem::CreateDirectoryStructure(outputDirectoryStr);
     if (ret)
@@ -426,7 +426,7 @@ RETURN_CODE Evaluation::PostEvaluationIO::AppendToEvaluationSummaryFile(
     evalSummaryLog.Format("%s/%s/EvaluationSummary_%s.txt",
         outputDirectory.c_str(),
         window->name.c_str(),
-        (const char*)result->GetSerial());
+        result->GetSerial().c_str());
 
     if (!Filesystem::IsExistingFile(evalSummaryLog))
     {
@@ -502,7 +502,7 @@ RETURN_CODE Evaluation::PostEvaluationIO::AppendToPakFileSummaryFile(
     }
 
     // the serial of the instrument
-    fprintf(f, "%s\t", (const char*)result->GetSerial());
+    fprintf(f, "%s\t", result->GetSerial().c_str());
 
     // the start-time
     fprintf(f, "%04d.%02d.%02dT%02d:%02d:%02d\t", scan->m_startTime.year, scan->m_startTime.month, scan->m_startTime.day, scan->m_startTime.hour, scan->m_startTime.minute, scan->m_startTime.second);

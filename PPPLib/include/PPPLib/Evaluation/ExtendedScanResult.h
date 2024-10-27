@@ -1,9 +1,9 @@
 #pragma once
 
-#include <PPPLib/MFC/CString.h>
-#include <SpectralEvaluation/Flux/PlumeInScanProperty.h>
 #include <PPPLib/Definitions.h>
+#include <PPPLib/Measurement.h>
 #include <SpectralEvaluation/DateTime.h>
+#include <SpectralEvaluation/Flux/PlumeInScanProperty.h>
 
 namespace Evaluation
 {
@@ -26,20 +26,38 @@ namespace Evaluation
 struct CExtendedScanResult
 {
 public:
+
+    CExtendedScanResult()
+    {
+        m_evalLogFile.reserve(MAX_FIT_WINDOWS);
+        m_fitWindowName.reserve(MAX_FIT_WINDOWS);
+    }
+
+    CExtendedScanResult(std::string serial, novac::CDateTime scanStartTime, MEASUREMENT_MODE mode)
+        : m_instrumentSerial(serial), m_startTime(scanStartTime), m_measurementMode(mode)
+    {
+        m_evalLogFile.reserve(MAX_FIT_WINDOWS);
+        m_fitWindowName.reserve(MAX_FIT_WINDOWS);
+    }
+
+    std::string m_instrumentSerial = "";
+
+    MEASUREMENT_MODE m_measurementMode = MEASUREMENT_MODE::MODE_FLUX;
+
     /** The full path and file-name to the .pak-file containing the spectra
         from which this result was computed. */
     std::string m_pakFile = "";
 
     /** The full path and file-name of the evaluation log file that was generated.
         The file itself contains the result of the evaluation */
-    std::string m_evalLogFile[MAX_FIT_WINDOWS];
+    std::vector<std::string> m_evalLogFile;
 
     /** The full name of the fit-window that was used to generate each evaluation
         result, this is typically a name such as 'SO2', 'SO2_low' or 'O4'
          m_fitWindowName[i] is the name of the fit-window behind the result in m_evalLogFile[i]. */
-    std::string m_fitWindowName[MAX_FIT_WINDOWS];
+    std::vector<std::string> m_fitWindowName;
 
-    /** The date and time that the scan was generated. In UTC, taken from the .pak-file  */
+    /** The date and time that the scan was generated. */
     novac::CDateTime m_startTime;
 
     /** The properties of this scan. This is only evaluated in the main-fit window */

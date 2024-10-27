@@ -36,6 +36,7 @@
 #include <PPPLib/ThreadUtils.h>
 #include <SpectralEvaluation/Evaluation/CrossSectionData.h>
 #include <SpectralEvaluation/Calibration/StandardCrossSectionSetup.h>
+#include <SpectralEvaluation/VectorUtils.h>
 
 // we need to be able to download data from the FTP-server
 #include <PPPLib/Communication/FTPServerConnection.h>
@@ -57,16 +58,6 @@ void EvaluateScansThread(
     const Configuration::CNovacPPPConfiguration& setup,
     const Configuration::CUserConfiguration& userSettings,
     const CContinuationOfProcessing& continuation,
-    CPostProcessingStatistics& processingStats);
-
-// this takes care of adding the evaluated log-files to the list in an synchronized way
-//  the parameter passed in a reference to an array of strings holding the names of the 
-//  eval-log files generated
-void AddResultToList(
-    const novac::CString& pakFileName,
-    const novac::CString(&evalLog)[MAX_FIT_WINDOWS],
-    const CPlumeInScanProperty& scanProperties,
-    const Configuration::CUserConfiguration& userSettings,
     CPostProcessingStatistics& processingStats);
 
 CPostProcessing::CPostProcessing(ILogger& logger, Configuration::CNovacPPPConfiguration setup, Configuration::CUserConfiguration userSettings, const CContinuationOfProcessing& continuation)
@@ -411,22 +402,33 @@ void EvaluateScansThread(
     // while there are more .pak-files
     while (s_pakFilesRemaining.PopFront(fileName))
     {
-        novac::CString evalLog[MAX_FIT_WINDOWS];
-        CPlumeInScanProperty scanProperties[MAX_FIT_WINDOWS];
-
         novac::LogContext context(novac::LogContext::FileName, novac::GetFileName(fileName));
 
         // evaluate the .pak-file in all the specified fit-windows and retrieve the name of the 
         // eval-logs. If any of the fit-windows fails then the scan is not inserted.
         bool evaluationSucceeded = true;
+        Evaluation::CExtendedScanResult combinedResult;
         try
         {
             for (int fitWindowIndex = 0; fitWindowIndex < userSettings.m_nFitWindowsToUse; ++fitWindowIndex)
             {
-                if (!eval.EvaluateScan(fileName, userSettings.m_fitWindowsToUse[fitWindowIndex], &evalLog[fitWindowIndex], &scanProperties[fitWindowIndex]))
+                auto result = eval.EvaluateScan(fileName, userSettings.m_fitWindowsToUse[fitWindowIndex]);
+
+                if (result == nullptr)
                 {
                     evaluationSucceeded = false;
                     break;
+                }
+
+                combinedResult.m_pakFile = result->m_pakFile;
+                combinedResult.m_startTime = result->m_startTime;
+                combinedResult.m_instrumentSerial = result->m_instrumentSerial;
+                combinedResult.m_measurementMode = result->m_measurementMode;
+                combinedResult.m_evalLogFile.push_back(result->m_evalLogFile.front());
+                combinedResult.m_fitWindowName.push_back(result->m_fitWindowName.front());
+                if (fitWindowIndex == userSettings.m_mainFitWindow)
+                {
+                    combinedResult.m_scanProperties = result->m_scanProperties;
                 }
             }
         }
@@ -439,7 +441,8 @@ void EvaluateScansThread(
         if (evaluationSucceeded)
         {
             // If we made it this far then the measurement is ok, insert it into the list!
-            AddResultToList(fileName, evalLog, scanProperties[userSettings.m_mainFitWindow], userSettings, processingStats);
+            s_evalLogs.AddItem(combinedResult);
+            processingStats.InsertAcception(combinedResult.m_instrumentSerial);
 
             log.Information(context, "Inserted scan into list of evaluation logs");
         }
@@ -448,36 +451,6 @@ void EvaluateScansThread(
             log.Information(context, "No flux calculated for scan.");
         }
     }
-}
-
-void AddResultToList(
-    const novac::CString& pakFileName,
-    const novac::CString(&evalLog)[MAX_FIT_WINDOWS],
-    const CPlumeInScanProperty& scanProperties,
-    const Configuration::CUserConfiguration& userSettings,
-    CPostProcessingStatistics& processingStats)
-{
-    // these are not used...
-    novac::CString serial;
-    int channel;
-    MEASUREMENT_MODE mode;
-
-    // Create a new Extended scan result and add it to the end of the list
-    Evaluation::CExtendedScanResult newResult;
-    newResult.m_pakFile = pakFileName.std_str();
-    for (int fitWindowIndex = 0; fitWindowIndex < userSettings.m_nFitWindowsToUse; ++fitWindowIndex)
-    {
-        newResult.m_evalLogFile[fitWindowIndex] = evalLog[fitWindowIndex].std_str();
-        newResult.m_fitWindowName[fitWindowIndex] = userSettings.m_fitWindowsToUse[fitWindowIndex].std_str();
-    }
-    novac::CFileUtils::GetInfoFromFileName(evalLog[0], newResult.m_startTime, serial, channel, mode);
-    newResult.m_scanProperties = scanProperties;
-
-    // store the name of the evaluation-log file generated
-    s_evalLogs.AddItem(newResult);
-
-    // update the statistics
-    processingStats.InsertAcception(serial);
 }
 
 int CPostProcessing::CheckInstrumentCalibrationSettings() const
@@ -877,10 +850,7 @@ void CPostProcessing::CalculateGeometries(
     std::vector<Evaluation::CExtendedScanResult>& scanResults,
     std::vector<Geometry::CGeometryResult>& geometryResults)
 {
-    novac::CString serial1, serial2, messageToUser;
-    CDateTime startTime1, startTime2;
-    MEASUREMENT_MODE measMode1, measMode2;
-    int channel;
+    novac::CString messageToUser;
     unsigned long nFilesChecked1 = 0; // this is for debugging purposes...
     unsigned long nFilesChecked2 = 0; // this is for debugging purposes...
     unsigned long nCalculationsMade = 0; // this is for debugging purposes...
@@ -894,22 +864,18 @@ void CPostProcessing::CalculateGeometries(
     // Loop through list with output text files from evaluation and apply geometrical corrections
     for (size_t pos1 = 0; pos1 < scanResults.size(); ++pos1)
     {
-        const novac::CString& evalLog1 = scanResults[pos1].m_evalLogFile[m_userSettings.m_mainFitWindow];
-        const CPlumeInScanProperty& plume1 = scanResults[pos1].m_scanProperties;
+        const Evaluation::CExtendedScanResult& scanResult1 = scanResults[pos1];
 
         ++nFilesChecked1; // for debugging...
 
         // if this scan does not see a large enough portion of the plume, then ignore it...
-        if (plume1.completeness < m_userSettings.m_calcGeometry_CompletenessLimit)
+        if (scanResult1.m_scanProperties.completeness < m_userSettings.m_calcGeometry_CompletenessLimit)
         {
             continue;
         }
 
-        //  Get the information about evaluation log file #1
-        novac::CFileUtils::GetInfoFromFileName(evalLog1, startTime1, serial1, channel, measMode1);
-
         // If this is not a flux-measurement, then there's no use in trying to use it...
-        if (measMode1 != MEASUREMENT_MODE::MODE_FLUX)
+        if (scanResult1.m_measurementMode != MEASUREMENT_MODE::MODE_FLUX)
         {
             continue;
         }
@@ -921,37 +887,33 @@ void CPostProcessing::CalculateGeometries(
         bool successfullyCombined = false; // this is true if evalLog1 was combined with (at least one) other eval-log to make a geomery calculation.
         for (size_t pos2 = pos1 + 1; pos2 < scanResults.size(); ++pos2)
         {
-            const novac::CString& evalLog2 = scanResults[pos2].m_evalLogFile[m_userSettings.m_mainFitWindow];
-            const CPlumeInScanProperty& plume2 = scanResults[pos2].m_scanProperties;
+            const Evaluation::CExtendedScanResult& scanResult2 = scanResults[pos2];
 
             ++nFilesChecked2; // for debugging...
 
             // if this scan does not see a large enough portion of the plume, then ignore it...
-            if (plume2.completeness < m_userSettings.m_calcGeometry_CompletenessLimit)
+            if (scanResult2.m_scanProperties.completeness < m_userSettings.m_calcGeometry_CompletenessLimit)
             {
                 continue;
             }
 
-            //  Get the information about evaluation log file # 2
-            novac::CFileUtils::GetInfoFromFileName(evalLog2, startTime2, serial2, channel, measMode2);
-
             // The time elapsed between the two measurements must not be more than 
             // the user defined time-limit (in seconds)
-            double timeDifference = std::abs(CDateTime::Difference(startTime1, startTime2));
+            double timeDifference = std::abs(CDateTime::Difference(scanResult1.m_startTime, scanResult2.m_startTime));
             if (timeDifference > m_userSettings.m_calcGeometry_MaxTimeDifference)
             {
                 break;
             }
 
             // If this is not a flux-measurement, then there's no use in trying to use it...
-            if (measMode2 != MEASUREMENT_MODE::MODE_FLUX)
+            if (scanResult2.m_measurementMode != MEASUREMENT_MODE::MODE_FLUX)
             {
                 continue;
             }
 
             // the serials must be different (i.e. the two measurements must be
             //  from two different instruments)
-            if (Equals(serial1, serial2))
+            if (Equals(scanResult1.m_instrumentSerial, scanResult2.m_instrumentSerial))
             {
                 continue;
             }
@@ -960,8 +922,8 @@ void CPostProcessing::CalculateGeometries(
             Configuration::CInstrumentLocation location[2];
             try
             {
-                location[0] = m_setup.GetInstrumentLocation(serial1.std_str(), startTime1);
-                location[1] = m_setup.GetInstrumentLocation(serial2.std_str(), startTime1);
+                location[0] = m_setup.GetInstrumentLocation(scanResult1.m_instrumentSerial, scanResult1.m_startTime);
+                location[1] = m_setup.GetInstrumentLocation(scanResult2.m_instrumentSerial, scanResult2.m_startTime);
             }
             catch (PPPLib::NotFoundException& ex)
             {
@@ -984,7 +946,7 @@ void CPostProcessing::CalculateGeometries(
             // If the files have passed these tests then make a geometry-calculation
             Geometry::CGeometryResult result;
             Geometry::CGeometryCalculator geometryCalculator(m_log, m_userSettings);
-            if (geometryCalculator.CalculateGeometry(plume1, startTime1, plume2, startTime2, location, result))
+            if (geometryCalculator.CalculateGeometry(scanResult1.m_scanProperties, scanResult1.m_startTime, scanResult2.m_scanProperties, scanResult2.m_startTime, location, result))
             {
                 // Check the quality of the measurement before we insert it...
                 if (result.m_plumeAltitudeError > m_userSettings.m_calcGeometry_MaxPlumeAltError)
@@ -1002,8 +964,8 @@ void CPostProcessing::CalculateGeometries(
                 else
                 {
                     // remember which instruments were used
-                    result.m_instrumentSerial1 = serial1.std_str();
-                    result.m_instrumentSerial2 = serial2.std_str();
+                    result.m_instrumentSerial1 = scanResult1.m_instrumentSerial;
+                    result.m_instrumentSerial2 = scanResult2.m_instrumentSerial;
 
                     geometryResults.push_back(result);
 
@@ -1012,7 +974,7 @@ void CPostProcessing::CalculateGeometries(
                         result.m_plumeAltitudeError,
                         result.m_windDirection,
                         result.m_windDirectionError);
-                    m_log.Information(context.With("device1", serial1.std_str()).With("device2", serial2.std_str()).WithTimestamp(startTime1), messageToUser.std_str());
+                    m_log.Information(context.With("device1", scanResult1.m_instrumentSerial).With("device2", scanResult2.m_instrumentSerial).WithTimestamp(scanResult1.m_startTime), messageToUser.std_str());
 
                     successfullyCombined = true;
                 }
@@ -1030,7 +992,7 @@ void CPostProcessing::CalculateGeometries(
             Configuration::CInstrumentLocation location;
             try
             {
-                location = m_setup.GetInstrumentLocation(serial1.std_str(), startTime1);
+                location = m_setup.GetInstrumentLocation(scanResult1.m_instrumentSerial, scanResult1.m_startTime);
             }
             catch (PPPLib::NotFoundException& ex)
             {
@@ -1042,12 +1004,12 @@ void CPostProcessing::CalculateGeometries(
             // general database. Then have a look in the list of geometry-results
             // that we just generated to see if there's anything better there...
             Geometry::CPlumeHeight plumeHeight;
-            m_plumeDataBase.GetPlumeHeight(startTime1, plumeHeight);
+            m_plumeDataBase.GetPlumeHeight(scanResult1.m_startTime, plumeHeight);
 
             for (auto it = geometryResults.rbegin(); it != geometryResults.rend(); ++it)
             {
                 const Geometry::CGeometryResult& oldResult = *it;
-                if (std::abs(CDateTime::Difference(oldResult.m_averageStartTime, startTime1)) < m_userSettings.m_calcGeometryValidTime)
+                if (std::abs(CDateTime::Difference(oldResult.m_averageStartTime, scanResult1.m_startTime)) < m_userSettings.m_calcGeometryValidTime)
                 {
                     if ((oldResult.m_plumeAltitudeError < plumeHeight.m_plumeAltitudeError) && (oldResult.m_plumeAltitude > NOT_A_NUMBER))
                     {
@@ -1061,16 +1023,21 @@ void CPostProcessing::CalculateGeometries(
             // Try to calculate the wind-direction
             Geometry::CGeometryResult result;
             Geometry::CGeometryCalculator geometryCalculator(m_log, m_userSettings);
-            if (geometryCalculator.CalculateWindDirection(plume1, startTime1, plumeHeight, location, result))
+            if (geometryCalculator.CalculateWindDirection(scanResult1.m_scanProperties, scanResult1.m_startTime, plumeHeight, location, result))
             {
+                if (result.m_windDirectionError > m_userSettings.m_calcGeometry_MaxWindDirectionError)
+                {
+                    continue;
+                }
+
                 // Success!!
-                result.m_instrumentSerial1 = serial1.std_str();
+                result.m_instrumentSerial1 = scanResult1.m_instrumentSerial;
                 geometryResults.push_back(result);
 
                 // tell the user   
                 messageToUser.Format("Calculated a wind direction of %.0lf +- %.0lf degrees from a scan",
                     result.m_windDirection, result.m_windDirectionError);
-                m_log.Information(context.With(novac::LogContext::Device, serial1.std_str()).WithTimestamp(result.m_averageStartTime), messageToUser.std_str());
+                m_log.Debug(context.With(novac::LogContext::Device, scanResult1.m_instrumentSerial).WithTimestamp(result.m_averageStartTime), messageToUser.std_str());
             }
             else
             {
@@ -1086,8 +1053,28 @@ void CPostProcessing::CalculateGeometries(
     }
     else
     {
-        messageToUser.Format("Done calculating geometries. Plume height calculated on %d occasions", geometryResults.size());
-        m_log.Information(context, messageToUser.std_str());
+        std::vector<double> plumeHeights;
+        std::vector<double> windDirections;
+        plumeHeights.reserve(geometryResults.size());
+        windDirections.reserve(geometryResults.size());
+        for each (const auto & g in geometryResults)
+        {
+            if (g.m_plumeAltitude > 0.1 && g.m_plumeAltitude != NOT_A_NUMBER)
+            {
+                plumeHeights.push_back(g.m_plumeAltitude);
+            }
+            if (std::abs(g.m_windDirection) < 365.0)
+            {
+                windDirections.push_back(g.m_windDirection);
+            }
+        }
+
+        std::stringstream msg;
+        msg << "Done calculating geometries. Plume height calculated on " << plumeHeights.size() << " occasions. ";
+        msg << "Median plume height: " << Median(plumeHeights) << ", min plume height: " << Min(plumeHeights) << ", max plume height: " << Max(plumeHeights) << " [masl]" << std::endl;
+        msg << "Wind direction calculated on " << windDirections.size() << " occasions. ";
+        msg << "Wind direction in range: [" << Min(windDirections) << "; " << Max(windDirections) << "] [deg]";
+        m_log.Information(context, msg.str());
     }
     messageToUser.Format("nFilesChecked1 = %ld, nFilesChecked2 = %ld, nCalculationsMade = %ld", nFilesChecked1, nFilesChecked2, nCalculationsMade);
     m_log.Information(context, messageToUser.std_str());
@@ -1433,12 +1420,11 @@ void CPostProcessing::WriteCalculatedGeometriesToFile(novac::LogContext context,
         return; // nothing to write...
 
     FILE* f = nullptr;
-    novac::CString geomLogFile;
-    geomLogFile.Format("%s%cGeometryLog.txt", (const char*)m_userSettings.m_outputDirectory, Poco::Path::separator());
+    const std::string geomLogFile = m_userSettings.m_outputDirectory + "/" + "GeometryLog.csv";
 
     if (Filesystem::IsExistingFile(geomLogFile))
     {
-        f = fopen(geomLogFile, "a");
+        f = fopen(geomLogFile.c_str(), "a");
         if (f == nullptr)
         {
             m_log.Information(context, "Could not open geometry log file for writing. Writing of results failed. ");
@@ -1447,13 +1433,13 @@ void CPostProcessing::WriteCalculatedGeometriesToFile(novac::LogContext context,
     }
     else
     {
-        f = fopen(geomLogFile, "w");
+        f = fopen(geomLogFile.c_str(), "w");
         if (f == nullptr)
         {
             m_log.Information(context, "Could not open geometry log file for writing. Writing of results failed. ");
             return;
         }
-        fprintf(f, "Date\tTime\tDifferenceInStartTime_minutes\tInstrument1\tInstrument2\tPlumeAltitude_masl\tPlumeHeightError_m\tWindDirection_deg\tWindDirectionError_deg\tPlumeCentre1_deg\tPlumeCentreError1_deg\tPlumeCentre2_deg\tPlumeCentreError2_deg\n");
+        fprintf(f, "Date;Time;DifferenceInStartTime_minutes;Instrument1;Instrument2;PlumeAltitude_masl;PlumeHeightError_m;WindDirection_deg;WindDirectionError_deg;PlumeCentre1_deg;PlumeCentreError1_deg;PlumeCentre2_deg;PlumeCentreError2_deg\n");
     }
 
     for (const auto& result : geometryResults)
@@ -1461,27 +1447,27 @@ void CPostProcessing::WriteCalculatedGeometriesToFile(novac::LogContext context,
         // write the file
         if (result.m_calculationType == Meteorology::MET_GEOMETRY_CALCULATION)
         {
-            fprintf(f, "%04d.%02d.%02d\t", result.m_averageStartTime.year, result.m_averageStartTime.month, result.m_averageStartTime.day);
-            fprintf(f, "%02d:%02d:%02d\t", result.m_averageStartTime.hour, result.m_averageStartTime.minute, result.m_averageStartTime.second);
-            fprintf(f, "%.1lf\t", result.m_startTimeDifference / 60.0);
-            fprintf(f, "%s\t%s\t", result.m_instrumentSerial1.c_str(), result.m_instrumentSerial2.c_str());
-            fprintf(f, "%.0lf\t%.0lf\t", result.m_plumeAltitude, result.m_plumeAltitudeError);
-            fprintf(f, "%.0lf\t%.0lf\t", result.m_windDirection, result.m_windDirectionError);
+            fprintf(f, "%04d.%02d.%02d;", result.m_averageStartTime.year, result.m_averageStartTime.month, result.m_averageStartTime.day);
+            fprintf(f, "%02d:%02d:%02d;", result.m_averageStartTime.hour, result.m_averageStartTime.minute, result.m_averageStartTime.second);
+            fprintf(f, "%.1lf;", result.m_startTimeDifference / 60.0);
+            fprintf(f, "%s;%s;", result.m_instrumentSerial1.c_str(), result.m_instrumentSerial2.c_str());
+            fprintf(f, "%.0lf;%.0lf;", result.m_plumeAltitude, result.m_plumeAltitudeError);
+            fprintf(f, "%.0lf;%.0lf;", result.m_windDirection, result.m_windDirectionError);
 
-            fprintf(f, "%.1f\t%.1f\t", result.m_plumeCentre1, result.m_plumeCentreError1);
-            fprintf(f, "%.1f\t%.1f\n", result.m_plumeCentre2, result.m_plumeCentreError2);
+            fprintf(f, "%.1f;%.1f;", result.m_plumeCentre1, result.m_plumeCentreError1);
+            fprintf(f, "%.1f;%.1f\n", result.m_plumeCentre2, result.m_plumeCentreError2);
         }
         else
         {
-            fprintf(f, "%04d.%02d.%02d\t", result.m_averageStartTime.year, result.m_averageStartTime.month, result.m_averageStartTime.day);
-            fprintf(f, "%02d:%02d:%02d\t", result.m_averageStartTime.hour, result.m_averageStartTime.minute, result.m_averageStartTime.second);
-            fprintf(f, "0\t");
-            fprintf(f, "%s\t\t", result.m_instrumentSerial1.c_str());
-            fprintf(f, "%.0lf\t%.0lf\t", result.m_plumeAltitude, result.m_plumeAltitudeError);
-            fprintf(f, "%.0lf\t%.0lf\t", result.m_windDirection, result.m_windDirectionError);
+            fprintf(f, "%04d.%02d.%02d;", result.m_averageStartTime.year, result.m_averageStartTime.month, result.m_averageStartTime.day);
+            fprintf(f, "%02d:%02d:%02d;", result.m_averageStartTime.hour, result.m_averageStartTime.minute, result.m_averageStartTime.second);
+            fprintf(f, "0;");
+            fprintf(f, "%s;;", result.m_instrumentSerial1.c_str());
+            fprintf(f, "%.0lf;%.0lf;", result.m_plumeAltitude, result.m_plumeAltitudeError);
+            fprintf(f, "%.0lf;%.0lf;", result.m_windDirection, result.m_windDirectionError);
 
-            fprintf(f, "%.1f\t%.1f\t", result.m_plumeCentre1, result.m_plumeCentreError1);
-            fprintf(f, "0\t0\n");
+            fprintf(f, "%.1f;%.1f;", result.m_plumeCentre1, result.m_plumeCentreError1);
+            fprintf(f, ";\n");
         }
     }
     fclose(f);
@@ -1949,8 +1935,10 @@ std::vector<Evaluation::CExtendedScanResult> CPostProcessing::LocateEvaluationLo
             m_log.Information(filenameContext, msg.str());
         }
 
-        Evaluation::CExtendedScanResult result;
-        result.m_evalLogFile[0] = filename;
+        Evaluation::CExtendedScanResult result(scanResult.GetSerial(), startTime, mode);
+        result.m_pakFile = ""; // unknown
+        result.m_evalLogFile.push_back(filename);
+        result.m_fitWindowName.push_back(""); // unknown
         result.m_startTime = startTime;
         result.m_scanProperties = scanResult.m_plumeProperties;
 

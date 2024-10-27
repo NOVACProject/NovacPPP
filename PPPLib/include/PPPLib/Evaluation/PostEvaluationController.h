@@ -6,7 +6,7 @@
 #include <PPPLib/Configuration/UserConfiguration.h>
 #include <PPPLib/ContinuationOfProcessing.h>
 #include <PPPLib/PostProcessingStatistics.h>
-
+#include <PPPLib/Evaluation/ExtendedScanResult.h>
 #include <SpectralEvaluation/File/ScanFileHandler.h>
 
 namespace Evaluation
@@ -49,8 +49,9 @@ public:
             results
         @param plumeProperties - if not NULL then this will on return be filled
             with the properties of the evaluated scan.
-        @return true on success, meaning that the evaluation succeeded and the scan is good enough to calculate a flux from. */
-    bool EvaluateScan(const novac::CString& pakFileName, const novac::CString& fitWindowName, novac::CString* txtFileName = NULL, novac::CPlumeInScanProperty* plumeProperties = NULL);
+        @return the collected scan result, if the evaluation succeeded and the scan is good enough to calculate a flux from.
+        @return nullptr if the scan evaluation failed or the scan is not good enough to calculate a flux from. */
+    std::unique_ptr<CExtendedScanResult> EvaluateScan(const novac::CString& pakFileName, const novac::CString& fitWindowName);
 
 
 private:

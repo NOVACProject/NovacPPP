@@ -161,8 +161,8 @@ void CStratosphereCalculator::BuildMeasurementList(const std::list <Evaluation::
                 meas.column = scanResult.GetColumn(k, specie);
 
                 // find the location of this instrument
-                auto instrLocation = m_setup.GetInstrumentLocation(scanResult.GetSerial().std_str(), meas.time);
-                CGPSData location = CGPSData(instrLocation.m_latitude, instrLocation.m_longitude, instrLocation.m_altitude);
+                auto instrLocation = m_setup.GetInstrumentLocation(scanResult.GetSerial(), meas.time);
+                CGPSData location = instrLocation.GpsData();
 
                 // calculate the AMF
                 meas.AMF = GetAMF_ZenithMeasurement(location, meas.time);

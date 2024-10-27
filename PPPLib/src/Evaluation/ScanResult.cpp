@@ -494,16 +494,17 @@ novac::CString CScanResult::GetName(int index) const
     return info.m_name;
 }
 
-/** Returns the serial-number of the spectrometer that collected this scan */
-novac::CString CScanResult::GetSerial() const
+std::string CScanResult::GetSerial() const
 {
     for (unsigned int k = 0; k < m_specNum; ++k)
     {
         const CSpectrumInfo& info = m_specInfo[k];
         if (info.m_device.size() > 0)
+        {
             return info.m_device;
+        }
     }
-    return novac::CString("");
+    return "";
 }
 
 /** Checks the kind of measurement that we have here and sets the flag 'm_measurementMode'

@@ -16,11 +16,9 @@
 using namespace Evaluation;
 using namespace novac;
 
-bool CPostEvaluationController::EvaluateScan(
+std::unique_ptr<CExtendedScanResult> CPostEvaluationController::EvaluateScan(
     const novac::CString& pakFileName,
-    const novac::CString& fitWindowName,
-    novac::CString* txtFileName,
-    CPlumeInScanProperty* plumeProperties)
+    const novac::CString& fitWindowName)
 {
     novac::CString errorMessage, serialNumber;
     Meteorology::CWindField windField;
@@ -73,7 +71,7 @@ bool CPostEvaluationController::EvaluateScan(
         if (this->m_continuation.IsPreviouslyIgnored(pakFileNameStr))
         {
             m_log.Information(context, "Scan has already been evaluated and was ignored. Will proceed to the next scan");
-            return true;
+            return nullptr;
         }
         else
         {
@@ -89,9 +87,10 @@ bool CPostEvaluationController::EvaluateScan(
                 {
                     m_log.Information(context, "Scan has already been evaluated and was ignored. Will proceed to the next scan");
 
-                    txtFileName->Format(archiveTxtFileName);
+                    std::unique_ptr<CExtendedScanResult> result = std::make_unique<CExtendedScanResult>(scan.GetDeviceSerial(), scan.GetScanStartTime(), modes[k]);
+                    result->m_evalLogFile.push_back(archiveTxtFileName.std_str());
 
-                    return true;
+                    return result;
                 }
             }
         }
@@ -104,7 +103,7 @@ bool CPostEvaluationController::EvaluateScan(
     {
         m_processingStats.InsertRejection(scan.m_device, rejectionReason);
         m_log.Information(context, "Scan quality not good enough to evaluate (" + errorMessageStr + "), skipping scan.");
-        return false;
+        return nullptr;
     }
 
     // 6. Evaluate the scan
@@ -117,7 +116,7 @@ bool CPostEvaluationController::EvaluateScan(
     if (lastResult == nullptr || lastResult->GetEvaluatedNum() == 0)
     {
         m_log.Information(context, "Zero spectra evaluated in recieved pak-file. Evaluation failed.");
-        return false;
+        return nullptr;
     }
 
     const int specieIndex = lastResult->GetSpecieIndex(CMolecule(m_userSettings.m_molecule).name);
@@ -143,10 +142,12 @@ bool CPostEvaluationController::EvaluateScan(
     PostEvaluationIO::AppendToPakFileSummaryFile(m_userSettings.m_outputDirectory.std_str(), lastResult, &scan, &instrLocation, &fitWindow, windField);
 
     // 10. Append the result to the log file of the corresponding scanningInstrument
-    if (RETURN_CODE::SUCCESS != PostEvaluationIO::WriteEvaluationResult(m_log, context, m_userSettings.m_outputDirectory.std_str(), spectrometerModel, lastResult, &scan, &instrLocation, &fitWindow, windField, txtFileName))
+    novac::CString evaluationLogFileName;
+    if (RETURN_CODE::SUCCESS != PostEvaluationIO::WriteEvaluationResult(m_log, context, m_userSettings.m_outputDirectory.std_str(), spectrometerModel, lastResult, &scan, &instrLocation, &fitWindow, windField, &evaluationLogFileName))
     {
-        errorMessage.Format("Failed to write evaluation log file %s. No result produced", txtFileName);
+        errorMessage.Format("Failed to write evaluation log file %s. No result produced", evaluationLogFileName.c_str());
         m_log.Error(context, errorMessage.std_str());
+        return nullptr;
     }
 
     // 11. If this was a flux-measurement then we need to see the plume for the measurement to be useful
@@ -155,23 +156,25 @@ bool CPostEvaluationController::EvaluateScan(
     {
         if (!IsGoodEnoughToCalculateFlux(context, lastResult))
         {
-            return false;
+            return nullptr;
         }
     }
 
     // 12. Return the properties of the scan
-    if (plumeProperties != nullptr)
-    {
-        lastResult->GetCalculatedPlumeProperties(*plumeProperties);
+    auto result = std::make_unique<CExtendedScanResult>(scan.GetDeviceSerial(), scan.GetScanStartTime(), lastResult->GetMeasurementMode());
+    result->m_evalLogFile.push_back(evaluationLogFileName.std_str());
+    result->m_fitWindowName.push_back(fitWindow.name);
+    result->m_pakFile = scan.GetFileName();
 
-        std::stringstream msg;
-        msg << "Scan sees the plume at scan angle: " << plumeProperties->plumeCenter << " +-" << plumeProperties->plumeCenterError << " [deg]. Completeness: " << plumeProperties->completeness;
-        m_log.Information(context, msg.str());
-    }
+    lastResult->GetCalculatedPlumeProperties(result->m_scanProperties);
 
-    PostEvaluationIO::CreatePlumespectrumFile(m_log, context, m_userSettings.m_outputDirectory.std_str(), lastResult, fitWindowName, scan, spectrometerModel, plumeProperties, specieIndex);
+    std::stringstream msg;
+    msg << "Scan sees the plume at scan angle: " << result->m_scanProperties.plumeCenter << " +-" << result->m_scanProperties.plumeCenterError << " [deg]. Completeness: " << result->m_scanProperties.completeness;
+    m_log.Information(context, msg.str());
 
-    return true;
+    PostEvaluationIO::CreatePlumespectrumFile(m_log, context, m_userSettings.m_outputDirectory.std_str(), lastResult, fitWindowName, scan, spectrometerModel, &(result->m_scanProperties), specieIndex);
+
+    return result;
 }
 
 bool CPostEvaluationController::IsGoodEnoughToCalculateFlux(LogContext context, std::unique_ptr<CScanResult>& result) const
