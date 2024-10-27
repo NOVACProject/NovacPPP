@@ -12,8 +12,8 @@ CGeometryResult& CGeometryResult::operator=(const CGeometryResult& gr)
     m_windDirection = gr.m_windDirection;
     m_windDirectionError = gr.m_windDirectionError;
 
-    m_instr1.Format(gr.m_instr1);
-    m_instr2.Format(gr.m_instr2);
+    m_instrumentSerial1 = gr.m_instrumentSerial1;
+    m_instrumentSerial2 = gr.m_instrumentSerial2;
 
     m_plumeCentre1 = gr.m_plumeCentre1;
     m_plumeCentreError1 = gr.m_plumeCentreError1;

@@ -551,7 +551,7 @@ void CPostProcessing::CheckProcessingSettings() const
         g_volcanoes.GetVolcanoName(m_userSettings.m_volcano, volcanoName);
 
         novac::CString messageToUser;
-        messageToUser.Format("Monitoring volcano '%s', located at (lat: %lf, lon: %lf, alt: %lf)", 
+        messageToUser.Format("Monitoring volcano '%s', located at (lat: %lf, lon: %lf, alt: %lf)",
             volcanoName.c_str(),
             g_volcanoes.GetPeakLatitude(m_userSettings.m_volcano),
             g_volcanoes.GetPeakLongitude(m_userSettings.m_volcano),
@@ -1002,13 +1002,16 @@ void CPostProcessing::CalculateGeometries(
                 else
                 {
                     // remember which instruments were used
-                    result.m_instr1.Format(serial1);
-                    result.m_instr2.Format(serial2);
+                    result.m_instrumentSerial1 = serial1.std_str();
+                    result.m_instrumentSerial2 = serial2.std_str();
 
                     geometryResults.push_back(result);
 
                     messageToUser.Format("Calculated a plume altitude of %.0lf +- %.0lf masl and wind direction of %.0lf +- %.0lf degrees by combining measurements two instruments",
-                        result.m_plumeAltitude, result.m_plumeAltitudeError, result.m_windDirection, result.m_windDirectionError);
+                        result.m_plumeAltitude,
+                        result.m_plumeAltitudeError,
+                        result.m_windDirection,
+                        result.m_windDirectionError);
                     m_log.Information(context.With("device1", serial1.std_str()).With("device2", serial2.std_str()).WithTimestamp(startTime1), messageToUser.std_str());
 
                     successfullyCombined = true;
@@ -1022,7 +1025,6 @@ void CPostProcessing::CalculateGeometries(
         if (!successfullyCombined)
         {
             Meteorology::CWindField windField;
-            Geometry::CPlumeHeight plumeHeight;
 
             // Get the location of the instrument
             Configuration::CInstrumentLocation location;
@@ -1036,12 +1038,12 @@ void CPostProcessing::CalculateGeometries(
                 continue;
             }
 
-            Geometry::CGeometryResult result;
-
             // Get the altitude of the plume at this moment. First look into the
             // general database. Then have a look in the list of geometry-results
             // that we just generated to see if there's anything better there...
+            Geometry::CPlumeHeight plumeHeight;
             m_plumeDataBase.GetPlumeHeight(startTime1, plumeHeight);
+
             for (auto it = geometryResults.rbegin(); it != geometryResults.rend(); ++it)
             {
                 const Geometry::CGeometryResult& oldResult = *it;
@@ -1057,11 +1059,12 @@ void CPostProcessing::CalculateGeometries(
             }
 
             // Try to calculate the wind-direction
+            Geometry::CGeometryResult result;
             Geometry::CGeometryCalculator geometryCalculator(m_log, m_userSettings);
-            if (geometryCalculator.CalculateWindDirection(evalLog1, 0, plumeHeight, location, result))
+            if (geometryCalculator.CalculateWindDirection(plume1, startTime1, plumeHeight, location, result))
             {
                 // Success!!
-                result.m_instr1.Format(serial1);
+                result.m_instrumentSerial1 = serial1.std_str();
                 geometryResults.push_back(result);
 
                 // tell the user   
@@ -1461,7 +1464,7 @@ void CPostProcessing::WriteCalculatedGeometriesToFile(novac::LogContext context,
             fprintf(f, "%04d.%02d.%02d\t", result.m_averageStartTime.year, result.m_averageStartTime.month, result.m_averageStartTime.day);
             fprintf(f, "%02d:%02d:%02d\t", result.m_averageStartTime.hour, result.m_averageStartTime.minute, result.m_averageStartTime.second);
             fprintf(f, "%.1lf\t", result.m_startTimeDifference / 60.0);
-            fprintf(f, "%s\t%s\t", (const char*)result.m_instr1, (const char*)result.m_instr2);
+            fprintf(f, "%s\t%s\t", result.m_instrumentSerial1.c_str(), result.m_instrumentSerial2.c_str());
             fprintf(f, "%.0lf\t%.0lf\t", result.m_plumeAltitude, result.m_plumeAltitudeError);
             fprintf(f, "%.0lf\t%.0lf\t", result.m_windDirection, result.m_windDirectionError);
 
@@ -1473,7 +1476,7 @@ void CPostProcessing::WriteCalculatedGeometriesToFile(novac::LogContext context,
             fprintf(f, "%04d.%02d.%02d\t", result.m_averageStartTime.year, result.m_averageStartTime.month, result.m_averageStartTime.day);
             fprintf(f, "%02d:%02d:%02d\t", result.m_averageStartTime.hour, result.m_averageStartTime.minute, result.m_averageStartTime.second);
             fprintf(f, "0\t");
-            fprintf(f, "%s\t\t", (const char*)result.m_instr1);
+            fprintf(f, "%s\t\t", result.m_instrumentSerial1.c_str());
             fprintf(f, "%.0lf\t%.0lf\t", result.m_plumeAltitude, result.m_plumeAltitudeError);
             fprintf(f, "%.0lf\t%.0lf\t", result.m_windDirection, result.m_windDirectionError);
 
@@ -1503,7 +1506,7 @@ void CPostProcessing::InsertCalculatedGeometriesIntoDataBase(novac::LogContext c
             try
             {
                 // get the location of the instrument at the time of the measurement
-                location = m_setup.GetInstrumentLocation(result.m_instr1.std_str(), result.m_averageStartTime);
+                location = m_setup.GetInstrumentLocation(result.m_instrumentSerial1, result.m_averageStartTime);
 
                 // get the time-interval that the measurement is valid for
                 validFrom = CDateTime(result.m_averageStartTime);
@@ -1910,6 +1913,8 @@ std::vector<Evaluation::CExtendedScanResult> CPostProcessing::LocateEvaluationLo
         novac::CString serial;
         novac::CFileUtils::GetInfoFromFileName(filename, startTime, serial, channel, mode);
 
+        novac::LogContext filenameContext = context.With(LogContext::FileName, novac::GetFileName(filename));
+
         FileHandler::CEvaluationLogFileHandler logReader(m_log, filename, m_userSettings.m_molecule);
         if (RETURN_CODE::SUCCESS != logReader.ReadEvaluationLog() || logReader.m_scan.size() == 0)
         {
@@ -1918,22 +1923,30 @@ std::vector<Evaluation::CExtendedScanResult> CPostProcessing::LocateEvaluationLo
         }
         if (logReader.m_scan.size() > 1)
         {
-            m_log.Information(context.With(LogContext::FileName, novac::GetFileName(filename)), "File contained mored than one scan. Only the first will be used.");
+            m_log.Information(filenameContext, "File contained mored than one scan. Only the first will be used.");
         }
 
         Evaluation::CScanResult scanResult = logReader.m_scan[0];
 
         if (0 != scanResult.CalculateOffset(CMolecule(m_userSettings.m_molecule)))
         {
-            m_log.Information(context.With(LogContext::FileName, novac::GetFileName(filename)), "Failed to calculate the offset of the scan, no flux will be calculated.");
+            m_log.Information(filenameContext, "Failed to calculate the offset of the scan, no flux will be calculated.");
             continue;
         }
 
         std::string message;
         if (!scanResult.CalculatePlumeCentre(CMolecule(m_userSettings.m_molecule), message))
         {
-            m_log.Information(context.With(LogContext::FileName, novac::GetFileName(filename)), message + " Scan does not see the plume, no flux will be calculated.");
+            m_log.Information(filenameContext, message + " Scan does not see the plume, no flux will be calculated.");
             continue;
+        }
+        else
+        {
+            std::stringstream msg;
+            msg << "Scan sees the plume at: " << scanResult.m_plumeProperties.plumeCenter;
+            msg << " +- " << scanResult.m_plumeProperties.plumeCenterError;
+            msg << " [deg]. Completeness:" << scanResult.m_plumeProperties.completeness;
+            m_log.Information(filenameContext, msg.str());
         }
 
         Evaluation::CExtendedScanResult result;

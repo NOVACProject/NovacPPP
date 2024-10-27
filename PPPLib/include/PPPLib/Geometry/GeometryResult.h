@@ -30,18 +30,18 @@ public:
 
     /** The two instruments that were used to derive this
         geometry result. */
-    novac::CString m_instr1 = "";
-    novac::CString m_instr2 = "";
+    std::string m_instrumentSerial1 = "";
+    std::string m_instrumentSerial2 = "";
 
     /** The plume centre-angles for the two scans
         that were combined */
-    float m_plumeCentre1 = NOT_A_NUMBER;
-    float m_plumeCentre2 = NOT_A_NUMBER;
+    double m_plumeCentre1 = NOT_A_NUMBER;
+    double m_plumeCentre2 = NOT_A_NUMBER;
 
     /** The estimated error in the plume-centre angles
         for each of the two scans that were combined */
-    float m_plumeCentreError1 = NOT_A_NUMBER;
-    float m_plumeCentreError2 = NOT_A_NUMBER;
+    double m_plumeCentreError1 = NOT_A_NUMBER;
+    double m_plumeCentreError2 = NOT_A_NUMBER;
 
     /** The calculated plume height (in meters above sea level) */
     double m_plumeAltitude = 0.0;

@@ -9,6 +9,8 @@
         for various purposes.*/
 namespace novac
 {
+class CGPSData;
+
 class CVolcanoInfo
 {
 public:
@@ -57,12 +59,16 @@ public:
 
     /** Retrieves the volcano position from the given index.
         @throws std::invalid_argument if there is no volcano with this index. */
-    double GetPeakLatitude(unsigned int index);
+    double GetPeakLatitude(unsigned int index) const;
     double GetPeakLatitude(const novac::CString& name) { return GetPeakLatitude(GetVolcanoIndex(name)); }
-    double GetPeakLongitude(unsigned int index);
+    double GetPeakLongitude(unsigned int index) const;
     double GetPeakLongitude(const novac::CString& name) { return GetPeakLongitude(GetVolcanoIndex(name)); }
-    double GetPeakAltitude(unsigned int index);
+    double GetPeakAltitude(unsigned int index) const;
     double GetPeakAltitude(const novac::CString& name) { return GetPeakAltitude(GetVolcanoIndex(name)); }
+
+    /** Retrieves the position (latitude, longitude and altitude) of the volcanoe with the given index. 
+        @throws std::invalid_argument if there is no volcano with this index. */
+    novac::CGPSData GetPeak(unsigned int index) const;
 
     /** Retrieves the time-zone this volcano is in */
     double GetHoursToGMT(unsigned int index);

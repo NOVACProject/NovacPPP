@@ -51,7 +51,7 @@ public:
                 The properties of the scanner are given by the 'compass' - direction (degrees from north)
                 and the 'coneAngle' (degrees)
                 @return the plume height if the calculations are successful
-                @return NOT_A_NUMBER if something is wrong.				*/
+                @return NOT_A_NUMBER if something is wrong. */
     static double GetPlumeHeight(const novac::CGPSData source, double windDirection, const novac::CGPSData scannerPos, double compass, double plumeCentre, double coneAngle, double tilt);
 
     /** Calculate the plume-height using the two scans found in the
@@ -59,8 +59,6 @@ public:
             @param result - will on successful return be filled with information on the result
                 the resulting plume height is the altitude of the plume in meters above sea level...
             @return true on success */
-    bool CalculateGeometry(const novac::CString& evalLog1, const novac::CString& evalLog2, const Configuration::CInstrumentLocation locations[2], Geometry::CGeometryResult& result);
-    bool CalculateGeometry(const novac::CString& evalLog1, int scanIndex1, const novac::CString& evalLog2, int scanIndex2, const Configuration::CInstrumentLocation locations[2], Geometry::CGeometryResult& result);
     bool CalculateGeometry(const novac::CPlumeInScanProperty& plume1, const novac::CDateTime& startTime1, const novac::CPlumeInScanProperty& plume2, const novac::CDateTime& startTime2, const Configuration::CInstrumentLocation locations[2], Geometry::CGeometryResult& result);
 
     /** Calculate the plume-height using the scan found in the given evaluation-file.
@@ -70,7 +68,7 @@ public:
                 the estimated error is based on the error in wind-direction and the error in estimating
                     the plume centre position.
             @return true on success */
-    bool CalculatePlumeHeight(const novac::CString& evalLog, int scanIndex, Meteorology::CWindField& windField, Configuration::CInstrumentLocation location, Geometry::CGeometryResult& result);
+    bool CalculatePlumeHeight(const novac::CString& evalLog, int scanIndex, Meteorology::CWindField& windField, Configuration::CInstrumentLocation location, CGeometryResult& result);
 
     /** Calculate the wind direction using the scan found in the given evaluation-file.
             @param absolutePlumeHeight - the assumed plume height (in meters above sea level)
@@ -78,9 +76,9 @@ public:
             @param result - will on successful return be filled with information on the result
                 only the wind-direction (and its error) will be filled in
             @return true on success */
-    bool CalculateWindDirection(const novac::CString& evalLog, int scanIndex, Geometry::CPlumeHeight& absolutePlumeHeight, Configuration::CInstrumentLocation location, Geometry::CGeometryResult& result);
+    bool CalculateWindDirection(const novac::CPlumeInScanProperty& plume, const novac::CDateTime& startTime, const CPlumeHeight& absolutePlumeHeight, const Configuration::CInstrumentLocation& location, CGeometryResult& result);
 
-protected:
+private:
 
     const Configuration::CUserConfiguration& m_userSettings;
 
@@ -121,7 +119,7 @@ protected:
                 The properties of the scanner are given by the 'compass' - direction (degrees from north)
                 and the 'coneAngle' (degrees)
                 @return the wind-direction if the calculations are successful
-                @return NOT_A_NUMBER if something is wrong. 					*/
+                @return NOT_A_NUMBER if something is wrong. s*/
     static double GetWindDirection(const novac::CGPSData source, double plumeHeight, const novac::CGPSData scannerPos, double compass, double plumeCentre, double coneAngle, double tilt);
     static double GetWindDirection(const novac::CGPSData source, double plumeHeight, const Configuration::CInstrumentLocation scannerLocation, double plumeCentre);
 
@@ -131,7 +129,7 @@ protected:
                 the scanning instrument is given by 'plumeHeight' (in meters).
                 This function is intended for use with V-II Heidelberg instruments
                 @return the wind-direction if the calculations are successful
-                @return NOT_A_NUMBER if something is wrong. 					*/
+                @return NOT_A_NUMBER if something is wrong. */
     static double GetWindDirection(const novac::CGPSData source, const novac::CGPSData scannerPos, double plumeHeight, double alpha_center_of_mass, double phi_center_of_mass);
 
     /** Rotates the given vector the given angle [degrees] around the given axis

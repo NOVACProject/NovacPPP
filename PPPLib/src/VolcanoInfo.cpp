@@ -1,4 +1,5 @@
 #include <PPPLib/VolcanoInfo.h>
+#include <SpectralEvaluation/GPSData.h>
 #include <stdexcept>
 #include <sstream>
 
@@ -165,26 +166,34 @@ void CVolcanoInfo::GetSimpleVolcanoName(unsigned int index, novac::CString& name
     name.Format(vol.m_simpleName);
 }
 
-double CVolcanoInfo::GetPeakLatitude(unsigned int index)
+double CVolcanoInfo::GetPeakLatitude(unsigned int index) const
 {
     ValidateVolcanoIndex(index);
 
-    Volcano& vol = m_volcanoes.at(index);
+    const Volcano& vol = m_volcanoes.at(index);
     return vol.m_peakLatitude;
 }
-double CVolcanoInfo::GetPeakLongitude(unsigned int  index)
+double CVolcanoInfo::GetPeakLongitude(unsigned int index) const
 {
     ValidateVolcanoIndex(index);
 
-    Volcano& vol = m_volcanoes.at(index);
+    const Volcano& vol = m_volcanoes.at(index);
     return vol.m_peakLongitude;
 }
-double CVolcanoInfo::GetPeakAltitude(unsigned int  index)
+double CVolcanoInfo::GetPeakAltitude(unsigned int index) const
 {
     ValidateVolcanoIndex(index);
 
-    Volcano& vol = m_volcanoes.at(index);
+    const Volcano& vol = m_volcanoes.at(index);
     return vol.m_peakHeight;
+}
+
+novac::CGPSData CVolcanoInfo::GetPeak(unsigned int index) const
+{
+    ValidateVolcanoIndex(index);
+
+    const Volcano& vol = m_volcanoes.at(index);
+    return novac::CGPSData(vol.m_peakLatitude, vol.m_peakLongitude, vol.m_peakHeight);
 }
 
 double CVolcanoInfo::GetHoursToGMT(unsigned int index)
