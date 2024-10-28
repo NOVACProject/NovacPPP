@@ -23,8 +23,7 @@ CFluxCalculator::CFluxCalculator(
     const Configuration::CNovacPPPConfiguration& setup,
     const Configuration::CUserConfiguration& userSettings)
     : m_log(log), m_setup(setup), m_userSettings(userSettings)
-{
-}
+{}
 
 bool CFluxCalculator::CalculateFlux(
     novac::LogContext context,
@@ -143,22 +142,22 @@ bool CFluxCalculator::CalculateFlux(
 
     switch (windField.GetWindSpeedSource())
     {
-    case Meteorology::MET_DEFAULT:				windFieldQuality = FluxQuality::Red; break;
-    case Meteorology::MET_USER:					windFieldQuality = FluxQuality::Red; break;
-    case Meteorology::MET_ECMWF_FORECAST:		windFieldQuality = FluxQuality::Green; break;
-    case Meteorology::MET_ECMWF_ANALYSIS:		windFieldQuality = FluxQuality::Green; break;
-    case Meteorology::MET_DUAL_BEAM_MEASUREMENT:windFieldQuality = FluxQuality::Green; break;
-    case Meteorology::MET_MODEL_WRF:			windFieldQuality = FluxQuality::Green; break;
-    case Meteorology::MET_NOAA_GDAS:			windFieldQuality = FluxQuality::Green; break;
-    case Meteorology::MET_NOAA_FNL:				windFieldQuality = FluxQuality::Green; break;
-    default:									windFieldQuality = FluxQuality::Yellow; break;
+    case Meteorology::MeteorologySource::Default:				windFieldQuality = FluxQuality::Red; break;
+    case Meteorology::MeteorologySource::User:					windFieldQuality = FluxQuality::Red; break;
+    case Meteorology::MeteorologySource::EcmwfForecast:		windFieldQuality = FluxQuality::Green; break;
+    case Meteorology::MeteorologySource::EcmwfAnalysis:		windFieldQuality = FluxQuality::Green; break;
+    case Meteorology::MeteorologySource::DualBeamMeasurement:windFieldQuality = FluxQuality::Green; break;
+    case Meteorology::MeteorologySource::ModelledWrf:			windFieldQuality = FluxQuality::Green; break;
+    case Meteorology::MeteorologySource::NoaaGdas:			windFieldQuality = FluxQuality::Green; break;
+    case Meteorology::MeteorologySource::NoaaFnl:				windFieldQuality = FluxQuality::Green; break;
+    default:									            windFieldQuality = FluxQuality::Yellow; break;
     }
     switch (relativePlumeHeight.m_plumeAltitudeSource)
     {
-    case Meteorology::MET_DEFAULT:				plumeHeightQuality = FluxQuality::Red; break;
-    case Meteorology::MET_USER:					plumeHeightQuality = FluxQuality::Red; break;
-    case Meteorology::MET_GEOMETRY_CALCULATION:	plumeHeightQuality = FluxQuality::Green; break;
-    default:									plumeHeightQuality = FluxQuality::Yellow; break;
+    case Meteorology::MeteorologySource::Default:				plumeHeightQuality = FluxQuality::Red; break;
+    case Meteorology::MeteorologySource::User:					plumeHeightQuality = FluxQuality::Red; break;
+    case Meteorology::MeteorologySource::GeometryCalculationTwoInstruments:	plumeHeightQuality = FluxQuality::Green; break;
+    default:									            plumeHeightQuality = FluxQuality::Yellow; break;
     }
     if (fluxResult.m_completeness < 0.7)
     {

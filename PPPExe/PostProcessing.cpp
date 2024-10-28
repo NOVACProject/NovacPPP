@@ -807,7 +807,7 @@ void CPostProcessing::PreparePlumeHeights(novac::LogContext context)
     // we need to construct a default plume height to use, if there's nothing else...
     Geometry::CPlumeHeight plumeHeight;
     plumeHeight.m_plumeAltitude = g_volcanoes.GetPeakAltitude(m_userSettings.m_volcano);
-    plumeHeight.m_plumeAltitudeSource = Meteorology::MET_DEFAULT;
+    plumeHeight.m_plumeAltitudeSource = Meteorology::MeteorologySource::Default;
     plumeHeight.m_validFrom = CDateTime(0, 0, 0, 0, 0, 0);
     plumeHeight.m_validTo = CDateTime(9999, 12, 31, 23, 59, 59);
 
@@ -1445,7 +1445,7 @@ void CPostProcessing::WriteCalculatedGeometriesToFile(novac::LogContext context,
     for (const auto& result : geometryResults)
     {
         // write the file
-        if (result.m_calculationType == Meteorology::MET_GEOMETRY_CALCULATION)
+        if (result.m_calculationType == Meteorology::MeteorologySource::GeometryCalculationTwoInstruments)
         {
             fprintf(f, "%04d.%02d.%02d;", result.m_averageStartTime.year, result.m_averageStartTime.month, result.m_averageStartTime.day);
             fprintf(f, "%02d:%02d:%02d;", result.m_averageStartTime.hour, result.m_averageStartTime.minute, result.m_averageStartTime.second);
@@ -1635,7 +1635,7 @@ void CPostProcessing::CalculateDualBeamWindSpeeds(novac::LogContext context, con
                     windField.GetValidTimeFrame(validFrom, validTo);
 
                     // insert the new wind speed into the database
-                    m_windDataBase.InsertWindSpeed(validFrom, validTo, windField.GetWindSpeed(), windField.GetWindSpeedError(), Meteorology::MET_DUAL_BEAM_MEASUREMENT, nullptr);
+                    m_windDataBase.InsertWindSpeed(validFrom, validTo, windField.GetWindSpeed(), windField.GetWindSpeedError(), Meteorology::MeteorologySource::DualBeamMeasurement, nullptr);
                 }
                 m_log.Information(fileContext, userMessage.std_str());
             }
@@ -1705,7 +1705,7 @@ void CPostProcessing::CalculateDualBeamWindSpeeds(novac::LogContext context, con
                         windField.GetValidTimeFrame(validFrom, validTo);
 
                         // insert the new wind speed into the database
-                        m_windDataBase.InsertWindSpeed(validFrom, validTo, windField.GetWindSpeed(), windField.GetWindSpeedError(), Meteorology::MET_DUAL_BEAM_MEASUREMENT, nullptr);
+                        m_windDataBase.InsertWindSpeed(validFrom, validTo, windField.GetWindSpeed(), windField.GetWindSpeedError(), Meteorology::MeteorologySource::DualBeamMeasurement, nullptr);
                     }
                     m_log.Information(calcContext, userMessage.std_str());
 

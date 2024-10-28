@@ -515,7 +515,7 @@ int CWindSpeedCalculator::CalculateWindSpeed(const novac::CString& evalLog1, con
     double averageDelay = Average(goodDelays, nGoodPoints);
     double stdDelay = Std(goodDelays, nGoodPoints);
 
-    windField.SetWindSpeed(distance / averageDelay, Meteorology::MET_DUAL_BEAM_MEASUREMENT);
+    windField.SetWindSpeed(distance / averageDelay, Meteorology::MeteorologySource::DualBeamMeasurement);
 
     // Estimate the error in the wind-speed
     windField.SetWindSpeedError(fabs(relativePlumeHeight.m_plumeAltitudeError / averageDelay) + fabs(relativePlumeHeight.m_plumeAltitude * stdDelay / (averageDelay * averageDelay)));

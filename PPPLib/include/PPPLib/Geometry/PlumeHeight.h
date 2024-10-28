@@ -27,7 +27,7 @@ public:
     double m_plumeAltitudeError = 1000.0;;
 
     /** The source of our knowledge of this altitude. */
-    Meteorology::MET_SOURCE m_plumeAltitudeSource = Meteorology::MET_DEFAULT;
+    Meteorology::MeteorologySource m_plumeAltitudeSource = Meteorology::MeteorologySource::Default;
 
     /** The time range over which this information of the plume is valid */
     novac::CDateTime m_validFrom = novac::CDateTime(0, 0, 0, 0, 0, 0);

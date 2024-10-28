@@ -609,7 +609,7 @@ bool CGeometryCalculator::CalculatePlumeHeight(const novac::CString& evalLog, in
     result.m_windDirectionError = 0.0;
     result.m_plumeCentre1 = plume.plumeCenter;
     result.m_plumeCentreError1 = plume.plumeCenterError;
-    result.m_calculationType = Meteorology::MET_GEOMETRY_CALCULATION_SINGLE_INSTR;
+    result.m_calculationType = Meteorology::MeteorologySource::GeometryCalculationSingleInstrument;
 
     return true;
 }
@@ -657,7 +657,7 @@ bool CGeometryCalculator::CalculateWindDirection(const novac::CPlumeInScanProper
     result.m_windDirectionError = windDirectionErr;
     result.m_plumeCentre1 = plume.plumeCenter;
     result.m_plumeCentreError1 = plume.plumeCenterError;
-    result.m_calculationType = Meteorology::MET_GEOMETRY_CALCULATION_SINGLE_INSTR;
+    result.m_calculationType = Meteorology::MeteorologySource::GeometryCalculationSingleInstrument;
 
     return true;
 }

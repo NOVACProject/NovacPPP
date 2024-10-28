@@ -993,9 +993,9 @@ void CEvaluationLogFileHandler::ParseFluxInformation(Meteorology::WindField& win
     char szLine[8192];
     char* pt = nullptr;
     double windSpeed = 10, windDirection = 0, plumeHeight = 1000;
-    Meteorology::MET_SOURCE windSpeedSource = Meteorology::MET_USER;
-    Meteorology::MET_SOURCE windDirectionSource = Meteorology::MET_USER;
-    Meteorology::MET_SOURCE plumeHeightSource = Meteorology::MET_USER;
+    Meteorology::MeteorologySource windSpeedSource = Meteorology::MeteorologySource::User;
+    Meteorology::MeteorologySource windDirectionSource = Meteorology::MeteorologySource::User;
+    Meteorology::MeteorologySource plumeHeightSource = Meteorology::MeteorologySource::User;
     char source[512];
 
     // read the additional scan-information, line by line

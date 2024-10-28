@@ -66,21 +66,19 @@ public:
         @param wd_src - the source of this piece of information
         @param location - the point in space where this piece of information is valid.
             If location is NULL then the wind-direction is assumed to be valid everywhere.
-            The altitude in 'location ' will be ignored.
-    */
-    void InsertWindDirection(const novac::CDateTime& validFrom, const novac::CDateTime& validTo, double wd, double wd_err, MET_SOURCE wd_src, const novac::CGPSData* location);
+            The altitude in 'location ' will be ignored. */
+    void InsertWindDirection(const novac::CDateTime& validFrom, const novac::CDateTime& validTo, double wd, double wd_err, MeteorologySource wd_src, const novac::CGPSData* location);
 
     /** Inserts a wind-speed into the database.
         @param validFrom - the time from which the wind-direction is judged to be ok
         @param validTo - the time until which the wind-direction is judged to be ok
-        @param ws - the actual wind-speed, in meters per second.
-        @param ws_err - the judged error in the wind-speed. Also in meters per second.
+        @param windSpeed - the actual wind-speed, in meters per second.
+        @param windSpeed_err - the judged error in the wind-speed. Also in meters per second.
         @param ws_src - the source of this piece of information
         @param location - the point in space where this piece of information is valid.
             If location is NULL then the wind-speed is assumed to be valid everywhere.
-            The altitude in 'location ' will be ignored.
-    */
-    void InsertWindSpeed(const novac::CDateTime& validFrom, const novac::CDateTime& validTo, double wd, double wd_err, MET_SOURCE wd_src, const novac::CGPSData* location);
+            The altitude in 'location ' will be ignored. */
+    void InsertWindSpeed(const novac::CDateTime& validFrom, const novac::CDateTime& validTo, double windSpeed, double windSpeed_err, MeteorologySource wd_src, const novac::CGPSData* location);
 
     /** Writes the contents of this database to file.
         @return 0 on success. */
@@ -109,11 +107,11 @@ private:
 
         double ws = 10.0;   // the wind-speed, in meters/second
         double ws_err = 10.0;   // the absolute error in wind-speed, in meters/second
-        MET_SOURCE ws_src = MET_SOURCE::MET_DEFAULT;    // the source for the wind-speed
+        MeteorologySource ws_src = MeteorologySource::Default;    // the source for the wind-speed
 
         double wd = 0.0;    // the wind-direction, in degrees from north, positive clock-wise
         double wd_err = 360.0;  // the absolute error in wind-direction, in degrees
-        MET_SOURCE wd_src = MET_SOURCE::MET_DEFAULT;    // the source for the wind-direction
+        MeteorologySource wd_src = MeteorologySource::Default;    // the source for the wind-direction
     };
 
     /** This is used to organise all data that is valid within a certain

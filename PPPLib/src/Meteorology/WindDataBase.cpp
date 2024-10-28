@@ -34,14 +34,6 @@ CWindDataBase::WindInTime& CWindDataBase::WindInTime::operator=(const WindInTime
 // --------- THE CLASS CWindDataBase ----------
 
 
-/** Retrieves the wind field at a given time and at a given location.
-    @param time - the time for which the wind field should be retrieved
-    @param location - the position and altitude for which the wind field
-        should be retrieved.
-    @param windField - will on successful return be filled with the information
-        about the wind field at the requested time and location.
-    @return true if the wind field could be retrieved, otherwise false.
-    */
 bool CWindDataBase::GetWindField(const novac::CDateTime& time, const novac::CGPSData& location, InterpolationMethod method, WindField& windField) const
 {
     if (InterpolationMethod::Exact == method)
@@ -60,7 +52,6 @@ bool CWindDataBase::GetWindField(const novac::CDateTime& time, const novac::CGPS
     return false; // nothing found in the database
 }
 
-/** Inserts a wind field into the database */
 void CWindDataBase::InsertWindField(const WindField& windField)
 {
     bool foundMatchingTimeFrame = false;
@@ -89,11 +80,11 @@ void CWindDataBase::InsertWindField(const WindField& windField)
 
     // create a new data object to insert
     WindData data;
-    data.ws = (float)windField.GetWindSpeed();
-    data.ws_err = (float)windField.GetWindSpeedError();
+    data.ws = windField.GetWindSpeed();
+    data.ws_err = windField.GetWindSpeedError();
     data.ws_src = windField.GetWindSpeedSource();
-    data.wd = (float)windField.GetWindDirection();
-    data.wd_err = (float)windField.GetWindDirectionError();
+    data.wd = windField.GetWindDirection();
+    data.wd_err = windField.GetWindDirectionError();
     data.wd_src = windField.GetWindDirectionSource();
     windField.GetValidPosition(position.m_latitude, position.m_longitude, position.m_altitude);
     if (position.m_latitude == NOT_A_NUMBER && position.m_longitude == NOT_A_NUMBER)
@@ -130,35 +121,35 @@ void CWindDataBase::InsertWindField(const WindField& windField)
 }
 
 /** Inserts a wind-direction into the database */
-void CWindDataBase::InsertWindDirection(const novac::CDateTime& validFrom, const novac::CDateTime& validTo, double wd, double wd_err, MET_SOURCE wd_src, const novac::CGPSData* location)
+void CWindDataBase::InsertWindDirection(const novac::CDateTime& validFrom, const novac::CDateTime& validTo, double wd, double wd_err, MeteorologySource wd_src, const novac::CGPSData* location)
 {
     WindField windField;
 
     if (location != NULL)
     {
-        windField = WindField(NOT_A_NUMBER, NOT_A_NUMBER, MET_NONE, wd, wd_err, wd_src, validFrom, validTo, location->m_latitude, location->m_longitude, location->m_altitude);
+        windField = WindField(NOT_A_NUMBER, NOT_A_NUMBER, MeteorologySource::None, wd, wd_err, wd_src, validFrom, validTo, location->m_latitude, location->m_longitude, location->m_altitude);
         this->InsertWindField(windField);
     }
     else
     {
-        windField = WindField(NOT_A_NUMBER, NOT_A_NUMBER, MET_NONE, wd, wd_err, wd_src, validFrom, validTo, NOT_A_NUMBER, NOT_A_NUMBER, NOT_A_NUMBER);
+        windField = WindField(NOT_A_NUMBER, NOT_A_NUMBER, MeteorologySource::None, wd, wd_err, wd_src, validFrom, validTo, NOT_A_NUMBER, NOT_A_NUMBER, NOT_A_NUMBER);
         this->InsertWindField(windField);
     }
 }
 
 /** Inserts a wind-direction into the database */
-void CWindDataBase::InsertWindSpeed(const novac::CDateTime& validFrom, const novac::CDateTime& validTo, double ws, double ws_err, MET_SOURCE ws_src, const novac::CGPSData* location)
+void CWindDataBase::InsertWindSpeed(const novac::CDateTime& validFrom, const novac::CDateTime& validTo, double ws, double ws_err, MeteorologySource ws_src, const novac::CGPSData* location)
 {
     WindField windField;
 
     if (location != NULL)
     {
-        windField = WindField(ws, ws_err, ws_src, NOT_A_NUMBER, NOT_A_NUMBER, MET_NONE, validFrom, validTo, location->m_latitude, location->m_longitude, location->m_altitude);
+        windField = WindField(ws, ws_err, ws_src, NOT_A_NUMBER, NOT_A_NUMBER, MeteorologySource::None, validFrom, validTo, location->m_latitude, location->m_longitude, location->m_altitude);
         this->InsertWindField(windField);
     }
     else
     {
-        windField = WindField(ws, ws_err, ws_src, NOT_A_NUMBER, NOT_A_NUMBER, MET_NONE, validFrom, validTo, NOT_A_NUMBER, NOT_A_NUMBER, NOT_A_NUMBER);
+        windField = WindField(ws, ws_err, ws_src, NOT_A_NUMBER, NOT_A_NUMBER, MeteorologySource::None, validFrom, validTo, NOT_A_NUMBER, NOT_A_NUMBER, NOT_A_NUMBER);
         this->InsertWindField(windField);
     }
 }
@@ -292,7 +283,7 @@ bool CWindDataBase::GetWindField_Exact(const novac::CDateTime& time, const novac
 {
     int bestWs_Quality = -1; // the best quality data of wind-speed that we found
     int bestWd_Quality = -1; // the best quality data of wind-speed that we found
-    WindField tempWindField = WindField(NOT_A_NUMBER, MET_NONE, NOT_A_NUMBER, MET_NONE, novac::CDateTime(), novac::CDateTime(9999, 12, 31, 23, 59, 59), location.m_latitude, location.m_longitude, location.m_altitude);
+    WindField tempWindField = WindField(NOT_A_NUMBER, MeteorologySource::None, NOT_A_NUMBER, MeteorologySource::None, novac::CDateTime(), novac::CDateTime(9999, 12, 31, 23, 59, 59), location.m_latitude, location.m_longitude, location.m_altitude);
     novac::CDateTime validFrom = novac::CDateTime(0, 0, 0, 0, 0, 0);
     novac::CDateTime validTo = novac::CDateTime(9999, 12, 31, 23, 59, 59);
     int ws_Average = 0; // how many data-points is the wind-speed an average of...
@@ -403,7 +394,7 @@ bool CWindDataBase::GetWindField_Exact(const novac::CDateTime& time, const novac
         }
     }
 
-    if (bestWs_Quality <= GetSourceQuality(MET_NONE) || bestWd_Quality <= GetSourceQuality(MET_NONE))
+    if (bestWs_Quality <= GetSourceQuality(MeteorologySource::None) || bestWd_Quality <= GetSourceQuality(MeteorologySource::None))
         return false; // no matching location found.
     else
     {

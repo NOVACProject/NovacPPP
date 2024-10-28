@@ -256,7 +256,7 @@ int CXMLWindFileReader::Parse_WindField(Meteorology::CWindDataBase& dataBase)
     double altitude = 0.0;
     double windspeed = 0.0, windspeederror = 0.0;
     double winddirection = 0.0, winddirectionerror = 0.0;
-    MET_SOURCE windSource = MET_DEFAULT;
+    MeteorologySource windSource = MeteorologySource::Default;
 
     // parse the file
     while (nullptr != (szToken = NextToken()))

@@ -14,9 +14,9 @@ public:
     CGeometryResult& operator=(const CGeometryResult& gr);
 
     /** How this calculation was made. Can be either one of
-        MET_GEOMETRY_CALCULATION (default) or
-        MET_GEOMETRY_CALCULATION_SINGLE_INSTR */
-    Meteorology::MET_SOURCE m_calculationType = Meteorology::MET_GEOMETRY_CALCULATION;
+        GeometryCalculationTwoInstruments (default) or
+        GeometryCalculationSingleInstrument */
+    Meteorology::MeteorologySource m_calculationType = Meteorology::MeteorologySource::GeometryCalculationTwoInstruments;
 
     /** The average of the starting-time of the
             two scans that were combined to generate the result

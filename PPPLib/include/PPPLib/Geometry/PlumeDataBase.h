@@ -74,7 +74,7 @@ private:
         // The plume altitude (meters above sea level)
         float		altitude;
         float		altitudeError;
-        Meteorology::MET_SOURCE	altitudeSource;
+        Meteorology::MeteorologySource	altitudeSource;
     };
 
     // ----------------------------------------------------------------------

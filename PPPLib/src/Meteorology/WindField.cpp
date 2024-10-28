@@ -2,175 +2,159 @@
 
 using namespace Meteorology;
 
-// global function that converts a MET_SOURCE item to string
-void Meteorology::MetSourceToString(const MET_SOURCE src, novac::CString& str)
+// global function that converts a MeteorologySource item to string
+void Meteorology::MetSourceToString(const MeteorologySource src, novac::CString& str)
 {
-    if (MET_USER == src)
+    if (MeteorologySource::User == src)
         str.Format("user");
-    else if (MET_DEFAULT == src)
+    else if (MeteorologySource::Default == src)
         str.Format("default");
-    else if (MET_ECMWF_FORECAST == src)
+    else if (MeteorologySource::EcmwfForecast == src)
         str.Format("ecmwf_forecast");
-    else if (MET_ECMWF_ANALYSIS == src)
+    else if (MeteorologySource::EcmwfAnalysis == src)
         str.Format("ecmwf_analysis");
-    else if (MET_DUAL_BEAM_MEASUREMENT == src)
+    else if (MeteorologySource::DualBeamMeasurement == src)
         str.Format("dual_beam_measurement");
-    else if (MET_MODEL_WRF == src)
+    else if (MeteorologySource::ModelledWrf == src)
         str.Format("model_wrf");
-    else if (MET_GEOMETRY_CALCULATION == src)
+    else if (MeteorologySource::GeometryCalculationTwoInstruments == src)
         str.Format("geometry_calc");
-    else if (MET_GEOMETRY_CALCULATION_SINGLE_INSTR == src)
+    else if (MeteorologySource::GeometryCalculationSingleInstrument == src)
         str.Format("geometry_calc_single_instr");
-    else if (MET_NOAA_GDAS == src)
+    else if (MeteorologySource::NoaaGdas == src)
         str.Format("noaa_gdas");
-    else if (MET_NOAA_FNL == src)
+    else if (MeteorologySource::NoaaFnl == src)
         str.Format("noaa_fnl");
-    else if (MET_NONE == src)
+    else if (MeteorologySource::None == src)
         str.Format("none");
     else
         str.Format("unknown");
 }
 
-MET_SOURCE Meteorology::StringToMetSource(const novac::CString& str)
+MeteorologySource Meteorology::StringToMetSource(const novac::CString& str)
 {
     novac::CString trimmedStr(str);
     trimmedStr.Trim(); // remove blanks in the beginning and in the end
 
     if (Equals(trimmedStr, "user"))
     {
-        return MET_USER;
+        return MeteorologySource::User;
 
     }
     else if (Equals(trimmedStr, "none"))
     {
-        return MET_NONE;
+        return MeteorologySource::None;
 
     }
     else if (Equals(trimmedStr, "default"))
     {
-        return MET_DEFAULT;
+        return MeteorologySource::Default;
 
     }
     else if (Equals(trimmedStr, "default"))
     {
-        return MET_USER;
+        return MeteorologySource::User;
 
     }
     else if (Equals(trimmedStr, "ecmwf_forecast"))
     {
-        return MET_ECMWF_FORECAST;
+        return MeteorologySource::EcmwfForecast;
 
     }
     else if (Equals(trimmedStr, "ecmwf_analysis"))
     {
-        return MET_ECMWF_ANALYSIS;
+        return MeteorologySource::EcmwfAnalysis;
 
     }
     else if (Equals(trimmedStr, "ecmwf_postanalysis"))
     {
-        return MET_ECMWF_ANALYSIS;
+        return MeteorologySource::EcmwfAnalysis;
 
     }
     else if (Equals(trimmedStr, "dual_beam_measurement"))
     {
-        return MET_DUAL_BEAM_MEASUREMENT;
+        return MeteorologySource::DualBeamMeasurement;
 
     }
     else if (Equals(trimmedStr, "model_wrf"))
     {
-        return MET_MODEL_WRF;
+        return MeteorologySource::ModelledWrf;
 
     }
     else if (Equals(trimmedStr, "noaa_gdas"))
     {
-        return MET_NOAA_GDAS;
+        return MeteorologySource::NoaaGdas;
 
     }
     else if (Equals(trimmedStr, "noaa_fnl"))
     {
-        return MET_NOAA_FNL;
+        return MeteorologySource::NoaaFnl;
 
     }
     else if (Equals(trimmedStr, "geometry_calc"))
     {
-        return MET_GEOMETRY_CALCULATION;
+        return MeteorologySource::GeometryCalculationTwoInstruments;
 
     }
     else if (Equals(trimmedStr, "geometry_calc_single_instr"))
     {
-        return MET_GEOMETRY_CALCULATION_SINGLE_INSTR;
+        return MeteorologySource::GeometryCalculationSingleInstrument;
 
     }
     else
     {
-        return MET_NONE;
+        return MeteorologySource::None;
     }
 }
 
-/** Retrieves the judged quality of a given source */
-int Meteorology::GetSourceQuality(MET_SOURCE src)
+int Meteorology::GetSourceQuality(MeteorologySource src)
 {
-    int list[] = {
-        MET_DUAL_BEAM_MEASUREMENT,
-        MET_GEOMETRY_CALCULATION,
-        MET_GEOMETRY_CALCULATION_SINGLE_INSTR,
-        MET_MODEL_WRF,
-        MET_ECMWF_ANALYSIS,
-        MET_NOAA_GDAS,
-        MET_ECMWF_FORECAST,
-        MET_NOAA_FNL,
-        MET_USER,
-        MET_DEFAULT,
-        MET_NONE
+    MeteorologySource list[] = {
+        MeteorologySource::DualBeamMeasurement,
+        MeteorologySource::GeometryCalculationTwoInstruments,
+        MeteorologySource::GeometryCalculationSingleInstrument,
+        MeteorologySource::ModelledWrf,
+        MeteorologySource::EcmwfAnalysis,
+        MeteorologySource::NoaaGdas,
+        MeteorologySource::EcmwfForecast,
+        MeteorologySource::NoaaFnl,
+        MeteorologySource::User,
+        MeteorologySource::Default,
+        MeteorologySource::None
     };
-    for (int k = 0; k < MET_NUMBER_OF_DEFINED_SOURCES; ++k)
+
+    const int numberOfSources = static_cast<int>(MeteorologySource::NumberOfSources);
+
+    for (int k = 0; k < numberOfSources; ++k)
     {
         if (src == list[k])
         {
-            return (MET_NUMBER_OF_DEFINED_SOURCES - k - 1);
+            return (numberOfSources - k - 1);
         }
     }
     return -1; // shouldn't happen
 }
 
-WindField::WindField(double windSpeed, MET_SOURCE windSpeedSrc, double windDir, MET_SOURCE windDirSrc, const novac::CDateTime& validFrom, const novac::CDateTime& validTo, double lat, double lon, double alt)
+WindField::WindField(double windSpeed, MeteorologySource windSpeedSrc, double windDir, MeteorologySource windDirSrc, const novac::CDateTime& validFrom, const novac::CDateTime& validTo, double lat, double lon, double alt)
     : m_windSpeed(windSpeed), m_windSpeedSource(windSpeedSrc), m_windSpeedError(0.0),
     m_windDirection(windDir), m_windDirectionSource(windDirSrc), m_windDirectionError(0.0),
     m_validFrom(validFrom), m_validTo(validTo), m_location(lat, lon, alt)
 {}
 
-WindField::WindField(double windSpeed, double windSpeedErr, MET_SOURCE windSpeedSrc, double windDir, double windDirErr, MET_SOURCE windDirSrc, const novac::CDateTime& validFrom, const novac::CDateTime& validTo, double lat, double lon, double alt)
+WindField::WindField(double windSpeed, double windSpeedErr, MeteorologySource windSpeedSrc, double windDir, double windDirErr, MeteorologySource windDirSrc, const novac::CDateTime& validFrom, const novac::CDateTime& validTo, double lat, double lon, double alt)
     : m_windSpeed(windSpeed), m_windSpeedSource(windSpeedSrc), m_windSpeedError(windSpeedErr),
     m_windDirection(windDir), m_windDirectionSource(windDirSrc), m_windDirectionError(windDirErr),
     m_validFrom(validFrom), m_validTo(validTo), m_location(lat, lon, alt)
 {
 }
 
-WindField& WindField::operator=(const WindField& wf2)
-{
-    this->m_windDirection = wf2.m_windDirection;
-    this->m_windDirectionError = wf2.m_windDirectionError;
-    this->m_windDirectionSource = wf2.m_windDirectionSource;
-
-    this->m_windSpeed = wf2.m_windSpeed;
-    this->m_windSpeedError = wf2.m_windSpeedError;
-    this->m_windSpeedSource = wf2.m_windSpeedSource;
-
-    this->m_validFrom = wf2.m_validFrom;
-    this->m_validTo = wf2.m_validTo;
-
-    this->m_location = wf2.m_location;
-
-    return *this;
-}
-
-void WindField::SetWindSpeed(double ws, MET_SOURCE source)
+void WindField::SetWindSpeed(double ws, MeteorologySource source)
 {
     this->m_windSpeed = ws;
     this->m_windSpeedSource = source;
 }
 
-void WindField::SetWindDirection(double wd, MET_SOURCE source)
+void WindField::SetWindDirection(double wd, MeteorologySource source)
 {
     this->m_windDirection = wd;
     this->m_windDirectionSource = source;
@@ -190,7 +174,7 @@ double WindField::GetWindSpeed() const
 }
 
 /** Gets the source of the wind-speed */
-MET_SOURCE WindField::GetWindSpeedSource() const
+MeteorologySource WindField::GetWindSpeedSource() const
 {
     return this->m_windSpeedSource;
 }
@@ -221,7 +205,7 @@ double WindField::GetWindDirection() const
 }
 
 /** Gets the source of the wind-direction */
-MET_SOURCE WindField::GetWindDirectionSource() const
+MeteorologySource WindField::GetWindDirectionSource() const
 {
     return this->m_windDirectionSource;
 }

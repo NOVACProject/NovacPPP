@@ -19,7 +19,7 @@ CPlumeDataBase::CPlumeData::CPlumeData()
 {
     this->altitude = 1000.0;
     this->altitudeError = 1000.0;
-    this->altitudeSource = Meteorology::MET_DEFAULT;
+    this->altitudeSource = Meteorology::MeteorologySource::Default;
 
     this->validFrom = novac::CDateTime(0, 0, 0, 0, 0, 0);
     this->validTo = novac::CDateTime(9999, 12, 31, 23, 59, 59);
@@ -102,7 +102,7 @@ bool CPlumeDataBase::GetPlumeHeight(const novac::CDateTime& time, CPlumeHeight& 
     }
 
     // If there are several, then the priority is to take the one which is 
-    //	calculated (MET_GEOMETRY_CALCULATION) over the others. If there are 
+    //	calculated (GeometryCalculationTwoInstruments) over the others. If there are 
     //	several calculated then use their average value
     std::list <CPlumeData> calculatedData_2instr;
     std::list <CPlumeData> calculatedData_1instr;
@@ -111,11 +111,11 @@ bool CPlumeDataBase::GetPlumeHeight(const novac::CDateTime& time, CPlumeHeight& 
     {
         CPlumeData& data = (CPlumeData&)*pos;
 
-        if (Meteorology::MET_GEOMETRY_CALCULATION == data.altitudeSource)
+        if (Meteorology::MeteorologySource::GeometryCalculationTwoInstruments == data.altitudeSource)
         {
             calculatedData_2instr.push_back(CPlumeData(data));
         }
-        else if (Meteorology::MET_GEOMETRY_CALCULATION_SINGLE_INSTR == data.altitudeSource)
+        else if (Meteorology::MeteorologySource::GeometryCalculationSingleInstrument == data.altitudeSource)
         {
             calculatedData_1instr.push_back(CPlumeData(data));
         }
@@ -128,7 +128,7 @@ bool CPlumeDataBase::GetPlumeHeight(const novac::CDateTime& time, CPlumeHeight& 
         CPlumeData& data = (CPlumeData&)*calculatedData_2instr.begin();
         plumeHeight.m_plumeAltitude = data.altitude;
         plumeHeight.m_plumeAltitudeError = data.altitudeError;
-        plumeHeight.m_plumeAltitudeSource = Meteorology::MET_GEOMETRY_CALCULATION;
+        plumeHeight.m_plumeAltitudeSource = Meteorology::MeteorologySource::GeometryCalculationTwoInstruments;
         plumeHeight.m_validFrom = data.validFrom;
         plumeHeight.m_validTo = data.validTo;
         return true;
@@ -140,7 +140,7 @@ bool CPlumeDataBase::GetPlumeHeight(const novac::CDateTime& time, CPlumeHeight& 
 
         plumeHeight.m_plumeAltitude = avgAltitude;
         plumeHeight.m_plumeAltitudeError = altitudeError;
-        plumeHeight.m_plumeAltitudeSource = Meteorology::MET_GEOMETRY_CALCULATION;
+        plumeHeight.m_plumeAltitudeSource = Meteorology::MeteorologySource::GeometryCalculationTwoInstruments;
         plumeHeight.m_validFrom = time;
         plumeHeight.m_validTo = time;
         return true;
@@ -151,7 +151,7 @@ bool CPlumeDataBase::GetPlumeHeight(const novac::CDateTime& time, CPlumeHeight& 
         CPlumeData& data = (CPlumeData&)*calculatedData_1instr.begin();
         plumeHeight.m_plumeAltitude = data.altitude;
         plumeHeight.m_plumeAltitudeError = data.altitudeError;
-        plumeHeight.m_plumeAltitudeSource = Meteorology::MET_GEOMETRY_CALCULATION_SINGLE_INSTR;
+        plumeHeight.m_plumeAltitudeSource = Meteorology::MeteorologySource::GeometryCalculationSingleInstrument;
         plumeHeight.m_validFrom = data.validFrom;
         plumeHeight.m_validTo = data.validTo;
         return true;
@@ -163,7 +163,7 @@ bool CPlumeDataBase::GetPlumeHeight(const novac::CDateTime& time, CPlumeHeight& 
 
         plumeHeight.m_plumeAltitude = avgAltitude;
         plumeHeight.m_plumeAltitudeError = altitudeError;
-        plumeHeight.m_plumeAltitudeSource = Meteorology::MET_GEOMETRY_CALCULATION_SINGLE_INSTR;
+        plumeHeight.m_plumeAltitudeSource = Meteorology::MeteorologySource::GeometryCalculationSingleInstrument;
         plumeHeight.m_validFrom = time;
         plumeHeight.m_validTo = time;
         return true;
@@ -176,7 +176,7 @@ bool CPlumeDataBase::GetPlumeHeight(const novac::CDateTime& time, CPlumeHeight& 
 
     plumeHeight.m_plumeAltitude = avgAltitude;
     plumeHeight.m_plumeAltitudeError = altitudeError;
-    plumeHeight.m_plumeAltitudeSource = Meteorology::MET_GEOMETRY_CALCULATION;
+    plumeHeight.m_plumeAltitudeSource = Meteorology::MeteorologySource::GeometryCalculationTwoInstruments;
     plumeHeight.m_validFrom = time;
     plumeHeight.m_validTo = time;
 

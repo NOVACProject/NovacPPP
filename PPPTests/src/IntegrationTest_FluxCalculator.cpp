@@ -76,7 +76,7 @@ TEST_CASE("CalculateFlux, valid scan but very low intensity values in evaluation
 
         double windDirection = 10.0;
         double windSpeed = 277.3;
-        auto defaultSource = Meteorology::MET_SOURCE::MET_DEFAULT;
+        auto defaultSource = Meteorology::MeteorologySource::Default;
         novac::CDateTime validFrom(2020, 01, 01, 00, 00, 00);
         novac::CDateTime validTo(9999, 12, 31, 23, 59, 59);
         double instrumentLatitude = -39.281302;
@@ -150,7 +150,7 @@ TEST_CASE("CalculateFlux, reads values from configuration and verifies input (Ru
 
         double windDirection = 10.0;
         double windSpeed = 277.3;
-        auto defaultSource = Meteorology::MET_SOURCE::MET_DEFAULT;
+        auto defaultSource = Meteorology::MeteorologySource::Default;
         novac::CDateTime validFrom(2020, 01, 01, 00, 00, 00);
         novac::CDateTime validTo(9999, 12, 31, 23, 59, 59);
         double instrumentLatitude = -39.281302;
@@ -176,7 +176,7 @@ TEST_CASE("CalculateFlux, reads values from configuration and verifies input (Ru
 
         double windDirection = 262.3;
         double windSpeed = 10.54;
-        auto defaultSource = Meteorology::MET_SOURCE::MET_DEFAULT;
+        auto defaultSource = Meteorology::MeteorologySource::Default;
         novac::CDateTime validFrom(2020, 01, 01, 00, 00, 00);
         novac::CDateTime validTo(9999, 12, 31, 23, 59, 59);
         double instrumentLatitude = -39.281302;
@@ -228,7 +228,7 @@ TEST_CASE("CalculateFlux, valid scan with column values in molec/cm2 calculates 
 
     double windDirection = 262.3;
     double windSpeed = 10.54;
-    auto defaultSource = Meteorology::MET_SOURCE::MET_ECMWF_FORECAST;
+    auto defaultSource = Meteorology::MeteorologySource::EcmwfForecast;
     novac::CDateTime validFrom(2020, 01, 01, 00, 00, 00);
     novac::CDateTime validTo(9999, 12, 31, 23, 59, 59);
     double instrumentLatitude = -39.281302;
@@ -238,7 +238,7 @@ TEST_CASE("CalculateFlux, valid scan with column values in molec/cm2 calculates 
     Meteorology::CWindDataBase windDataBase;
 
     Geometry::CPlumeHeight plumeAltitude;
-    plumeAltitude.m_plumeAltitudeSource = Meteorology::MET_SOURCE::MET_GEOMETRY_CALCULATION;
+    plumeAltitude.m_plumeAltitudeSource = Meteorology::MeteorologySource::GeometryCalculationTwoInstruments;
     plumeAltitude.m_plumeAltitude = 3500;
 
     SECTION("Returns calculated flux")

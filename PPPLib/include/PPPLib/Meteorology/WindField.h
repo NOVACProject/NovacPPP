@@ -11,28 +11,26 @@
 namespace Meteorology
 {
 
-/** global function that converts a MET_SOURCE item to string.
+/** global function that converts a MeteorologySource item to string.
     This is used e.g. to write the source to file.
  */
-void MetSourceToString(const MET_SOURCE src, novac::CString& str);
+void MetSourceToString(const MeteorologySource src, novac::CString& str);
 
-/** Global function that converts a string to a MET_SOURCE.
+/** Global function that converts a string to a MeteorologySource.
     This is basically the inverse function of 'MetSourceToString'.
-    If the string does not evaluate to a known MET_SOURCE then
-    MET_NONE is returned.
+    If the string does not evaluate to a known MeteorologySource then
+    None is returned.
     This function is used e.g. to parse a log-file.
 */
-MET_SOURCE StringToMetSource(const novac::CString& str);
+MeteorologySource StringToMetSource(const novac::CString& str);
 
 /** Global function that retrieves the judged quality of a given source.
     Not all sources are equally good. A source with a higher 'quality'
     is judged to be better than a source with lower 'quality'.
-    For instance will the source 'MET_GEOMETRY_CALCULATION' give a higher
-    'quality' than 'MET_ECMWF_FORECAST' or 'MET_DEFAULT'.
-    @return - an integer >= 0 and < MET_NUMBER_OF_DEFINED_SOURCES
-
- */
-int GetSourceQuality(MET_SOURCE src);
+    For instance will the source 'GeometryCalculationTwoInstruments' give a higher
+    'quality' than 'EcmwfForecast' or 'Default'.
+    @return - an integer >= 0 and < NumberOfSources */
+int GetSourceQuality(MeteorologySource src);
 
 
 /** The struct WindField is intended to hold information about the
@@ -46,9 +44,9 @@ public:
 
     WindField(
         double windSpeed,
-        MET_SOURCE windSpeedSrc,
+        MeteorologySource windSpeedSrc,
         double windDir,
-        MET_SOURCE windDirSrc,
+        MeteorologySource windDirSrc,
         const novac::CDateTime& validFrom,
         const novac::CDateTime& validTo,
         double lat,
@@ -57,10 +55,10 @@ public:
 
     WindField(double windSpeed,
         double windSpeedErr,
-        MET_SOURCE windSpeedSrc,
+        MeteorologySource windSpeedSrc,
         double windDir,
         double windDirErr,
-        MET_SOURCE windDirSrc,
+        MeteorologySource windDirSrc,
         const novac::CDateTime& validFrom,
         const novac::CDateTime& validTo,
         double lat,
@@ -73,12 +71,12 @@ public:
     /** The speed of the wind */
     double  m_windSpeed = 10.0;
     double  m_windSpeedError = 10.0;
-    MET_SOURCE  m_windSpeedSource = MET_SOURCE::MET_DEFAULT;
+    MeteorologySource  m_windSpeedSource = MeteorologySource::Default;
 
     /** The direction of the wind */
     double  m_windDirection = 0.0;
     double  m_windDirectionError = 360.0;
-    MET_SOURCE  m_windDirectionSource = MET_SOURCE::MET_DEFAULT;
+    MeteorologySource  m_windDirectionSource = MeteorologySource::Default;
 
     /** The time frame during which this piece of wind information
         is valid. */
@@ -89,13 +87,13 @@ public:
     novac::CGPSData m_location;
 
     /** assignment operator */
-    WindField& operator=(const WindField& wf2);
+    WindField& operator=(const WindField& wf2) = default;
 
     /** Sets the wind-speed */
-    void SetWindSpeed(double ws, MET_SOURCE source);
+    void SetWindSpeed(double ws, MeteorologySource source);
 
     /** Sets the wind-direction */
-    void SetWindDirection(double wd, MET_SOURCE source);
+    void SetWindDirection(double wd, MeteorologySource source);
 
     /** Sets the time-frame the wind-field is valid for */
     void SetValidTimeFrame(const novac::CDateTime& from, const novac::CDateTime& to);
@@ -110,7 +108,7 @@ public:
     void SetWindSpeedError(double err);
 
     /** Gets the source of the wind-speed */
-    MET_SOURCE GetWindSpeedSource() const;
+    MeteorologySource GetWindSpeedSource() const;
 
     /** Gets the source of the wind-speed */
     void GetWindSpeedSource(novac::CString& str) const;
@@ -119,7 +117,7 @@ public:
     double GetWindDirection() const;
 
     /** Gets the source of the wind-direction */
-    MET_SOURCE GetWindDirectionSource() const;
+    MeteorologySource GetWindDirectionSource() const;
 
     /** Gets the source of the wind-direction */
     void GetWindDirectionSource(novac::CString& str) const;
