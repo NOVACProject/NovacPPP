@@ -68,7 +68,7 @@ public:
                 the estimated error is based on the error in wind-direction and the error in estimating
                     the plume centre position.
             @return true on success */
-    bool CalculatePlumeHeight(const novac::CString& evalLog, int scanIndex, Meteorology::CWindField& windField, Configuration::CInstrumentLocation location, CGeometryResult& result);
+    bool CalculatePlumeHeight(const novac::CString& evalLog, int scanIndex, Meteorology::WindField& windField, Configuration::CInstrumentLocation location, CGeometryResult& result);
 
     /** Calculate the wind direction using the scan found in the given evaluation-file.
             @param absolutePlumeHeight - the assumed plume height (in meters above sea level)

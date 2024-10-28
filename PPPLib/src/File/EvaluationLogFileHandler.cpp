@@ -376,7 +376,7 @@ RETURN_CODE CEvaluationLogFileHandler::ReadEvaluationLog()
             // find the next flux-information section
             if (nullptr != strstr(szLine, fluxInformation))
             {
-                Meteorology::CWindField windField;
+                Meteorology::WindField windField;
                 ParseFluxInformation(windField, flux, f);
                 m_windField.push_back(windField);
                 continue;
@@ -988,7 +988,7 @@ void CEvaluationLogFileHandler::ParseScanInformation(novac::CSpectrumInfo& scanI
     }
 }
 
-void CEvaluationLogFileHandler::ParseFluxInformation(Meteorology::CWindField& windField, double& flux, FILE* f)
+void CEvaluationLogFileHandler::ParseFluxInformation(Meteorology::WindField& windField, double& flux, FILE* f)
 {
     char szLine[8192];
     char* pt = nullptr;
@@ -1156,7 +1156,7 @@ RETURN_CODE CEvaluationLogFileHandler::WriteEvaluationLog(const std::string& fil
     for (int scanIndex = 0; scanIndex < this->m_scan.size(); ++scanIndex)
     {
         Evaluation::CScanResult& scan = this->m_scan[scanIndex];
-        Meteorology::CWindField& wind = this->m_windField[scanIndex];
+        Meteorology::WindField& wind = this->m_windField[scanIndex];
 
         scan.GetStartTime(0, startTime);
 

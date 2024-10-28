@@ -986,7 +986,7 @@ void CPostProcessing::CalculateGeometries(
         // a wind direction given the plume height at the time of the measurement.
         if (!successfullyCombined)
         {
-            Meteorology::CWindField windField;
+            Meteorology::WindField windField;
 
             // Get the location of the instrument
             Configuration::CInstrumentLocation location;
@@ -1090,7 +1090,7 @@ void CPostProcessing::CalculateFluxes(novac::LogContext context, const std::vect
     Flux::CFluxStatistics stat;
 
     // we keep the calculated fluxes in a list
-    std::list<Flux::CFluxResult> calculatedFluxes;
+    std::list<Flux::FluxResult> calculatedFluxes;
 
     // Initiate the flux-calculator
     Flux::CFluxCalculator fluxCalc(m_log, m_setup, m_userSettings);
@@ -1129,7 +1129,7 @@ void CPostProcessing::CalculateFluxes(novac::LogContext context, const std::vect
 
         // Calculate the flux. This also takes care of writing
         // the results to file
-        Flux::CFluxResult fluxResult;
+        Flux::FluxResult fluxResult;
         if (fluxCalc.CalculateFlux(fileContext, evalLog.std_str(), m_windDataBase, plumeHeight, fluxResult))
         {
             novac::CString messageToUser;
@@ -1153,7 +1153,7 @@ void CPostProcessing::CalculateFluxes(novac::LogContext context, const std::vect
     stat.WriteFluxStat(fluxStatFileName);
 }
 
-void CPostProcessing::WriteFluxResult_XML(const std::list<Flux::CFluxResult>& calculatedFluxes)
+void CPostProcessing::WriteFluxResult_XML(const std::list<Flux::FluxResult>& calculatedFluxes)
 {
     novac::CString fluxLogFile, styleFile, wsSrc, wdSrc, phSrc, typeStr;
     CDateTime now;
@@ -1183,7 +1183,7 @@ void CPostProcessing::WriteFluxResult_XML(const std::list<Flux::CFluxResult>& ca
 
     fprintf(f, "<NovacPPPFluxResults>\n");
 
-    for (const Flux::CFluxResult& fluxResult : calculatedFluxes)
+    for (const Flux::FluxResult& fluxResult : calculatedFluxes)
     {
         // extract the sources of information about wind-speed, wind-direction and plume-height
         fluxResult.m_windField.GetWindSpeedSource(wsSrc);
@@ -1302,7 +1302,7 @@ void CPostProcessing::WriteFluxResult_XML(const std::list<Flux::CFluxResult>& ca
     fclose(f);
 }
 
-void CPostProcessing::WriteFluxResult_Txt(const std::list<Flux::CFluxResult>& calculatedFluxes)
+void CPostProcessing::WriteFluxResult_Txt(const std::list<Flux::FluxResult>& calculatedFluxes)
 {
     novac::CString fluxLogFile, wsSrc, wdSrc, phSrc, typeStr;
     CDateTime now;
@@ -1333,7 +1333,7 @@ void CPostProcessing::WriteFluxResult_Txt(const std::list<Flux::CFluxResult>& ca
     fprintf(f, "#StartTime\tStopTime\tSerial\tInstrumentType\tFlux_kgs\tFluxQuality\tFluxError_Wind_kgs\tFluxError_PlumeHeight_kgs\tWindSpeed_ms\tWindSpeedErr_ms\tWindSpeedSrc\tWindDir_deg\tWindDirErr_deg\tWindDirSrc\tPlumeHeight_m\tPlumeHeightErr_m\tPlumeHeightSrc\t");
     fprintf(f, "Compass\tConeAngle\tTilt\tnSpectra\tPlumeCentre_1\tPlumeCentre_2\tPlumeCompleteness\tScanOffset\n");
 
-    for (const Flux::CFluxResult& fluxResult : calculatedFluxes)
+    for (const Flux::FluxResult& fluxResult : calculatedFluxes)
     {
         // extract the instrument type
         if (fluxResult.m_instrumentType == INSTRUMENT_TYPE::INSTR_HEIDELBERG)
@@ -1475,7 +1475,7 @@ void CPostProcessing::WriteCalculatedGeometriesToFile(novac::LogContext context,
 
 void CPostProcessing::InsertCalculatedGeometriesIntoDataBase(novac::LogContext context, const std::vector<Geometry::CGeometryResult>& geometryResults)
 {
-    Meteorology::CWindField windField;
+    Meteorology::WindField windField;
     CDateTime validFrom, validTo;
     Configuration::CInstrumentLocation location;
 
@@ -1527,7 +1527,7 @@ void CPostProcessing::CalculateDualBeamWindSpeeds(novac::LogContext context, con
     Configuration::CInstrumentLocation location;
     WindSpeedMeasurement::CWindSpeedCalculator calculator(m_log, m_userSettings);
     Geometry::CPlumeHeight plumeHeight;
-    Meteorology::CWindField windField, oldWindField;
+    Meteorology::WindField windField, oldWindField;
 
     // -------------------------------- step 1. -------------------------------------
     // search through 'evalLogs' for dual-beam measurements from master and from slave

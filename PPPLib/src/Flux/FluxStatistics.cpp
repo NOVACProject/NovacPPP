@@ -12,7 +12,7 @@ CFluxStatistics::CMeasurementDay& CFluxStatistics::CMeasurementDay::operator =(c
     auto p = m.fluxList.GetHeadPosition();
     while (p != nullptr)
     {
-        fluxList.AddTail(CFluxResult(m.fluxList.GetNext(p)));
+        fluxList.AddTail(FluxResult(m.fluxList.GetNext(p)));
     }
 
     return *this;
@@ -80,7 +80,7 @@ void CFluxStatistics::CMeasurementDay::GetStatistics(novac::CString& str, novac:
         auto fluxPosition = fluxList.GetHeadPosition();
         while (fluxPosition != nullptr)
         {
-            const CFluxResult& flux = fluxList.GetNext(fluxPosition);
+            const FluxResult& flux = fluxList.GetNext(fluxPosition);
             if (Equals(flux.m_instrument, serial))
             {
                 ++nMeasurementsFromThisInstrument;
@@ -112,17 +112,17 @@ void CFluxStatistics::Clear()
     m_measurements.RemoveAll();
 }
 
-void CFluxStatistics::AttachFluxList(const std::list<CFluxResult>& calculatedFluxes)
+void CFluxStatistics::AttachFluxList(const std::list<FluxResult>& calculatedFluxes)
 {
-    for (const CFluxResult & result : calculatedFluxes)
+    for (const FluxResult & result : calculatedFluxes)
     {
         AttachFlux(result);
     }
 }
 
-void CFluxStatistics::AttachFlux(const CFluxResult& result)
+void CFluxStatistics::AttachFlux(const FluxResult& result)
 {
-    CFluxResult r = result; // make a local copy of the result
+    FluxResult r = result; // make a local copy of the result
     CMeasurementDay measday;
     CDateTime resultDay = CDateTime(result.m_startTime.year, result.m_startTime.month, result.m_startTime.day, 0, 0, 0);
 

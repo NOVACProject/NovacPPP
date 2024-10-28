@@ -51,7 +51,7 @@ public:
     std::vector<Evaluation::CScanResult> m_scan;
 
     /** Information of the wind field used to calculate the flux of each scan */
-    std::vector<Meteorology::CWindField> m_windField;
+    std::vector<Meteorology::WindField> m_windField;
 
     /** The names of the species that were found in this evaluation log */
     std::vector<std::string> m_specieName;
@@ -107,7 +107,7 @@ private:
     void ParseScanInformation(novac::CSpectrumInfo& scanInfo, double& flux, FILE* f);
 
     /** Reads and parses the XML-shaped 'fluxInfo' header before the scan */
-    void ParseFluxInformation(Meteorology::CWindField& windField, double& flux, FILE* f);
+    void ParseFluxInformation(Meteorology::WindField& windField, double& flux, FILE* f);
 
     /** Resets the information about which column data is stored in */
     void ResetColumns();

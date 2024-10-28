@@ -133,62 +133,20 @@ int Meteorology::GetSourceQuality(MET_SOURCE src)
     return -1; // shouldn't happen
 }
 
-CWindField::CWindField(void)
-{
-    this->m_windDirection = 0.0;
-    this->m_windDirectionSource = MET_DEFAULT;
-    this->m_windDirectionError = 360.0;
+WindField::WindField(double windSpeed, MET_SOURCE windSpeedSrc, double windDir, MET_SOURCE windDirSrc, const novac::CDateTime& validFrom, const novac::CDateTime& validTo, double lat, double lon, double alt)
+    : m_windSpeed(windSpeed), m_windSpeedSource(windSpeedSrc), m_windSpeedError(0.0),
+    m_windDirection(windDir), m_windDirectionSource(windDirSrc), m_windDirectionError(0.0),
+    m_validFrom(validFrom), m_validTo(validTo), m_location(lat, lon, alt)
+{}
 
-    this->m_windSpeed = 10.0;
-    this->m_windSpeedSource = MET_DEFAULT;
-    this->m_windSpeedError = 10.0;
-
-    m_validFrom = novac::CDateTime(2005, 10, 01, 00, 00, 00);
-    m_validTo = novac::CDateTime(9999, 12, 31, 23, 59, 59);
-
-    m_location = novac::CGPSData(0.0, 0.0, 0.0);
-}
-
-CWindField::CWindField(double windSpeed, MET_SOURCE windSpeedSrc, double windDir, MET_SOURCE windDirSrc, const novac::CDateTime& validFrom, const novac::CDateTime& validTo, double lat, double lon, double alt)
-{
-    this->m_windSpeed = windSpeed;
-    this->m_windSpeedSource = windSpeedSrc;
-    this->m_windDirection = windDir;
-    this->m_windDirectionSource = windDirSrc;
-    this->m_validFrom = validFrom;
-    this->m_validTo = validTo;
-    this->m_location.m_latitude = lat;
-    this->m_location.m_longitude = lon;
-    this->m_location.m_altitude = alt;
-
-    this->m_windSpeedError = 0.0;
-    this->m_windDirectionError = 0.0;
-}
-
-CWindField::CWindField(double windSpeed, double windSpeedErr, MET_SOURCE windSpeedSrc, double windDir, double windDirErr, MET_SOURCE windDirSrc, const novac::CDateTime& validFrom, const novac::CDateTime& validTo, double lat, double lon, double alt)
-{
-    this->m_windSpeed = windSpeed;
-    this->m_windSpeedSource = windSpeedSrc;
-    this->m_windSpeedError = windSpeedErr;
-
-    this->m_windDirection = windDir;
-    this->m_windDirectionSource = windDirSrc;
-    this->m_windDirectionError = windDirErr;
-
-    this->m_validFrom = validFrom;
-    this->m_validTo = validTo;
-    this->m_location.m_latitude = lat;
-    this->m_location.m_longitude = lon;
-    this->m_location.m_altitude = alt;
-}
-
-
-CWindField::~CWindField(void)
+WindField::WindField(double windSpeed, double windSpeedErr, MET_SOURCE windSpeedSrc, double windDir, double windDirErr, MET_SOURCE windDirSrc, const novac::CDateTime& validFrom, const novac::CDateTime& validTo, double lat, double lon, double alt)
+    : m_windSpeed(windSpeed), m_windSpeedSource(windSpeedSrc), m_windSpeedError(windSpeedErr),
+    m_windDirection(windDir), m_windDirectionSource(windDirSrc), m_windDirectionError(windDirErr),
+    m_validFrom(validFrom), m_validTo(validTo), m_location(lat, lon, alt)
 {
 }
 
-/** assignment operator */
-CWindField& CWindField::operator=(const CWindField& wf2)
+WindField& WindField::operator=(const WindField& wf2)
 {
     this->m_windDirection = wf2.m_windDirection;
     this->m_windDirectionError = wf2.m_windDirectionError;
@@ -206,115 +164,97 @@ CWindField& CWindField::operator=(const CWindField& wf2)
     return *this;
 }
 
-/** Sets the wind-speed */
-void CWindField::SetWindSpeed(double ws, MET_SOURCE source)
+void WindField::SetWindSpeed(double ws, MET_SOURCE source)
 {
     this->m_windSpeed = ws;
     this->m_windSpeedSource = source;
 }
 
-/** Sets the wind-direction */
-void CWindField::SetWindDirection(double wd, MET_SOURCE source)
+void WindField::SetWindDirection(double wd, MET_SOURCE source)
 {
     this->m_windDirection = wd;
     this->m_windDirectionSource = source;
 
 }
 
-/** Sets the time and/or date the wind-field is valid for */
-void CWindField::SetValidTimeFrame(const novac::CDateTime& from, const novac::CDateTime& to)
+void WindField::SetValidTimeFrame(const novac::CDateTime& from, const novac::CDateTime& to)
 {
     this->m_validFrom = from;
     this->m_validTo = to;
 }
 
 /** Gets the wind-speed */
-double CWindField::GetWindSpeed() const
+double WindField::GetWindSpeed() const
 {
     return this->m_windSpeed;
 }
 
 /** Gets the source of the wind-speed */
-MET_SOURCE CWindField::GetWindSpeedSource() const
+MET_SOURCE WindField::GetWindSpeedSource() const
 {
     return this->m_windSpeedSource;
 }
 
 /** Gets the source of the wind-speed */
-void CWindField::GetWindSpeedSource(novac::CString& str) const
+void WindField::GetWindSpeedSource(novac::CString& str) const
 {
     return Meteorology::MetSourceToString(m_windSpeedSource, str);
 }
 
 /** Gets the estimate for the total error in the wind-speed */
-double CWindField::GetWindSpeedError() const
+double WindField::GetWindSpeedError() const
 {
     return this->m_windSpeedError;
 }
 
 /** Sets the estimate for the total error in the wind-speed */
-void CWindField::SetWindSpeedError(double err)
+void WindField::SetWindSpeedError(double err)
 {
     this->m_windSpeedError = err;
 }
 
 
 /** Gets the wind-direction */
-double CWindField::GetWindDirection() const
+double WindField::GetWindDirection() const
 {
     return this->m_windDirection;
 }
 
 /** Gets the source of the wind-direction */
-MET_SOURCE CWindField::GetWindDirectionSource() const
+MET_SOURCE WindField::GetWindDirectionSource() const
 {
     return this->m_windDirectionSource;
 }
 
 /** Gets the source of the wind-direction */
-void CWindField::GetWindDirectionSource(novac::CString& str) const
+void WindField::GetWindDirectionSource(novac::CString& str) const
 {
     return Meteorology::MetSourceToString(m_windDirectionSource, str);
 }
 
 /** Gets the estimate for the total error in the wind-direction */
-double CWindField::GetWindDirectionError() const
+double WindField::GetWindDirectionError() const
 {
     return this->m_windDirectionError;
 }
 
 /** Sets the estimate for the total error in the wind-direction */
-void CWindField::SetWindDirectionError(double err)
+void WindField::SetWindDirectionError(double err)
 {
     this->m_windDirectionError = err;
 }
 
 /** Gets the time and date for which this wind-field is valid */
-void CWindField::GetValidTimeFrame(novac::CDateTime& from, novac::CDateTime& to) const
+void WindField::GetValidTimeFrame(novac::CDateTime& from, novac::CDateTime& to) const
 {
     from = this->m_validFrom;
     to = this->m_validTo;
 }
 
 /** Gets the position that this wind-field is valid for */
-void CWindField::GetValidPosition(double& lat, double& lon, double& alt) const
+void WindField::GetValidPosition(double& lat, double& lon, double& alt) const
 {
     lat = this->m_location.m_latitude;
     lon = this->m_location.m_longitude;
     alt = this->m_location.m_altitude;
-}
-/** Gets the position that this wind-field is valid for */
-void CWindField::GetValidPosition(float& lat, float& lon, float& alt) const
-{
-    lat = (float)this->m_location.m_latitude;
-    lon = (float)this->m_location.m_longitude;
-    alt = (float)this->m_location.m_altitude;
-}
-
-/** Sets the position that this wind-field is valid for */
-void CWindField::SetValidPosition(const double& lat, const double& lon, const double& alt)
-{
-    this->m_location.m_latitude = lat;
-    this->m_location.m_longitude = lon;
-    this->m_location.m_altitude = alt;
 }

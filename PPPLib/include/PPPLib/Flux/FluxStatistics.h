@@ -29,11 +29,11 @@ public:
 
     /** Attaches the supplied list of flux results to the current set
         of measured data. */
-    void AttachFluxList(const std::list<CFluxResult>& calculatedFluxes);
+    void AttachFluxList(const std::list<FluxResult>& calculatedFluxes);
 
     /** Attaches the given flux result to the current set of
         measured data */
-    void AttachFlux(const CFluxResult& result);
+    void AttachFlux(const FluxResult& result);
 
     /** Calculates statistics on the statistics we have here and writes
         the results to file. */
@@ -48,7 +48,7 @@ private:
     {
     public:
         novac::CDateTime day; // the date of the measurement
-        novac::CList <CFluxResult> fluxList;
+        novac::CList <FluxResult> fluxList;
         static void GetHeaderLine(novac::CString& str, novac::CList <novac::CString, novac::CString&>& instruments);
         void GetStatistics(novac::CString& str, novac::CList <novac::CString, novac::CString&>& instruments);
         CMeasurementDay& operator=(const CMeasurementDay& m);

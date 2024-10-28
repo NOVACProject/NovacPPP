@@ -42,10 +42,10 @@ TEST_CASE("ReadWindFile gives expected wind profile", "[XMLWindFileReader][File]
     {
         auto time = novac::CDateTime{ 2023, 1, 19, 22, 0, 0 };
         auto location = novac::CGPSData{ -39.281302 , 175.564254 , 2700.0 };
-        auto windField = Meteorology::CWindField{};
+        auto windField = Meteorology::WindField{};
 
         // Act
-        bool exists = resultingDatabase.GetWindField(time, location, Meteorology::INTERP_EXACT, windField);
+        bool exists = resultingDatabase.GetWindField(time, location, Meteorology::InterpolationMethod::Exact, windField);
 
         // Assert
         REQUIRE(exists);
@@ -56,10 +56,10 @@ TEST_CASE("ReadWindFile gives expected wind profile", "[XMLWindFileReader][File]
     {
         auto time = novac::CDateTime{ 2023, 1, 20, 1, 0, 0 };
         auto location = novac::CGPSData{ -39.281302 , 175.564254 , 2700.0 };
-        auto windField = Meteorology::CWindField{};
+        auto windField = Meteorology::WindField{};
 
         // Act
-        bool exists = resultingDatabase.GetWindField(time, location, Meteorology::INTERP_EXACT, windField);
+        bool exists = resultingDatabase.GetWindField(time, location, Meteorology::InterpolationMethod::Exact, windField);
 
         // Assert
         REQUIRE(exists);
@@ -71,10 +71,10 @@ TEST_CASE("ReadWindFile gives expected wind profile", "[XMLWindFileReader][File]
     {
         auto time = novac::CDateTime{ 2023, 1, 21, 1, 0, 0 }; // Time out of range
         auto location = novac::CGPSData{ -39.281302 , 175.564254 , 2700.0 };
-        auto windField = Meteorology::CWindField{};
+        auto windField = Meteorology::WindField{};
 
         // Act
-        bool exists = resultingDatabase.GetWindField(time, location, Meteorology::INTERP_EXACT, windField);
+        bool exists = resultingDatabase.GetWindField(time, location, Meteorology::InterpolationMethod::Exact, windField);
 
         // Assert
         REQUIRE(exists == false);
@@ -85,10 +85,10 @@ TEST_CASE("ReadWindFile gives expected wind profile", "[XMLWindFileReader][File]
     {
         auto time = novac::CDateTime{ 2023, 1, 18, 1, 0, 0 }; // Time out of range
         auto location = novac::CGPSData{ -39.281302 , 175.564254 , 2700.0 };
-        auto windField = Meteorology::CWindField{};
+        auto windField = Meteorology::WindField{};
 
         // Act
-        bool exists = resultingDatabase.GetWindField(time, location, Meteorology::INTERP_EXACT, windField);
+        bool exists = resultingDatabase.GetWindField(time, location, Meteorology::InterpolationMethod::Exact, windField);
 
         // Assert
         REQUIRE(exists == false);

@@ -31,7 +31,7 @@ bool CFluxCalculator::CalculateFlux(
     const std::string& evalLogFileName,
     const Meteorology::CWindDataBase& windDataBase,
     const Geometry::CPlumeHeight& plumeAltitude,
-    CFluxResult& fluxResult)
+    FluxResult& fluxResult)
 {
     novac::CString errorMessage, serial;
 
@@ -66,8 +66,8 @@ bool CFluxCalculator::CalculateFlux(
     }
 
     // Get the wind field at the time of the collection of this scan
-    Meteorology::CWindField windField;
-    if (!windDataBase.GetWindField(skyStartTime, novac::CGPSData(instrLocation.m_latitude, instrLocation.m_longitude, plumeAltitude.m_plumeAltitude), Meteorology::INTERP_NEAREST_NEIGHBOUR, windField))
+    Meteorology::WindField windField;
+    if (!windDataBase.GetWindField(skyStartTime, novac::CGPSData(instrLocation.m_latitude, instrLocation.m_longitude, plumeAltitude.m_plumeAltitude), Meteorology::InterpolationMethod::NearestNeighbour, windField))
     {
         m_log.Error(context, "Could not retrieve wind field at time of measurement. Could not calculate flux");
         return false;
@@ -243,7 +243,7 @@ int CFluxCalculator::GetLocation(
 
 RETURN_CODE CFluxCalculator::WriteFluxResult(
     novac::LogContext context,
-    const Flux::CFluxResult& fluxResult,
+    const Flux::FluxResult& fluxResult,
     const Evaluation::CScanResult* result)
 {
     novac::CString string, dateStr, dateStr2, serialNumber;
@@ -384,13 +384,13 @@ bool CFluxCalculator::CalculateFlux(
     novac::LogContext context,
     Evaluation::CScanResult& result,
     const CMolecule& specie,
-    const Meteorology::CWindField& wind,
+    const Meteorology::WindField& wind,
     const Geometry::CPlumeHeight& relativePlumeHeight,
     double compass,
     double coneAngle,
     double tilt)
 {
-    Meteorology::CWindField modifiedWind;
+    Meteorology::WindField modifiedWind;
 
     // If this is a not a flux measurement, then don't calculate any flux
     if (!result.IsFluxMeasurement())
@@ -436,7 +436,7 @@ bool CFluxCalculator::CalculateFlux(
         ++numberOfGoodDataPoints;
     }
 
-    Flux::CFluxResult fluxResult;
+    Flux::FluxResult fluxResult;
 
     // if there are no good datapoints in the measurement, the flux is assumed to be zero
     if (numberOfGoodDataPoints < 10)
@@ -532,7 +532,7 @@ double CFluxCalculator::CalculateFlux(
     const double* column,
     double offset,
     int nDataPoints,
-    const Meteorology::CWindField& wind,
+    const Meteorology::WindField& wind,
     const Geometry::CPlumeHeight& relativePlumeHeight,
     double compass,
     INSTRUMENT_TYPE type,

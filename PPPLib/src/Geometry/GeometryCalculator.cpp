@@ -545,7 +545,7 @@ double CGeometryCalculator::GetWindDirection(const CGPSData source, double plume
     return windDirection;
 }
 
-bool CGeometryCalculator::CalculatePlumeHeight(const novac::CString& evalLog, int scanIndex, Meteorology::CWindField& windField, Configuration::CInstrumentLocation location, Geometry::CGeometryResult& result)
+bool CGeometryCalculator::CalculatePlumeHeight(const novac::CString& evalLog, int scanIndex, Meteorology::WindField& windField, Configuration::CInstrumentLocation location, Geometry::CGeometryResult& result)
 {
     // extract the location of the instrument
     const CGPSData scannerPos = location.GpsData();

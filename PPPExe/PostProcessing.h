@@ -180,8 +180,8 @@ private:
     void SortEvaluationLogs(std::vector<Evaluation::CExtendedScanResult>& evalLogs);
 
     /** Writes the calculated fluxes to the flux result file */
-    void WriteFluxResult_XML(const std::list<Flux::CFluxResult>& calculatedFluxes);
-    void WriteFluxResult_Txt(const std::list<Flux::CFluxResult>& calculatedFluxes);
+    void WriteFluxResult_XML(const std::list<Flux::FluxResult>& calculatedFluxes);
+    void WriteFluxResult_Txt(const std::list<Flux::FluxResult>& calculatedFluxes);
 
     /** Takes care of uploading the result files to the FTP server */
     void UploadResultsToFTP(novac::LogContext context);

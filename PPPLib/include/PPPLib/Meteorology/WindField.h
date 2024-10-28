@@ -35,27 +35,61 @@ MET_SOURCE StringToMetSource(const novac::CString& str);
 int GetSourceQuality(MET_SOURCE src);
 
 
-/** The class <b>CWindField</b> is intended to hold information about the
+/** The struct WindField is intended to hold information about the
     wind speed and direction at a given location and at a given point in time.
-    It should be used as a container for this kind of data.
-*/
-class CWindField
+    It should be used as a container for this kind of data. */
+struct WindField
 {
 public:
-    /** Default constructor */
-    CWindField(void);
+    WindField() {};
+    ~WindField() {};
 
-    /** Constructor */
-    CWindField(double windSpeed, MET_SOURCE windSpeedSrc, double windDir, MET_SOURCE windDirSrc, const novac::CDateTime& validFrom, const novac::CDateTime& validTo, double lat, double lon, double alt);
+    WindField(
+        double windSpeed,
+        MET_SOURCE windSpeedSrc,
+        double windDir,
+        MET_SOURCE windDirSrc,
+        const novac::CDateTime& validFrom,
+        const novac::CDateTime& validTo,
+        double lat,
+        double lon,
+        double alt);
 
-    /** Constructor */
-    CWindField(double windSpeed, double windSpeedErr, MET_SOURCE windSpeedSrc, double windDir, double windDirErr, MET_SOURCE windDirSrc, const novac::CDateTime& validFrom, const novac::CDateTime& validTo, double lat, double lon, double alt);
+    WindField(double windSpeed,
+        double windSpeedErr,
+        MET_SOURCE windSpeedSrc,
+        double windDir,
+        double windDirErr,
+        MET_SOURCE windDirSrc,
+        const novac::CDateTime& validFrom,
+        const novac::CDateTime& validTo,
+        double lat,
+        double lon,
+        double alt);
 
-    /** Default destructor */
-    ~CWindField(void);
+    WindField(const WindField& other) = default;
+    WindField(WindField&& other) = default;
+
+    /** The speed of the wind */
+    double  m_windSpeed = 10.0;
+    double  m_windSpeedError = 10.0;
+    MET_SOURCE  m_windSpeedSource = MET_SOURCE::MET_DEFAULT;
+
+    /** The direction of the wind */
+    double  m_windDirection = 0.0;
+    double  m_windDirectionError = 360.0;
+    MET_SOURCE  m_windDirectionSource = MET_SOURCE::MET_DEFAULT;
+
+    /** The time frame during which this piece of wind information
+        is valid. */
+    novac::CDateTime m_validFrom = novac::CDateTime(2005, 10, 01, 00, 00, 00);
+    novac::CDateTime m_validTo = novac::CDateTime(9999, 12, 31, 23, 59, 59);;
+
+    /** The place on earth where this wind-field comes from */
+    novac::CGPSData m_location;
 
     /** assignment operator */
-    CWindField& operator=(const CWindField& wf2);
+    WindField& operator=(const WindField& wf2);
 
     /** Sets the wind-speed */
     void SetWindSpeed(double ws, MET_SOURCE source);
@@ -70,10 +104,10 @@ public:
     double GetWindSpeed() const;
 
     /** Gets the estimate for the total error in the wind-speed */
-    double	GetWindSpeedError() const;
+    double GetWindSpeedError() const;
 
     /** Sets the estimate for the total error in the wind-speed */
-    void	SetWindSpeedError(double err);
+    void SetWindSpeedError(double err);
 
     /** Gets the source of the wind-speed */
     MET_SOURCE GetWindSpeedSource() const;
@@ -91,40 +125,17 @@ public:
     void GetWindDirectionSource(novac::CString& str) const;
 
     /** Gets the estimate for the total error in the wind-direction */
-    double	GetWindDirectionError() const;
+    double GetWindDirectionError() const;
 
     /** Sets the estimate for the total error in the wind-direction */
-    void	SetWindDirectionError(double err);
+    void SetWindDirectionError(double err);
 
     /** Gets the time and date for which this wind-field is valid */
     void GetValidTimeFrame(novac::CDateTime& from, novac::CDateTime& to) const;
 
     /** Gets the position that this wind-field is valid for */
     void GetValidPosition(double& lat, double& lon, double& alt) const;
-    void GetValidPosition(float& lat, float& lon, float& alt) const;
 
-    /** Sets the position that this wind-field is valid for */
-    void SetValidPosition(const double& lat, const double& lon, const double& alt);
-
-protected:
-
-    /** The speed of the wind */
-    double			m_windSpeed;
-    double			m_windSpeedError;
-    MET_SOURCE		m_windSpeedSource;
-
-    /** The direction of the wind */
-    double			m_windDirection;
-    double			m_windDirectionError;
-    MET_SOURCE		m_windDirectionSource;
-
-    /** The time frame during which this piece of wind information
-        is valid. */
-    novac::CDateTime		m_validFrom;
-    novac::CDateTime		m_validTo;
-
-    /** The place on earth where this wind-field comes from */
-    novac::CGPSData		m_location;
 };
 }
 #endif

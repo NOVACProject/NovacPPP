@@ -97,7 +97,7 @@ void CXMLWindFileReader::ReadWindFile(novac::LogContext context, const novac::CS
             const char* volcanoName = GetAttributeValue("volcano");
             if (volcanoName != nullptr)
             {
-                dataBase.m_dataBaseName.Format("%s", volcanoName);
+                dataBase.m_dataBaseName = std::string(volcanoName);
             }
             continue;
         }
@@ -249,7 +249,7 @@ void CXMLWindFileReader::ReadWindDirectory(novac::LogContext context, const nova
 int CXMLWindFileReader::Parse_WindField(Meteorology::CWindDataBase& dataBase)
 {
     novac::CString sourceStr, userMessage;
-    Meteorology::CWindField w;
+    Meteorology::WindField w;
     CDateTime validFrom, validTo;
     double latitude = 0.0;
     double longitude = 0.0;
@@ -374,7 +374,7 @@ int CXMLWindFileReader::Parse_WindField(Meteorology::CWindDataBase& dataBase)
             }
 
             // we have now enough information to make a wind-field and insert it into the database
-            w = CWindField(windspeed, windspeederror, windSource, winddirection, winddirectionerror, windSource, validFrom, validTo, latitude, longitude, altitude);
+            w = WindField(windspeed, windspeederror, windSource, winddirection, winddirectionerror, windSource, validFrom, validTo, latitude, longitude, altitude);
 
             dataBase.InsertWindField(w);
         }

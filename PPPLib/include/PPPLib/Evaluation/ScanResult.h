@@ -43,7 +43,7 @@ public:
     // ----------------------------------------------------------------------
 
     /** The calculated flux and the parameters used to calculate the flux */
-    Flux::CFluxResult m_flux;
+    Flux::FluxResult m_flux;
 
     /** This contains the parameters of the plume that is seen in this scan,
         such as the completeness or the centre angle of the plume. */
@@ -158,7 +158,7 @@ public:
     /** Returns the calculated flux */
     double GetFlux() const { return m_flux.m_flux; }
 
-    const Flux::CFluxResult& GetFluxResult() const { return m_flux; }
+    const Flux::FluxResult& GetFluxResult() const { return m_flux; }
 
     /** Returns true if the automatic judgment considers this flux
         measurement to be a good measurement */

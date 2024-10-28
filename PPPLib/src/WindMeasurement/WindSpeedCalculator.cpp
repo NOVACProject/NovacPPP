@@ -436,7 +436,7 @@ void CWindSpeedCalculator::InitializeArrays()
         NOTE THAT THE WIND-DIRECTION WILL NOT BE CALCULATED AND WILL THUS NOT MAKE
         ANY SENSE...
 */
-int CWindSpeedCalculator::CalculateWindSpeed(const novac::CString& evalLog1, const novac::CString& evalLog2, const Configuration::CInstrumentLocation& location, const Geometry::CPlumeHeight& plumeHeight, Meteorology::CWindField& windField)
+int CWindSpeedCalculator::CalculateWindSpeed(const novac::CString& evalLog1, const novac::CString& evalLog2, const Configuration::CInstrumentLocation& location, const Geometry::CPlumeHeight& plumeHeight, Meteorology::WindField& windField)
 {
     double distance = 0; // the distance between the two viewing directions at the altitude of the plume.
 
@@ -533,7 +533,7 @@ int CWindSpeedCalculator::CalculateWindSpeed(const novac::CString& evalLog1, con
 RETURN_CODE CWindSpeedCalculator::CalculateCorrelation(const novac::CString& evalLog1, const novac::CString& evalLog2)
 {
     CDateTime time;
-    Meteorology::CWindField wf;
+    Meteorology::WindField wf;
     novac::CString errorMessage;
     WindSpeedMeasurement::CWindSpeedCalculator::CMeasurementSeries* series[2];
     size_t scanIndex[2];
@@ -671,7 +671,7 @@ RETURN_CODE CWindSpeedCalculator::CalculateCorrelation(const novac::CString& eva
 RETURN_CODE CWindSpeedCalculator::CalculateCorrelation_Heidelberg(const novac::CString& evalLog)
 {
     WindSpeedMeasurement::CWindSpeedCalculator::CMeasurementSeries* series[2];
-    Meteorology::CWindField wf;
+    Meteorology::WindField wf;
     CDateTime time;
     size_t scanIndex;
     double delay;
@@ -804,7 +804,7 @@ void CWindSpeedCalculator::WriteWindSpeedLogHeader(const novac::CString& fileNam
 void CWindSpeedCalculator::AppendResultToFile(const novac::CString& fileName, const CDateTime& startTime,
     const Configuration::CInstrumentLocation& /*location*/,
     const Geometry::CPlumeHeight& plumeHeight,
-    Meteorology::CWindField& windField)
+    Meteorology::WindField& windField)
 {
     CDateTime validFrom, validTo;
 

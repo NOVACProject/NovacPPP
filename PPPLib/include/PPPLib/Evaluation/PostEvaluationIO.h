@@ -46,7 +46,7 @@ public:
         const novac::CScanFileHandler* scan,
         const Configuration::CInstrumentLocation* instrLocation,
         const novac::CFitWindow* window,
-        Meteorology::CWindField& windField,
+        Meteorology::WindField& windField,
         novac::CString* txtFileName = nullptr);
 
     /** Creates the 'pluem spectrum file' which is a text file containing a list of which spectra are judged to be _in_ the plume
@@ -73,7 +73,7 @@ public:
         const novac::CScanFileHandler* scan,
         const Configuration::CInstrumentLocation* instrLocation,
         const novac::CFitWindow* window,
-        Meteorology::CWindField& windField);
+        Meteorology::WindField& windField);
 
     /** Appends the evaluation result to the pak-file summary log file.
         @param result - a CScanResult holding information about the result
@@ -86,6 +86,6 @@ public:
         const novac::CScanFileHandler* scan,
         const Configuration::CInstrumentLocation* instrLocation,
         const novac::CFitWindow* window,
-        Meteorology::CWindField& windField);
+        Meteorology::WindField& windField);
 };
 }

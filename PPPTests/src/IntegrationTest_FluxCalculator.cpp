@@ -48,7 +48,7 @@ TEST_CASE("CalculateFlux, valid scan but very low intensity values in evaluation
 
     SECTION("Instrument does not have a configured location. Returns error")
     {
-        Flux::CFluxResult fluxResult;
+        Flux::FluxResult fluxResult;
 
         // Act
         bool success = sut.CalculateFlux(context, filename, windDataBase, plumeAltitude, fluxResult);
@@ -59,7 +59,7 @@ TEST_CASE("CalculateFlux, valid scan but very low intensity values in evaluation
 
     SECTION("Instrument does not have a configured wind field. Returns error")
     {
-        Flux::CFluxResult fluxResult;
+        Flux::FluxResult fluxResult;
         configuration.m_instrument.push_back(instrumentConfiguration);
 
         // Act
@@ -71,7 +71,7 @@ TEST_CASE("CalculateFlux, valid scan but very low intensity values in evaluation
 
     SECTION("All data required, returns failure")
     {
-        Flux::CFluxResult fluxResult;
+        Flux::FluxResult fluxResult;
         configuration.m_instrument.push_back(instrumentConfiguration);
 
         double windDirection = 10.0;
@@ -82,7 +82,7 @@ TEST_CASE("CalculateFlux, valid scan but very low intensity values in evaluation
         double instrumentLatitude = -39.281302;
         double instrumentLongitude = 175.564254;
         double altitude = 2700;
-        Meteorology::CWindField windField(windSpeed, defaultSource, windDirection, defaultSource, validFrom, validTo, instrumentLatitude, instrumentLongitude, altitude);
+        Meteorology::WindField windField(windSpeed, defaultSource, windDirection, defaultSource, validFrom, validTo, instrumentLatitude, instrumentLongitude, altitude);
         windDataBase.InsertWindField(windField);
 
         // Act
@@ -117,7 +117,7 @@ TEST_CASE("CalculateFlux, reads values from configuration and verifies input (Ru
 
     SECTION("Instrument does not have a configured location. Returns error")
     {
-        Flux::CFluxResult fluxResult;
+        Flux::FluxResult fluxResult;
         Flux::CFluxCalculator sut(logger, configuration, userSettings);
 
         // Act
@@ -129,7 +129,7 @@ TEST_CASE("CalculateFlux, reads values from configuration and verifies input (Ru
 
     SECTION("Instrument does not have a configured wind field. Returns error")
     {
-        Flux::CFluxResult fluxResult;
+        Flux::FluxResult fluxResult;
         instrumentConfiguration.m_location.InsertLocation(instrumentLocation);
         configuration.m_instrument.push_back(instrumentConfiguration);
         Flux::CFluxCalculator sut(logger, configuration, userSettings);
@@ -143,7 +143,7 @@ TEST_CASE("CalculateFlux, reads values from configuration and verifies input (Ru
 
     SECTION("All data required, completeness below limit. Returns failure")
     {
-        Flux::CFluxResult fluxResult;
+        Flux::FluxResult fluxResult;
 
         instrumentConfiguration.m_location.InsertLocation(instrumentLocation);
         configuration.m_instrument.push_back(instrumentConfiguration);
@@ -156,7 +156,7 @@ TEST_CASE("CalculateFlux, reads values from configuration and verifies input (Ru
         double instrumentLatitude = -39.281302;
         double instrumentLongitude = 175.564254;
         double altitude = 2700;
-        Meteorology::CWindField windField(windSpeed, defaultSource, windDirection, defaultSource, validFrom, validTo, instrumentLatitude, instrumentLongitude, altitude);
+        Meteorology::WindField windField(windSpeed, defaultSource, windDirection, defaultSource, validFrom, validTo, instrumentLatitude, instrumentLongitude, altitude);
         windDataBase.InsertWindField(windField);
 
         userSettings.m_completenessLimitFlux = 0.90; // this is higher than the completess of the scan
@@ -182,7 +182,7 @@ TEST_CASE("CalculateFlux, reads values from configuration and verifies input (Ru
         double instrumentLatitude = -39.281302;
         double instrumentLongitude = 175.564254;
         double altitude = 2700;
-        Meteorology::CWindField windField(windSpeed, defaultSource, windDirection, defaultSource, validFrom, validTo, instrumentLatitude, instrumentLongitude, altitude);
+        Meteorology::WindField windField(windSpeed, defaultSource, windDirection, defaultSource, validFrom, validTo, instrumentLatitude, instrumentLongitude, altitude);
         windDataBase.InsertWindField(windField);
 
         plumeAltitude.m_plumeAltitude = 3500;
@@ -191,7 +191,7 @@ TEST_CASE("CalculateFlux, reads values from configuration and verifies input (Ru
         Flux::CFluxCalculator sut(logger, configuration, userSettings);
 
         // Act
-        Flux::CFluxResult fluxResult;
+        Flux::FluxResult fluxResult;
         bool success = sut.CalculateFlux(context, filename, windDataBase, plumeAltitude, fluxResult);
 
         // Assert
@@ -234,7 +234,7 @@ TEST_CASE("CalculateFlux, valid scan with column values in molec/cm2 calculates 
     double instrumentLatitude = -39.281302;
     double instrumentLongitude = 175.564254;
     double altitude = 2700;
-    Meteorology::CWindField windField(windSpeed, defaultSource, windDirection, defaultSource, validFrom, validTo, instrumentLatitude, instrumentLongitude, altitude);
+    Meteorology::WindField windField(windSpeed, defaultSource, windDirection, defaultSource, validFrom, validTo, instrumentLatitude, instrumentLongitude, altitude);
     Meteorology::CWindDataBase windDataBase;
 
     Geometry::CPlumeHeight plumeAltitude;
@@ -253,7 +253,7 @@ TEST_CASE("CalculateFlux, valid scan with column values in molec/cm2 calculates 
         Flux::CFluxCalculator sut(logger, configuration, userSettings);
 
         // Act
-        Flux::CFluxResult fluxResult;
+        Flux::FluxResult fluxResult;
         bool success = sut.CalculateFlux(context, filename, windDataBase, plumeAltitude, fluxResult);
 
         // Assert
@@ -297,7 +297,7 @@ TEST_CASE("CalculateFlux, valid scan with column values in molec/cm2 calculates 
         Flux::CFluxCalculator sut(logger, configuration, userSettings);
 
         // Act
-        Flux::CFluxResult fluxResult;
+        Flux::FluxResult fluxResult;
         bool success = sut.CalculateFlux(context, filename, windDataBase, plumeAltitude, fluxResult);
 
         // Assert

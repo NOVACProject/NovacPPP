@@ -125,7 +125,7 @@ RETURN_CODE Evaluation::PostEvaluationIO::WriteEvaluationResult(
     const novac::CScanFileHandler* scan,
     const Configuration::CInstrumentLocation* instrLocation,
     const novac::CFitWindow* window,
-    Meteorology::CWindField& windField,
+    Meteorology::WindField& windField,
     novac::CString* txtFileName)
 {
     novac::CString string, string1, string2, string3, string4;
@@ -417,7 +417,7 @@ RETURN_CODE Evaluation::PostEvaluationIO::AppendToEvaluationSummaryFile(
     const novac::CScanFileHandler* scan,
     const Configuration::CInstrumentLocation* /*instrLocation*/,
     const novac::CFitWindow* window,
-    Meteorology::CWindField& /*windField*/)
+    Meteorology::WindField& /*windField*/)
 {
     novac::CString evalSummaryLog;
     bool fWriteHeaderLine = false;
@@ -477,7 +477,7 @@ RETURN_CODE Evaluation::PostEvaluationIO::AppendToPakFileSummaryFile(
     const novac::CScanFileHandler* scan,
     const Configuration::CInstrumentLocation* /*instrLocation*/,
     const novac::CFitWindow* /*window*/,
-    Meteorology::CWindField& /*windField*/)
+    Meteorology::WindField& /*windField*/)
 {
     novac::CString pakSummaryLog;
     bool fWriteHeaderLine = false;

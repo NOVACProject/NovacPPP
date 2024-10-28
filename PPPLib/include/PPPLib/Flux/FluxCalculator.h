@@ -66,7 +66,7 @@ public:
         const std::string& evalLogFileName,
         const Meteorology::CWindDataBase& windDataBase,
         const Geometry::CPlumeHeight& plumeAltitude,
-        CFluxResult& fluxResult);
+        FluxResult& fluxResult);
 
 
     /** Calculate the flux in this scan, using the supplied compass direction and coneAngle.
@@ -84,7 +84,7 @@ public:
         novac::LogContext context,
         Evaluation::CScanResult& result,
         const CMolecule& specie,
-        const Meteorology::CWindField& wind,
+        const Meteorology::WindField& wind,
         const Geometry::CPlumeHeight& relativePlumeHeight,
         double compass,
         double coneAngle = 90.0,
@@ -102,7 +102,7 @@ public:
         const double* column,
         double offset,
         int nDataPoints,
-        const Meteorology::CWindField& wind,
+        const Meteorology::WindField& wind,
         const Geometry::CPlumeHeight& relativePlumeHeight,
         double compass,
         INSTRUMENT_TYPE type,
@@ -140,7 +140,7 @@ private:
         @return SUCCESS if operation completed sucessfully. */
     RETURN_CODE WriteFluxResult(
         novac::LogContext context,
-        const Flux::CFluxResult& fluxResult,
+        const Flux::FluxResult& fluxResult,
         const Evaluation::CScanResult* result);
 };
 }

@@ -1,11 +1,7 @@
 #pragma once
 
-// include the list-template from the C++ standard library
 #include <list>
-
-// include the vector-template from the C++ standard library
 #include <vector>
-
 #include <SpectralEvaluation/DateTime.h>
 #include <SpectralEvaluation/Definitions.h>
 #include <PPPLib/Meteorology/MeteorologySource.h>
@@ -13,11 +9,11 @@
 
 namespace Meteorology
 {
-enum INTERPOLATION_METHOD
+enum class InterpolationMethod
 {
-    INTERP_EXACT,
-    INTERP_NEAREST_NEIGHBOUR,
-    INTERP_BILINEAR,
+    Exact,
+    NearestNeighbour,
+    Bilinear,
 };
 
 /** An instance of the class <b>CWindDataBase</b> can be used to
@@ -38,7 +34,7 @@ public:
 
     /** The name of this database. Typically this is the name of the volcano for
         which the database is valid. Used to identify the database */
-    novac::CString m_dataBaseName;
+    std::string m_dataBaseName;
 
     // ----------------------------------------------------------------------
     // --------------------- PUBLIC METHODS ---------------------------------
@@ -57,10 +53,10 @@ public:
             about the wind field at the requested time and location.
         @return true if the wind field could be retrieved, otherwise false.
      */
-    bool GetWindField(const novac::CDateTime& time, const novac::CGPSData& location, INTERPOLATION_METHOD method, CWindField& windField) const;
+    bool GetWindField(const novac::CDateTime& time, const novac::CGPSData& location, InterpolationMethod method, WindField& windField) const;
 
     /** Inserts a wind field into the database */
-    void InsertWindField(const CWindField& windField);
+    void InsertWindField(const WindField& windField);
 
     /** Inserts a wind-direction into the database.
         @param validFrom - the time from which the wind-direction is judged to be ok
@@ -97,44 +93,41 @@ private:
 
     // the structure winddata is used to hold the information about the wind for a
     //  single location and a single altitude
-    class CWindData
+    struct WindData
     {
     public:
-        CWindData();
-        CWindData(const CWindData& w);
-        ~CWindData();
-        CWindData& operator=(const CWindData& w);
+        WindData() = default;
+        WindData(const WindData& other) = default;
+        WindData& operator=(const WindData& other) = default;
 
-        bool HasWindSpeed() { return ws != NOT_A_NUMBER; }
-        bool HasWindDirection() { return wd != NOT_A_NUMBER; }
+        bool HasWindSpeed() const { return ws != NOT_A_NUMBER; }
+        bool HasWindDirection() const { return wd != NOT_A_NUMBER; }
 
         /** This is the position where this wind field is valid
             If equal to -1 then this is valid everywhere */
-        int location;
+        int location = -1;
 
-        // The wind-speed
-        float ws;            // the wind-speed, in meters/second
-        float ws_err;        // the absolute error in wind-speed, in meters/second
-        MET_SOURCE ws_src;    // the source for the wind-speed
+        double ws = 10.0;   // the wind-speed, in meters/second
+        double ws_err = 10.0;   // the absolute error in wind-speed, in meters/second
+        MET_SOURCE ws_src = MET_SOURCE::MET_DEFAULT;    // the source for the wind-speed
 
-        // The wind-direction
-        float wd;            // the wind-direction, in degrees from north, positive clock-wise
-        float wd_err;        // the absolute error in wind-direction, in degrees
-        MET_SOURCE wd_src;    // the source for the wind-direction
+        double wd = 0.0;    // the wind-direction, in degrees from north, positive clock-wise
+        double wd_err = 360.0;  // the absolute error in wind-direction, in degrees
+        MET_SOURCE wd_src = MET_SOURCE::MET_DEFAULT;    // the source for the wind-direction
     };
 
     /** This is used to organise all data that is valid within a certain
         time frame. */
-    class CWindInTime
+    struct WindInTime
     {
     public:
-        CWindInTime();
-        CWindInTime(const CWindInTime& w);
-        CWindInTime& operator=(const CWindInTime& w);
-        ~CWindInTime();
-        novac::CDateTime    validFrom;  // this wind-data is valid from this day and time
-        novac::CDateTime    validTo;    // this wind-data is valid until this day and time
-        std::list <CWindData> windData; // the list of wind-datas
+        WindInTime();
+        WindInTime(const WindInTime& w);
+        WindInTime& operator=(const WindInTime& w);
+
+        novac::CDateTime validFrom = novac::CDateTime(0, 0, 0, 0, 0, 0);  // this wind-data is valid from this day and time
+        novac::CDateTime validTo = novac::CDateTime(9999, 12, 31, 23, 59, 59);    // this wind-data is valid until this day and time
+        std::list <WindData> windData; // the list of wind-datas
     };
 
     // ----------------------------------------------------------------------
@@ -144,10 +137,10 @@ private:
     /** This is the database of wind information. Each item in the list
         holds the information of the wind for a single time frame.
 
-        Each CWindInTime object in the list MUST have an unique time frame.
+        Each WindInTime object in the list MUST have an unique time frame.
         The time frames MUST be disjoint!!!!
         */
-    std::list <CWindInTime> m_dataBase;
+    std::list <WindInTime> m_dataBase;
 
     /** These are all the positions that we have in our database */
     std::vector <novac::CGPSData> m_locations;
@@ -156,15 +149,6 @@ private:
     // ----------------------------------------------------------------------
     // --------------------- PRIVATE METHODS --------------------------------
     // ----------------------------------------------------------------------
-
-    /** Retrieves the wind field at a given location from a CWindInTime object.
-        @param location - the position and altitude for which the wind field
-            should be retrieved.
-        @param windField - will on successful return be filled with the information
-            about the wind field at the requested time and location.
-        @return true if the wind field could be retrieved, otherwise false.
-    */
-    bool GetWindField_FromCWindInTime(const CWindInTime& time, const novac::CGPSData& location, CWindField& windField) const;
 
     /** Returns the location that belongs to the given location index. */
     const novac::CGPSData& GetLocation(int index) const;
@@ -184,9 +168,9 @@ private:
 
     /** The implementations of the different (spatial) interpolation methods.
     */
-    bool GetWindField_Exact(const novac::CDateTime& time, const novac::CGPSData& location, CWindField& windField) const;
-    bool GetWindField_Nearest(const novac::CDateTime& time, const novac::CGPSData& location, CWindField& windField) const;
-    bool GetWindField_Bilinear(const novac::CDateTime& time, const novac::CGPSData& location, CWindField& windField) const;
+    bool GetWindField_Exact(const novac::CDateTime& time, const novac::CGPSData& location, WindField& windField) const;
+    bool GetWindField_Nearest(const novac::CDateTime& time, const novac::CGPSData& location, WindField& windField) const;
+    bool GetWindField_Bilinear(const novac::CDateTime& time, const novac::CGPSData& location, WindField& windField) const;
 
 
 };

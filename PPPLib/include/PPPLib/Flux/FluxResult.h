@@ -13,23 +13,15 @@ enum class FluxQuality
     Red
 };
 
-/** The class <b>CFluxResult</b> is a data structure for storing the results
-    from a flux-calculation of a scan. The class holds the values of all the
-    parameters used in the calculation (except for the measurement itself) and
-    the result of the measurement. All non-initialized variables are set to -999
-*/
-
 namespace Flux
 {
-class CFluxResult
+
+/** The data structure FluxResult stores the results from a flux-calculation of a scan.
+    The struct holds the values of all the parameters used in the calculation (except for the measurement itself)
+    and the result of the measurement. */
+struct FluxResult
 {
 public:
-    CFluxResult() = default;
-    ~CFluxResult() = default;
-
-    /** Assignment operator */
-    CFluxResult& operator=(const CFluxResult& fl2);
-
     /** The calculated flux, in kg/s */
     double m_flux = 0.0;
 
@@ -45,7 +37,7 @@ public:
     double m_fluxError_PlumeHeight = 0.0;
 
     /** The wind field that was used to calculate this flux */
-    Meteorology::CWindField m_windField;
+    Meteorology::WindField m_windField;
 
     /** The plume height that was used to calculate this flux */
     Geometry::CPlumeHeight m_plumeHeight;

@@ -21,7 +21,7 @@ std::unique_ptr<CExtendedScanResult> CPostEvaluationController::EvaluateScan(
     const novac::CString& fitWindowName)
 {
     novac::CString errorMessage, serialNumber;
-    Meteorology::CWindField windField;
+    Meteorology::WindField windField;
     CDateTime startTime;
     novac::CSpectrumIO reader;
     CSpectrum skySpectrum;
