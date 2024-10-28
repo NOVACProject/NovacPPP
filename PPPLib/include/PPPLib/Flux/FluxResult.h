@@ -40,7 +40,7 @@ public:
     Meteorology::WindField m_windField;
 
     /** The plume height that was used to calculate this flux */
-    Geometry::CPlumeHeight m_plumeHeight;
+    Geometry::PlumeHeight m_plumeHeight;
 
     /** The number of good spectra in this measurement. This is also
         the number of column-values that were used to calculate the
@@ -61,9 +61,6 @@ public:
 
     /** The date and time (UTC) when the measurement was finished */
     novac::CDateTime m_stopTime;
-
-    /** The volcano that this measurement was made at. Set to -1 if unknown */
-    int m_volcano = -1;
 
     /** The instrument that collected this scan */
     std::string m_instrument;

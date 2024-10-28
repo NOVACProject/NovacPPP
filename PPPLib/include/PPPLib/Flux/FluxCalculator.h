@@ -65,7 +65,7 @@ public:
         novac::LogContext context,
         const std::string& evalLogFileName,
         const Meteorology::CWindDataBase& windDataBase,
-        const Geometry::CPlumeHeight& plumeAltitude,
+        const Geometry::PlumeHeight& plumeAltitude,
         FluxResult& fluxResult);
 
 
@@ -85,7 +85,7 @@ public:
         Evaluation::CScanResult& result,
         const CMolecule& specie,
         const Meteorology::WindField& wind,
-        const Geometry::CPlumeHeight& relativePlumeHeight,
+        const Geometry::PlumeHeight& relativePlumeHeight,
         double compass,
         double coneAngle = 90.0,
         double tilt = 0.0);
@@ -103,7 +103,7 @@ public:
         double offset,
         int nDataPoints,
         const Meteorology::WindField& wind,
-        const Geometry::CPlumeHeight& relativePlumeHeight,
+        const Geometry::PlumeHeight& relativePlumeHeight,
         double compass,
         INSTRUMENT_TYPE type,
         double coneAngle = 90.0,

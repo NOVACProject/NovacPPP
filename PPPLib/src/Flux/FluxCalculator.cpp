@@ -29,7 +29,7 @@ bool CFluxCalculator::CalculateFlux(
     novac::LogContext context,
     const std::string& evalLogFileName,
     const Meteorology::CWindDataBase& windDataBase,
-    const Geometry::CPlumeHeight& plumeAltitude,
+    const Geometry::PlumeHeight& plumeAltitude,
     FluxResult& fluxResult)
 {
     novac::CString errorMessage, serial;
@@ -73,7 +73,7 @@ bool CFluxCalculator::CalculateFlux(
     }
 
     // 4b. Adjust the altitude of the plume so that it is relative to the altitude of the instrument...
-    Geometry::CPlumeHeight relativePlumeHeight = plumeAltitude;
+    Geometry::PlumeHeight relativePlumeHeight = plumeAltitude;
     relativePlumeHeight.m_plumeAltitude -= instrLocation.m_altitude;
     if (relativePlumeHeight.m_plumeAltitude <= 0)
     {
@@ -384,7 +384,7 @@ bool CFluxCalculator::CalculateFlux(
     Evaluation::CScanResult& result,
     const CMolecule& specie,
     const Meteorology::WindField& wind,
-    const Geometry::CPlumeHeight& relativePlumeHeight,
+    const Geometry::PlumeHeight& relativePlumeHeight,
     double compass,
     double coneAngle,
     double tilt)
@@ -532,7 +532,7 @@ double CFluxCalculator::CalculateFlux(
     double offset,
     int nDataPoints,
     const Meteorology::WindField& wind,
-    const Geometry::CPlumeHeight& relativePlumeHeight,
+    const Geometry::PlumeHeight& relativePlumeHeight,
     double compass,
     INSTRUMENT_TYPE type,
     double coneAngle,

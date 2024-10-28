@@ -98,7 +98,7 @@ TEST_CASE("CalculateWindDirection with PlumeInScanProperty gives expected wind d
     location.m_compass = 266.0;
     location.m_coneangle = 60.0;
     location.m_volcano = "ruapehu";
-    Geometry::CPlumeHeight plumeHeight;
+    Geometry::PlumeHeight plumeHeight;
     plumeHeight.m_plumeAltitude = 3600;
 
     SECTION("Plume directly above instrument one gives wind direction from volcano to instrument one")

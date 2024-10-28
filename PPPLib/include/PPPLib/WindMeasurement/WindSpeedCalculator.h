@@ -76,7 +76,7 @@ public:
     */
     int CalculateWindSpeed(const novac::CString& evalLog1, const novac::CString& evalLog2,
         const Configuration::CInstrumentLocation& location,
-        const Geometry::CPlumeHeight& plumeHeight,
+        const Geometry::PlumeHeight& plumeHeight,
         Meteorology::WindField& windField);
 
     /** Writes the header of a dual-beam wind speed log file to the given
@@ -86,7 +86,7 @@ public:
     /** Appends a dual-beam wind speed result to the given file */
     void AppendResultToFile(const novac::CString& fileName, const novac::CDateTime& startTime,
         const Configuration::CInstrumentLocation& location,
-        const Geometry::CPlumeHeight& plumeHeight,
+        const Geometry::PlumeHeight& plumeHeight,
         Meteorology::WindField& windField);
 
 private:

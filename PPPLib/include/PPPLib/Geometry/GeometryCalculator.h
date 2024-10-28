@@ -76,7 +76,7 @@ public:
             @param result - will on successful return be filled with information on the result
                 only the wind-direction (and its error) will be filled in
             @return true on success */
-    bool CalculateWindDirection(const novac::CPlumeInScanProperty& plume, const novac::CDateTime& startTime, const CPlumeHeight& absolutePlumeHeight, const Configuration::CInstrumentLocation& location, CGeometryResult& result);
+    bool CalculateWindDirection(const novac::CPlumeInScanProperty& plume, const novac::CDateTime& startTime, const PlumeHeight& absolutePlumeHeight, const Configuration::CInstrumentLocation& location, CGeometryResult& result);
 
 private:
 

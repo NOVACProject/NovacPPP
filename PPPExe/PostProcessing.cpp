@@ -805,7 +805,7 @@ void CPostProcessing::ReadWindField(novac::LogContext context)
 void CPostProcessing::PreparePlumeHeights(novac::LogContext context)
 {
     // we need to construct a default plume height to use, if there's nothing else...
-    Geometry::CPlumeHeight plumeHeight;
+    Geometry::PlumeHeight plumeHeight;
     plumeHeight.m_plumeAltitude = g_volcanoes.GetPeakAltitude(m_userSettings.m_volcano);
     plumeHeight.m_plumeAltitudeSource = Meteorology::MeteorologySource::Default;
     plumeHeight.m_validFrom = CDateTime(0, 0, 0, 0, 0, 0);
@@ -1003,7 +1003,7 @@ void CPostProcessing::CalculateGeometries(
             // Get the altitude of the plume at this moment. First look into the
             // general database. Then have a look in the list of geometry-results
             // that we just generated to see if there's anything better there...
-            Geometry::CPlumeHeight plumeHeight;
+            Geometry::PlumeHeight plumeHeight;
             m_plumeDataBase.GetPlumeHeight(scanResult1.m_startTime, plumeHeight);
 
             for (auto it = geometryResults.rbegin(); it != geometryResults.rend(); ++it)
@@ -1084,7 +1084,7 @@ void CPostProcessing::CalculateFluxes(novac::LogContext context, const std::vect
 {
     CDateTime scanStartTime;
     novac::CString serial;
-    Geometry::CPlumeHeight plumeHeight; // the altitude of the plume, in meters above sea level
+    Geometry::PlumeHeight plumeHeight; // the altitude of the plume, in meters above sea level
     MEASUREMENT_MODE measMode;
     int channel;
     Flux::CFluxStatistics stat;
@@ -1526,7 +1526,7 @@ void CPostProcessing::CalculateDualBeamWindSpeeds(novac::LogContext context, con
     MEASUREMENT_MODE meas_mode, meas_mode2;
     Configuration::CInstrumentLocation location;
     WindSpeedMeasurement::CWindSpeedCalculator calculator(m_log, m_userSettings);
-    Geometry::CPlumeHeight plumeHeight;
+    Geometry::PlumeHeight plumeHeight;
     Meteorology::WindField windField, oldWindField;
 
     // -------------------------------- step 1. -------------------------------------

@@ -42,10 +42,10 @@ public:
             about the plume height at the requested time.
         @return true if the wind field could be retrieved, otherwise false.
      */
-    bool GetPlumeHeight(const novac::CDateTime& time, CPlumeHeight& plumeHeight) const;
+    bool GetPlumeHeight(const novac::CDateTime& time, PlumeHeight& plumeHeight) const;
 
     /** Inserts a plume height into the database */
-    void InsertPlumeHeight(const CPlumeHeight& plumeHeight);
+    void InsertPlumeHeight(const PlumeHeight& plumeHeight);
 
     /** Inserts a calculated plume height into the database */
     void InsertPlumeHeight(const CGeometryResult& geomResult);

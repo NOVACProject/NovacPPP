@@ -618,7 +618,7 @@ bool CGeometryCalculator::CalculatePlumeHeight(const novac::CString& evalLog, in
     return true;
 }
 
-bool CGeometryCalculator::CalculateWindDirection(const novac::CPlumeInScanProperty& plume, const novac::CDateTime& startTime, const Geometry::CPlumeHeight& absolutePlumeHeight, const Configuration::CInstrumentLocation& location, Geometry::CGeometryResult& result)
+bool CGeometryCalculator::CalculateWindDirection(const novac::CPlumeInScanProperty& plume, const novac::CDateTime& startTime, const Geometry::PlumeHeight& absolutePlumeHeight, const Configuration::CInstrumentLocation& location, Geometry::CGeometryResult& result)
 {
     // extract the location of the instrument
     const CGPSData scannerPos = location.GpsData();

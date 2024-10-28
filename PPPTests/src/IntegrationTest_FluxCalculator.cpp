@@ -42,7 +42,7 @@ TEST_CASE("CalculateFlux, valid scan but very low intensity values in evaluation
     Configuration::CNovacPPPConfiguration configuration;
 
     Meteorology::CWindDataBase windDataBase;
-    Geometry::CPlumeHeight plumeAltitude;
+    Geometry::PlumeHeight plumeAltitude;
 
     Flux::CFluxCalculator sut(logger, configuration, userSettings);
 
@@ -113,7 +113,7 @@ TEST_CASE("CalculateFlux, reads values from configuration and verifies input (Ru
     Configuration::CNovacPPPConfiguration configuration;
 
     Meteorology::CWindDataBase windDataBase;
-    Geometry::CPlumeHeight plumeAltitude;
+    Geometry::PlumeHeight plumeAltitude;
 
     SECTION("Instrument does not have a configured location. Returns error")
     {
@@ -237,7 +237,7 @@ TEST_CASE("CalculateFlux, valid scan with column values in molec/cm2 calculates 
     Meteorology::WindField windField(windSpeed, defaultSource, windDirection, defaultSource, validFrom, validTo, instrumentLatitude, instrumentLongitude, altitude);
     Meteorology::CWindDataBase windDataBase;
 
-    Geometry::CPlumeHeight plumeAltitude;
+    Geometry::PlumeHeight plumeAltitude;
     plumeAltitude.m_plumeAltitudeSource = Meteorology::MeteorologySource::GeometryCalculationTwoInstruments;
     plumeAltitude.m_plumeAltitude = 3500;
 
@@ -272,7 +272,6 @@ TEST_CASE("CalculateFlux, valid scan with column values in molec/cm2 calculates 
         REQUIRE(fluxResult.m_numGoodSpectra == 51);
         REQUIRE(fluxResult.m_startTime == novac::CDateTime(2023, 01, 20, 19, 07, 48));
         REQUIRE(fluxResult.m_stopTime == novac::CDateTime(2023, 01, 20, 19, 15, 41));
-        REQUIRE(fluxResult.m_volcano == -1);
         REQUIRE(fluxResult.m_tilt == 0.0);
 
         REQUIRE(Approx(windSpeed) == fluxResult.m_windField.GetWindSpeed());

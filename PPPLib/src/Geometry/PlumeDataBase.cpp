@@ -68,7 +68,7 @@ CPlumeDataBase::~CPlumeDataBase(void)
         about the plume height at the requested time.
     @return true if the wind field could be retrieved, otherwise false.
     */
-bool CPlumeDataBase::GetPlumeHeight(const novac::CDateTime& time, CPlumeHeight& plumeHeight) const
+bool CPlumeDataBase::GetPlumeHeight(const novac::CDateTime& time, PlumeHeight& plumeHeight) const
 {
     std::list <CPlumeData> validData;
 
@@ -184,11 +184,11 @@ bool CPlumeDataBase::GetPlumeHeight(const novac::CDateTime& time, CPlumeHeight& 
 }
 
 /** Inserts a plume height into the database */
-void CPlumeDataBase::InsertPlumeHeight(const CPlumeHeight& plumeHeight)
+void CPlumeDataBase::InsertPlumeHeight(const PlumeHeight& plumeHeight)
 {
     CPlumeData data;
 
-    // generate a copy of the CPlumeHeight
+    // generate a copy of the PlumeHeight
     data.altitude = (float)plumeHeight.m_plumeAltitude;
     data.altitudeError = (float)plumeHeight.m_plumeAltitudeError;
     data.altitudeSource = plumeHeight.m_plumeAltitudeSource;

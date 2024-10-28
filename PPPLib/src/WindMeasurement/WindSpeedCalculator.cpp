@@ -436,12 +436,12 @@ void CWindSpeedCalculator::InitializeArrays()
         NOTE THAT THE WIND-DIRECTION WILL NOT BE CALCULATED AND WILL THUS NOT MAKE
         ANY SENSE...
 */
-int CWindSpeedCalculator::CalculateWindSpeed(const novac::CString& evalLog1, const novac::CString& evalLog2, const Configuration::CInstrumentLocation& location, const Geometry::CPlumeHeight& plumeHeight, Meteorology::WindField& windField)
+int CWindSpeedCalculator::CalculateWindSpeed(const novac::CString& evalLog1, const novac::CString& evalLog2, const Configuration::CInstrumentLocation& location, const Geometry::PlumeHeight& plumeHeight, Meteorology::WindField& windField)
 {
     double distance = 0; // the distance between the two viewing directions at the altitude of the plume.
 
     // Extract the relative plume height
-    Geometry::CPlumeHeight relativePlumeHeight = plumeHeight;
+    Geometry::PlumeHeight relativePlumeHeight = plumeHeight;
     relativePlumeHeight.m_plumeAltitude -= location.m_altitude;
 
     // Calculate the correlation between the time series
@@ -803,7 +803,7 @@ void CWindSpeedCalculator::WriteWindSpeedLogHeader(const novac::CString& fileNam
 /** Appends a dual-beam wind speed result to the given file */
 void CWindSpeedCalculator::AppendResultToFile(const novac::CString& fileName, const CDateTime& startTime,
     const Configuration::CInstrumentLocation& /*location*/,
-    const Geometry::CPlumeHeight& plumeHeight,
+    const Geometry::PlumeHeight& plumeHeight,
     Meteorology::WindField& windField)
 {
     CDateTime validFrom, validTo;
