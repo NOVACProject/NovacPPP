@@ -276,21 +276,6 @@ bool CScanResult::CalculatePlumeCentre(const CMolecule& specie, CPlumeInScanProp
     return success;
 }
 
-double CScanResult::GetCalculatedPlumeCentre(int motor) const
-{
-    if (motor == 1)
-        return m_plumeProperties.plumeCenter2;
-    else
-        return m_plumeProperties.plumeCenter;
-}
-
-/** Returns the calculated plume edges */
-void CScanResult::GetCalculatedPlumeEdges(double& lowEdge, double& highEdge) const
-{
-    lowEdge = m_plumeProperties.plumeEdgeLow;
-    highEdge = m_plumeProperties.plumeEdgeHigh;
-}
-
 double CScanResult::GetColumn(unsigned long spectrumNum, unsigned long specieNum) const
 {
     return this->GetFitParameter(spectrumNum, specieNum, COLUMN);

@@ -215,11 +215,9 @@ RETURN_CODE Evaluation::PostEvaluationIO::WriteEvaluationResult(
     // windField.GetPlumeHeightSource(phSrc);
 
         // Get the information on where the plume is seen
-    double plumeEdge1, plumeEdge2;
-    double plumeCompleteness = result->GetCalculatedPlumeCompleteness();
-    double plumeCentre1 = result->GetCalculatedPlumeCentre(0);
-    double plumeCentre2 = result->GetCalculatedPlumeCentre(1);
-    result->GetCalculatedPlumeEdges(plumeEdge1, plumeEdge2);
+    const double plumeCompleteness = result->GetCalculatedPlumeCompleteness();
+    const double plumeCentre1 = result->m_plumeProperties.plumeCenter.ValueOrDefault(NOT_A_NUMBER);
+    const double plumeCentre2 = result->m_plumeProperties.plumeCenter2.ValueOrDefault(NOT_A_NUMBER);
 
     string.Format("<fluxinfo>\n");
     string.AppendFormat("\tflux=%.4lf\n", result->GetFlux()); // ton/day
@@ -238,8 +236,8 @@ RETURN_CODE Evaluation::PostEvaluationIO::WriteEvaluationResult(
     string.AppendFormat("\tplumecentre=%.2lf\n", plumeCentre1);
     if (instrLocation->m_instrumentType == INSTRUMENT_TYPE::INSTR_HEIDELBERG)
         string.AppendFormat("\tplumecentre_phi=%.2lf\n", plumeCentre2);
-    string.AppendFormat("\tplumeedge1=%.2lf\n", plumeEdge1);
-    string.AppendFormat("\tplumeedge2=%.2lf\n", plumeEdge2);
+    string.AppendFormat("\tplumeedge1=%.2lf\n", result->m_plumeProperties.plumeEdgeLow.ValueOrDefault(NOT_A_NUMBER));
+    string.AppendFormat("\tplumeedge2=%.2lf\n", result->m_plumeProperties.plumeEdgeHigh.ValueOrDefault(NOT_A_NUMBER));
 
     string.Append("</fluxinfo>");
 
@@ -456,7 +454,7 @@ RETURN_CODE Evaluation::PostEvaluationIO::AppendToEvaluationSummaryFile(
 
     // the calculated plume parameters
     fprintf(f, "%.2lf\t", result->GetOffset());
-    fprintf(f, "%.2lf\t", result->GetCalculatedPlumeCentre());
+    fprintf(f, "%.2lf\t", result->m_plumeProperties.plumeCenter.ValueOrDefault(NOT_A_NUMBER));
     fprintf(f, "%.2lf\t", result->GetCalculatedPlumeCompleteness());
 
     // the number of evaluated spectra

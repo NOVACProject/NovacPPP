@@ -303,7 +303,7 @@ RETURN_CODE CFluxCalculator::WriteFluxResult(
     //	string.AppendFormat("user\t");
 
     // 12. Output the plume centre
-    string.AppendFormat("%.1lf\t", result->GetCalculatedPlumeCentre());
+    string.AppendFormat("%.1lf\t", result->m_plumeProperties.plumeCenter.ValueOrDefault(NOT_A_NUMBER));
 
     // 13. Output the plume completeness
     string.AppendFormat("%.2lf\t", result->GetCalculatedPlumeCompleteness());
@@ -495,8 +495,8 @@ bool CFluxCalculator::CalculateFlux(
 
     fluxResult.m_scanOffset = result.m_plumeProperties.offset;
     fluxResult.m_completeness = result.m_plumeProperties.completeness;
-    fluxResult.m_plumeCentre[0] = result.m_plumeProperties.plumeCenter;
-    fluxResult.m_plumeCentre[1] = result.m_plumeProperties.plumeCenter2;
+    fluxResult.m_plumeCentre[0] = result.m_plumeProperties.plumeCenter.ValueOrDefault(NOT_A_NUMBER);
+    fluxResult.m_plumeCentre[1] = result.m_plumeProperties.plumeCenter2.ValueOrDefault(NOT_A_NUMBER);
     fluxResult.m_instrumentType = result.m_instrumentType;
 
     // Try to make an estimation of the error in flux from the

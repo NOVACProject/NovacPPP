@@ -50,8 +50,8 @@ TEST_CASE("CalculateGeometry with PlumeInScanProperty gives expected wind direct
         REQUIRE(280 == Approx(result.m_plumeAltitudeError).margin(5.0));
 
         // The other properties should be filled in as well
-        REQUIRE(0.0 == Approx(result.m_plumeCentre1));
-        REQUIRE(-75.0 == Approx(result.m_plumeCentre2));
+        REQUIRE(0.0 == Approx(result.m_plumeCentre1.Value()));
+        REQUIRE(-75.0 == Approx(result.m_plumeCentre2.Value()));
         REQUIRE(CDateTime(2023, 01, 20, 15, 17, 0) == result.m_averageStartTime);
         REQUIRE(60 == result.m_startTimeDifference);
     }
@@ -75,8 +75,8 @@ TEST_CASE("CalculateGeometry with PlumeInScanProperty gives expected wind direct
         REQUIRE(365 == Approx(result.m_plumeAltitudeError).margin(5.0));
 
         // The other properties should be filled in as well
-        REQUIRE(80.0 == Approx(result.m_plumeCentre1));
-        REQUIRE(0.0 == Approx(result.m_plumeCentre2));
+        REQUIRE(80.0 == Approx(result.m_plumeCentre1.Value()));
+        REQUIRE(0.0 == Approx(result.m_plumeCentre2.Value()));
         REQUIRE(CDateTime(2023, 01, 20, 15, 17, 0) == result.m_averageStartTime);
         REQUIRE(60 == result.m_startTimeDifference);
     }
@@ -117,8 +117,8 @@ TEST_CASE("CalculateWindDirection with PlumeInScanProperty gives expected wind d
         REQUIRE(NOT_A_NUMBER == result.m_plumeAltitude);
 
         // The other properties should be filled in as well
-        REQUIRE(0.0 == Approx(result.m_plumeCentre1));
-        REQUIRE(NOT_A_NUMBER == Approx(result.m_plumeCentre2));
+        REQUIRE(0.0 == Approx(result.m_plumeCentre1.Value()));
+        REQUIRE(false == result.m_plumeCentre2.HasValue());
         REQUIRE(CDateTime(2023, 01, 20, 15, 16, 30) == result.m_averageStartTime);
         REQUIRE(0 == result.m_startTimeDifference);
     }

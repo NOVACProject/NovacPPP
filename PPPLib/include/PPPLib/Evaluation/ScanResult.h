@@ -176,12 +176,6 @@ public:
     /** Fills in the supplied CPlumeInScanProperty object with the calculated properties of this scan */
     void GetCalculatedPlumeProperties(novac::CPlumeInScanProperty& properties) const { properties = m_plumeProperties; }
 
-    /** Returns the calculated plume-centre position */
-    double GetCalculatedPlumeCentre(int motor = 0) const;
-
-    /** Returns the calculated plume edges */
-    void GetCalculatedPlumeEdges(double& lowEdge, double& highEdge) const;
-
     /** Returns the calculated plume-completeness */
     double GetCalculatedPlumeCompleteness() const { return m_plumeProperties.completeness; }
 

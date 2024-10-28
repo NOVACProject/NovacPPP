@@ -1454,8 +1454,8 @@ void CPostProcessing::WriteCalculatedGeometriesToFile(novac::LogContext context,
             fprintf(f, "%.0lf;%.0lf;", result.m_plumeAltitude, result.m_plumeAltitudeError);
             fprintf(f, "%.0lf;%.0lf;", result.m_windDirection, result.m_windDirectionError);
 
-            fprintf(f, "%.1f;%.1f;", result.m_plumeCentre1, result.m_plumeCentreError1);
-            fprintf(f, "%.1f;%.1f\n", result.m_plumeCentre2, result.m_plumeCentreError2);
+            fprintf(f, "%.1f;%.1f;", result.m_plumeCentre1.Value(), result.m_plumeCentreError1.Value());
+            fprintf(f, "%.1f;%.1f\n", result.m_plumeCentre2.Value(), result.m_plumeCentreError2.Value());
         }
         else
         {
@@ -1466,7 +1466,7 @@ void CPostProcessing::WriteCalculatedGeometriesToFile(novac::LogContext context,
             fprintf(f, "%.0lf;%.0lf;", result.m_plumeAltitude, result.m_plumeAltitudeError);
             fprintf(f, "%.0lf;%.0lf;", result.m_windDirection, result.m_windDirectionError);
 
-            fprintf(f, "%.1f;%.1f;", result.m_plumeCentre1, result.m_plumeCentreError1);
+            fprintf(f, "%.1f;%.1f;", result.m_plumeCentre1.Value(), result.m_plumeCentreError1.Value());
             fprintf(f, ";\n");
         }
     }

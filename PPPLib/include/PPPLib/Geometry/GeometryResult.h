@@ -2,6 +2,7 @@
 
 #include <SpectralEvaluation/DateTime.h>
 #include <SpectralEvaluation/Definitions.h>
+#include <SpectralEvaluation/NullableValue.h>
 #include <PPPLib/Meteorology/MeteorologySource.h>
 #include <PPPLib/MFC/CString.h>
 
@@ -33,15 +34,14 @@ public:
     std::string m_instrumentSerial1 = "";
     std::string m_instrumentSerial2 = "";
 
-    /** The plume centre-angles for the two scans
-        that were combined */
-    double m_plumeCentre1 = NOT_A_NUMBER;
-    double m_plumeCentre2 = NOT_A_NUMBER;
+    /** The plume centre-angles for the two scans that were combined */
+    novac::Nullable<double> m_plumeCentre1;
+    novac::Nullable<double> m_plumeCentre2;
 
     /** The estimated error in the plume-centre angles
         for each of the two scans that were combined */
-    double m_plumeCentreError1 = NOT_A_NUMBER;
-    double m_plumeCentreError2 = NOT_A_NUMBER;
+    novac::Nullable<double> m_plumeCentreError1;
+    novac::Nullable<double> m_plumeCentreError2;
 
     /** The calculated plume height (in meters above sea level) */
     double m_plumeAltitude = 0.0;

@@ -361,11 +361,16 @@ void CGeometryCalculator::GetDirection(double direction[3], double scanAngle, do
 
 bool CGeometryCalculator::CalculateGeometry(const CPlumeInScanProperty& plume1, const CDateTime& startTime1, const CPlumeInScanProperty& plume2, const CDateTime& startTime2, const Configuration::CInstrumentLocation locations[2], Geometry::CGeometryResult& result)
 {
+    if (!plume1.plumeCenter.HasValue() || !plume2.plumeCenter.HasValue())
+    {
+        return false; // does not see the plume
+    }
+
     CDateTime startTime[2];
 
     // 2. Get the nearest volcanoes, if these are different then quit the calculations
-    unsigned int volcanoIndex = g_volcanoes.GetVolcanoIndex(locations[0].m_volcano);
-    unsigned int volcanoIndex2 = g_volcanoes.GetVolcanoIndex(locations[1].m_volcano);
+    const unsigned int volcanoIndex = g_volcanoes.GetVolcanoIndex(locations[0].m_volcano);
+    const unsigned int volcanoIndex2 = g_volcanoes.GetVolcanoIndex(locations[1].m_volcano);
     if (volcanoIndex != volcanoIndex2)
     {
         return false; // if we couldn't find any volcano or we found two different volcanoes...
@@ -374,7 +379,7 @@ bool CGeometryCalculator::CalculateGeometry(const CPlumeInScanProperty& plume1, 
     const CGPSData source = g_volcanoes.GetPeak(volcanoIndex);
 
     // 4. Get the scan-angles around which the plumes are centred and the start-times of the scans
-    double plumeCentre[2] = { plume1.plumeCenter, plume2.plumeCenter };
+    const double plumeCentre[2] = { plume1.plumeCenter.Value(), plume2.plumeCenter.Value() };
 
     // 5. Calculate the plume-height
     if (false == CGeometryCalculator::GetPlumeHeight_Fuzzy(source, locations, plumeCentre, result.m_plumeAltitude, result.m_windDirection))
@@ -389,7 +394,6 @@ bool CGeometryCalculator::CalculateGeometry(const CPlumeInScanProperty& plume1, 
     // 7. We also need an estimate of the errors in plume height and wind direction
 
     // 7a. The error in plume height and wind-direction due to uncertainty in finding the centre of the plume
-    // TODO: There's an error here. the wd_perp is never filled in!!
     double ph_perp[4] = { 1e99, 1e99, 1e99, 1e99 };
     double wd_perp[4] = { 1e99, 1e99, 1e99, 1e99 };
     for (int k = 0; k < 4; ++k)
@@ -397,8 +401,8 @@ bool CGeometryCalculator::CalculateGeometry(const CPlumeInScanProperty& plume1, 
         // make a small perturbation to the plume centre angles
         const double plumeCentre_perturbated[2] =
         {
-            plumeCentre[0] + plume1.plumeCenterError * ((k % 2 == 0) ? -1.0 : +1.0),
-            plumeCentre[1] + plume2.plumeCenterError * ((k < 2) ? -1.0 : +1.0)
+            plumeCentre[0] + plume1.plumeCenterError.Value() * ((k % 2 == 0) ? -1.0 : +1.0),
+            plumeCentre[1] + plume2.plumeCenterError.Value() * ((k < 2) ? -1.0 : +1.0)
         };
 
         // make sure that the perturbation is not too large...
@@ -574,7 +578,7 @@ bool CGeometryCalculator::CalculatePlumeHeight(const novac::CString& evalLog, in
     }
 
     // calculate the plume height
-    const double plumeHeight = CGeometryCalculator::GetPlumeHeight(source, windField.GetWindDirection(), scannerPos, location.m_compass, plume.plumeCenter, location.m_coneangle, location.m_tilt);
+    const double plumeHeight = CGeometryCalculator::GetPlumeHeight(source, windField.GetWindDirection(), scannerPos, location.m_compass, plume.plumeCenter.Value(), location.m_coneangle, location.m_tilt);
 
     // Check that the plume height is reasonable
     if (plumeHeight < 0)
@@ -587,12 +591,12 @@ bool CGeometryCalculator::CalculatePlumeHeight(const novac::CString& evalLog, in
     const double windDirection_minus = windField.GetWindDirection() - std::max(windField.GetWindDirectionError(), 5.0);
 
     // the error in plume height due to the uncertainty in wind direction
-    const double plumeHeight_plus_wd = CGeometryCalculator::GetPlumeHeight(source, windDirection_plus, scannerPos, location.m_compass, plume.plumeCenter, location.m_coneangle, location.m_tilt);
-    const double plumeHeight_minus_wd = CGeometryCalculator::GetPlumeHeight(source, windDirection_minus, scannerPos, location.m_compass, plume.plumeCenter, location.m_coneangle, location.m_tilt);
+    const double plumeHeight_plus_wd = CGeometryCalculator::GetPlumeHeight(source, windDirection_plus, scannerPos, location.m_compass, plume.plumeCenter.Value(), location.m_coneangle, location.m_tilt);
+    const double plumeHeight_minus_wd = CGeometryCalculator::GetPlumeHeight(source, windDirection_minus, scannerPos, location.m_compass, plume.plumeCenter.Value(), location.m_coneangle, location.m_tilt);
 
     // the error in plume height due to the uncertainty in the plume centre position
-    const double plumeHeight_plus_pc = CGeometryCalculator::GetPlumeHeight(source, windField.GetWindDirection(), scannerPos, location.m_compass, plume.plumeCenter + plume.plumeCenterError, location.m_coneangle, location.m_tilt);
-    const double plumeHeight_minus_pc = CGeometryCalculator::GetPlumeHeight(source, windField.GetWindDirection(), scannerPos, location.m_compass, plume.plumeCenter - plume.plumeCenterError, location.m_coneangle, location.m_tilt);
+    const double plumeHeight_plus_pc = CGeometryCalculator::GetPlumeHeight(source, windField.GetWindDirection(), scannerPos, location.m_compass, plume.plumeCenter.Value() + plume.plumeCenterError.Value(), location.m_coneangle, location.m_tilt);
+    const double plumeHeight_minus_pc = CGeometryCalculator::GetPlumeHeight(source, windField.GetWindDirection(), scannerPos, location.m_compass, plume.plumeCenter.Value() - plume.plumeCenterError.Value(), location.m_coneangle, location.m_tilt);
 
     // the total error in plume height
     const double plumeHeightErr = std::sqrt(pow(plumeHeight_plus_wd - plumeHeight_minus_wd, 2.0) + std::pow(plumeHeight_plus_pc - plumeHeight_minus_pc, 2.0));
@@ -631,7 +635,7 @@ bool CGeometryCalculator::CalculateWindDirection(const novac::CPlumeInScanProper
     }
 
     // calculate the wind direction
-    const double windDirection = CGeometryCalculator::GetWindDirection(source, plumeHeight, scannerPos, location.m_compass, plume.plumeCenter, location.m_coneangle, location.m_tilt);
+    const double windDirection = CGeometryCalculator::GetWindDirection(source, plumeHeight, scannerPos, location.m_compass, plume.plumeCenter.Value(), location.m_coneangle, location.m_tilt);
 
     // Check that the wind direction is reasonable
     if (windDirection <= NOT_A_NUMBER)
@@ -640,12 +644,12 @@ bool CGeometryCalculator::CalculateWindDirection(const novac::CPlumeInScanProper
     }
 
     // the error in wind direction due to the uncertainty in plume height
-    const double windDirection_plus_ph = CGeometryCalculator::GetWindDirection(source, plumeHeight + absolutePlumeHeight.m_plumeAltitudeError, scannerPos, location.m_compass, plume.plumeCenter, location.m_coneangle, location.m_tilt);
-    const double windDirection_minus_ph = CGeometryCalculator::GetWindDirection(source, plumeHeight - absolutePlumeHeight.m_plumeAltitudeError, scannerPos, location.m_compass, plume.plumeCenter, location.m_coneangle, location.m_tilt);
+    const double windDirection_plus_ph = CGeometryCalculator::GetWindDirection(source, plumeHeight + absolutePlumeHeight.m_plumeAltitudeError, scannerPos, location.m_compass, plume.plumeCenter.Value(), location.m_coneangle, location.m_tilt);
+    const double windDirection_minus_ph = CGeometryCalculator::GetWindDirection(source, plumeHeight - absolutePlumeHeight.m_plumeAltitudeError, scannerPos, location.m_compass, plume.plumeCenter.Value(), location.m_coneangle, location.m_tilt);
 
     // the error in wind direction due to the uncertainty in the plume centre position
-    const double windDirection_plus_pc = CGeometryCalculator::GetWindDirection(source, plumeHeight, scannerPos, location.m_compass, plume.plumeCenter + plume.plumeCenterError, location.m_coneangle, location.m_tilt);
-    const double windDirection_minus_pc = CGeometryCalculator::GetWindDirection(source, plumeHeight, scannerPos, location.m_compass, plume.plumeCenter - plume.plumeCenterError, location.m_coneangle, location.m_tilt);
+    const double windDirection_plus_pc = CGeometryCalculator::GetWindDirection(source, plumeHeight, scannerPos, location.m_compass, plume.plumeCenter.Value() + plume.plumeCenterError.Value(), location.m_coneangle, location.m_tilt);
+    const double windDirection_minus_pc = CGeometryCalculator::GetWindDirection(source, plumeHeight, scannerPos, location.m_compass, plume.plumeCenter.Value() - plume.plumeCenterError.Value(), location.m_coneangle, location.m_tilt);
 
     // the total error in wind direction
     const double windDirectionErr = std::sqrt(std::pow(windDirection_plus_ph - windDirection_minus_ph, 2.0) + std::pow(windDirection_plus_pc - windDirection_minus_pc, 2.0));
