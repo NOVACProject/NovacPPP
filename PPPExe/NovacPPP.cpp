@@ -27,11 +27,12 @@
 #include <Poco/Util/Application.h>
 #include "Common/Common.h"
 
-extern Configuration::CNovacPPPConfiguration        g_setup;	   // <-- The settings
 extern Configuration::CUserConfiguration            g_userSettings;// <-- The settings of the user
 
 novac::CVolcanoInfo g_volcanoes;   // <-- A list of all known volcanoes
 PocoLogger g_logger; // <-- global logger
+
+static Configuration::CNovacPPPConfiguration s_setup; // <-- The settings
 
 std::string s_exePath;
 std::string s_exeFileName;
@@ -128,7 +129,7 @@ protected:
 
             // Read the configuration files
             ShowMessage("Loading configuration");
-            LoadConfigurations(s_exePath, g_setup, g_userSettings);
+            LoadConfigurations(s_exePath, s_setup, g_userSettings);
 
             // Read the command line options again, in order to make sure the command line arguments override the configuration files.
             Configuration::CommandLineParser::ParseCommandLineOptions(arguments, g_userSettings, g_volcanoes, s_exePath, g_logger);
@@ -282,9 +283,9 @@ void ArchiveSettingsFiles(const Configuration::CUserConfiguration& userSettings)
 
     Common common;
     Common::CopyFile(common.m_exePath + "configuration/setup.xml", setupOutputFile);
-    for (int k = 0; k < g_setup.NumberOfInstruments(); ++k)
+    for (int k = 0; k < s_setup.NumberOfInstruments(); ++k)
     {
-        novac::CString serial(g_setup.m_instrument[k].m_serial);
+        novac::CString serial(s_setup.m_instrument[k].m_serial);
 
         Common::CopyFile(common.m_exePath + "configuration/" + serial + ".exml", confCopyDir + serial + ".exml");
     }
@@ -296,9 +297,9 @@ void CalculateAllFluxes(CContinuationOfProcessing continuation)
     try
     {
         Common common;
+        s_setup.m_executableDirectory = common.m_exePath.std_str();
 
-        CPostProcessing post{ g_logger, g_setup, g_userSettings, continuation };
-        post.m_exePath = std::string((const char*)common.m_exePath);
+        CPostProcessing post{ g_logger, s_setup, g_userSettings, continuation };
 
         // Copy the settings that we have read in from the 'configuration' directory
         //  to the output directory to make it easier for the user to remember 

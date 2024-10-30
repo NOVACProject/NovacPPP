@@ -36,14 +36,6 @@ public:
         const CContinuationOfProcessing& continuation);
 
     // ----------------------------------------------------------------------
-    // ---------------------- PUBLIC DATA -----------------------------------
-    // ----------------------------------------------------------------------
-
-    /** This is the directory of the executable.
-        Defines the directory where the configuration is supposed to be found. */
-    std::string m_exePath;
-
-    // ----------------------------------------------------------------------
     // --------------------- PUBLIC METHODS ---------------------------------
     // ----------------------------------------------------------------------
 
@@ -97,12 +89,6 @@ private:
         relevant to instrument calibration are ok and make sense.
         @return 0 if all settings are ok otherwise non-zero */
     int CheckInstrumentCalibrationSettings() const;
-
-    /** Prepares for the evaluation of the spectra
-        by reading in all the reference files that are
-        needed.
-        @throws std::invalid_argument if the references files could not be found or not be read. */
-    void PrepareEvaluation();
 
     /** Prepares for the flux calculations by reading in the relevant
         wind-field file.
@@ -188,9 +174,6 @@ private:
 
     /** Locates evaluation log files in the output directory */
     std::vector<Evaluation::CExtendedScanResult> LocateEvaluationLogFiles(novac::LogContext context, const std::string& directory) const;
-
-    /** Creates a reference file by convolving a high-res cross section with a slit-function and resamples it
-        to a given wavelength calibration. The instrument serial is provided since the result is
-        saved to a local file, for reference. */
-    bool ConvolveReference(novac::LogContext context, novac::CReferenceFile& ref, const novac::CString& instrumentSerial);
 };
+
+

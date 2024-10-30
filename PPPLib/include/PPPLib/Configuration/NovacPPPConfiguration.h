@@ -24,6 +24,10 @@ public:
     // ---------------------- PUBLIC DATA -----------------------------------
     // ----------------------------------------------------------------------
 
+    // The directory of the running executable.
+    // Makes it possible to convert relative to absolute paths.
+    std::string m_executableDirectory = "";
+
     /** The array of instruments that are configured. */
     std::vector<CInstrumentConfiguration> m_instrument;
 

@@ -1,9 +1,6 @@
 #include <PPPLib/Configuration/NovacPPPConfiguration.h>
 #include <PPPLib/Logging.h>
 
-// The global configuration object. TODO: Remove as a global variable when no longer used by any other classes.
-Configuration::CNovacPPPConfiguration g_setup;
-
 using namespace novac;
 
 namespace Configuration
