@@ -51,8 +51,8 @@ public:
                 The properties of the scanner are given by the 'compass' - direction (degrees from north)
                 and the 'coneAngle' (degrees)
                 @return the plume height if the calculations are successful
-                @return NOT_A_NUMBER if something is wrong. */
-    static double GetPlumeHeight(const novac::CGPSData source, double windDirection, const novac::CGPSData scannerPos, double compass, double plumeCentre, double coneAngle, double tilt);
+                @return a not set Nullable if something is wrong. */
+    static novac::Nullable<double> GetPlumeHeight(const novac::CGPSData source, double windDirection, const novac::CGPSData scannerPos, double compass, double plumeCentre, double coneAngle, double tilt);
 
     /** Calculate the plume-height using the two scans found in the
             given evaluation-files.

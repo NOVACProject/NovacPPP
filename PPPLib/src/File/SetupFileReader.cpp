@@ -1,5 +1,5 @@
 #include <PPPLib/File/SetupFileReader.h>
-#include <PPPLib/Exceptions.h>
+#include <SpectralEvaluation/Exceptions.h>
 #include <PPPLib/Logging.h>
 #include <cstring>
 
@@ -13,7 +13,7 @@ void CSetupFileReader::ReadSetupFile(const novac::CString& filename, Configurati
     {
         std::string message = std::string("Failed to open setup file for reading: '") + filename.std_str() + std::string("'");
         m_log.Error(message);
-        throw PPPLib::FileIoException(message);
+        throw novac::FileIoException(message);
     }
 
     // parse the file, one line at a time.

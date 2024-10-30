@@ -14,8 +14,8 @@ using namespace Geometry;
 
 extern Configuration::CUserConfiguration g_userSettings;// <-- The settings of the user
 
-// ----------- THE SUB-CLASS CPlumeData --------------
-CPlumeDataBase::CPlumeData::CPlumeData()
+// ----------- THE SUB-CLASS PlumeData --------------
+CPlumeDataBase::PlumeData::PlumeData()
 {
     this->altitude = 1000.0;
     this->altitudeError = 1000.0;
@@ -25,7 +25,7 @@ CPlumeDataBase::CPlumeData::CPlumeData()
     this->validTo = novac::CDateTime(9999, 12, 31, 23, 59, 59);
 }
 
-CPlumeDataBase::CPlumeData::CPlumeData(const CPlumeDataBase::CPlumeData& p)
+CPlumeDataBase::PlumeData::PlumeData(const CPlumeDataBase::PlumeData& p)
 {
     this->altitude = p.altitude;
     this->altitudeError = p.altitudeError;
@@ -35,11 +35,11 @@ CPlumeDataBase::CPlumeData::CPlumeData(const CPlumeDataBase::CPlumeData& p)
     this->validTo = p.validTo;
 }
 
-CPlumeDataBase::CPlumeData::~CPlumeData()
+CPlumeDataBase::PlumeData::~PlumeData()
 {
 }
 
-CPlumeDataBase::CPlumeData& CPlumeDataBase::CPlumeData::operator =(const CPlumeDataBase::CPlumeData& p)
+CPlumeDataBase::PlumeData& CPlumeDataBase::PlumeData::operator =(const CPlumeDataBase::PlumeData& p)
 {
     this->altitude = p.altitude;
     this->altitudeError = p.altitudeError;
@@ -70,18 +70,18 @@ CPlumeDataBase::~CPlumeDataBase(void)
     */
 bool CPlumeDataBase::GetPlumeHeight(const novac::CDateTime& time, PlumeHeight& plumeHeight) const
 {
-    std::list <CPlumeData> validData;
+    std::list <PlumeData> validData;
 
     // There can be more than one piece of wind-information valid for this given moment
     //	extract the ones which are valid and put them into the list 'validData'
-    std::list <CPlumeData>::const_iterator pos = m_dataBase.begin();
+    std::list <PlumeData>::const_iterator pos = m_dataBase.begin();
     while (pos != m_dataBase.end())
     {
-        const CPlumeData& data = (CPlumeData&)*pos;
+        const PlumeData& data = (PlumeData&)*pos;
 
         if ((data.validFrom < time || data.validFrom == time) && (time < data.validTo || time == data.validTo))
         {
-            validData.push_back(CPlumeData(data));
+            validData.push_back(PlumeData(data));
         }
 
         ++pos; // go to the next element in the list
@@ -92,7 +92,7 @@ bool CPlumeDataBase::GetPlumeHeight(const novac::CDateTime& time, PlumeHeight& p
     // If there's only one time, then return that one
     if (validData.size() == 1)
     {
-        CPlumeData& data = (CPlumeData&)*validData.begin();
+        PlumeData& data = (PlumeData&)*validData.begin();
         plumeHeight.m_plumeAltitude = data.altitude;
         plumeHeight.m_plumeAltitudeError = data.altitudeError;
         plumeHeight.m_plumeAltitudeSource = data.altitudeSource;
@@ -104,20 +104,20 @@ bool CPlumeDataBase::GetPlumeHeight(const novac::CDateTime& time, PlumeHeight& p
     // If there are several, then the priority is to take the one which is 
     //	calculated (GeometryCalculationTwoInstruments) over the others. If there are 
     //	several calculated then use their average value
-    std::list <CPlumeData> calculatedData_2instr;
-    std::list <CPlumeData> calculatedData_1instr;
+    std::list <PlumeData> calculatedData_2instr;
+    std::list <PlumeData> calculatedData_1instr;
     pos = validData.begin();
     while (pos != validData.end())
     {
-        CPlumeData& data = (CPlumeData&)*pos;
+        PlumeData& data = (PlumeData&)*pos;
 
         if (Meteorology::MeteorologySource::GeometryCalculationTwoInstruments == data.altitudeSource)
         {
-            calculatedData_2instr.push_back(CPlumeData(data));
+            calculatedData_2instr.push_back(PlumeData(data));
         }
         else if (Meteorology::MeteorologySource::GeometryCalculationSingleInstrument == data.altitudeSource)
         {
-            calculatedData_1instr.push_back(CPlumeData(data));
+            calculatedData_1instr.push_back(PlumeData(data));
         }
 
         ++pos; // go to the next element in the list
@@ -125,7 +125,7 @@ bool CPlumeDataBase::GetPlumeHeight(const novac::CDateTime& time, PlumeHeight& p
     if (calculatedData_2instr.size() == 1)
     {
         // There's only one geometry calculation. Return that one...
-        CPlumeData& data = (CPlumeData&)*calculatedData_2instr.begin();
+        PlumeData& data = (PlumeData&)*calculatedData_2instr.begin();
         plumeHeight.m_plumeAltitude = data.altitude;
         plumeHeight.m_plumeAltitudeError = data.altitudeError;
         plumeHeight.m_plumeAltitudeSource = Meteorology::MeteorologySource::GeometryCalculationTwoInstruments;
@@ -148,7 +148,7 @@ bool CPlumeDataBase::GetPlumeHeight(const novac::CDateTime& time, PlumeHeight& p
     else if (calculatedData_1instr.size() == 1)
     {
         // There's only one geometry calculation from a single instrument. Return that one...
-        CPlumeData& data = (CPlumeData&)*calculatedData_1instr.begin();
+        PlumeData& data = (PlumeData&)*calculatedData_1instr.begin();
         plumeHeight.m_plumeAltitude = data.altitude;
         plumeHeight.m_plumeAltitudeError = data.altitudeError;
         plumeHeight.m_plumeAltitudeSource = Meteorology::MeteorologySource::GeometryCalculationSingleInstrument;
@@ -186,7 +186,7 @@ bool CPlumeDataBase::GetPlumeHeight(const novac::CDateTime& time, PlumeHeight& p
 /** Inserts a plume height into the database */
 void CPlumeDataBase::InsertPlumeHeight(const PlumeHeight& plumeHeight)
 {
-    CPlumeData data;
+    PlumeData data;
 
     // generate a copy of the PlumeHeight
     data.altitude = (float)plumeHeight.m_plumeAltitude;
@@ -202,7 +202,7 @@ void CPlumeDataBase::InsertPlumeHeight(const PlumeHeight& plumeHeight)
 /** Inserts a calculated plume height into the database */
 void CPlumeDataBase::InsertPlumeHeight(const CGeometryResult& geomResult)
 {
-    CPlumeData data;
+    PlumeData data;
     novac::CDateTime validFrom = geomResult.m_averageStartTime;
     novac::CDateTime validTo = geomResult.m_averageStartTime;
 
@@ -211,8 +211,8 @@ void CPlumeDataBase::InsertPlumeHeight(const CGeometryResult& geomResult)
     validTo.Increment(g_userSettings.m_calcGeometryValidTime / 2);
 
     // generate a copy of the CGeometryResult
-    data.altitude = (float)geomResult.m_plumeAltitude;
-    data.altitudeError = (float)geomResult.m_plumeAltitudeError;
+    data.altitude = geomResult.m_plumeAltitude.Value();
+    data.altitudeError = geomResult.m_plumeAltitudeError.Value();
     data.altitudeSource = geomResult.m_calculationType;
     data.validFrom = validFrom;
     data.validTo = validTo;
@@ -229,16 +229,16 @@ int CPlumeDataBase::WriteToFile(const novac::CString& /*fileName*/) const
     return 1;
 }
 
-void CPlumeDataBase::CalculateAverageHeight(const std::list <CPlumeData>& plumeList, double& averageAltitude, double& altitudeError) const
+void CPlumeDataBase::CalculateAverageHeight(const std::list <PlumeData>& plumeList, double& averageAltitude, double& altitudeError) const
 {
     std::vector<double> plumeAltitudes;
     std::vector<double> plumeAltitudeErrors;
 
     // loop through the altitudes to extract the average and the errors
-    std::list <CPlumeData>::const_iterator pos = plumeList.begin();
+    std::list <PlumeData>::const_iterator pos = plumeList.begin();
     while (pos != plumeList.end())
     {
-        const CPlumeData& data = (CPlumeData&)*pos;
+        const PlumeData& data = (PlumeData&)*pos;
         plumeAltitudes.push_back(data.altitude);
         plumeAltitudeErrors.push_back(data.altitudeError);
 

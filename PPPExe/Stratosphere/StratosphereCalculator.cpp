@@ -169,7 +169,7 @@ void CStratosphereCalculator::BuildMeasurementList(const std::list <Evaluation::
 
                 measurementDay.measList.push_back(meas);
             }
-            catch (PPPLib::NotFoundException& ex)
+            catch (novac::NotFoundException& ex)
             {
                 ShowMessage(ex.message);
             }

@@ -26,22 +26,19 @@ static void SetupFitWindow(novac::CFitWindow& window)
     so2.SetShift(novac::SHIFT_TYPE::SHIFT_FIX, 0.0);
     so2.SetSqueeze(novac::SHIFT_TYPE::SHIFT_FIX, 1.0);
     so2.m_path = GetTestDataDirectory() + "2002128M1/2002128M1_SO2_Bogumil_293K_HP500.txt";
-    int success = so2.ReadCrossSectionDataFromFile();
-    REQUIRE(success == 0);
+    so2.ReadCrossSectionDataFromFile();
 
     novac::CReferenceFile o3;
     o3.SetShift(novac::SHIFT_TYPE::SHIFT_FIX, 0.0);
     o3.SetSqueeze(novac::SHIFT_TYPE::SHIFT_FIX, 1.0);
     o3.m_path = GetTestDataDirectory() + "2002128M1/2002128M1_O3_Voigt_223K_HP500.txt";
-    success = o3.ReadCrossSectionDataFromFile();
-    REQUIRE(success == 0);
+    o3.ReadCrossSectionDataFromFile();
 
     novac::CReferenceFile ring;
     ring.SetShift(novac::SHIFT_TYPE::SHIFT_FIX, 0.0);
     ring.SetSqueeze(novac::SHIFT_TYPE::SHIFT_FIX, 1.0);
     ring.m_path = GetTestDataDirectory() + "2002128M1/2002128M1_Ring_HP500_PPMM_0.txt";
-    success = ring.ReadCrossSectionDataFromFile();
-    REQUIRE(success == 0);
+    ring.ReadCrossSectionDataFromFile();
 
     window.ref[0] = so2;
     window.ref[1] = o3;
@@ -49,7 +46,7 @@ static void SetupFitWindow(novac::CFitWindow& window)
     window.nRef = 3;
 }
 
-static void SetupFitWindowWithCalibratedReferences(novac::CFitWindow& window)
+static void SetupFitWindowWithCalibratedReferences(novac::CFitWindow& window, bool highPassFilter)
 {
     window.fitLow = 464;
     window.fitHigh = 630;
@@ -58,29 +55,51 @@ static void SetupFitWindowWithCalibratedReferences(novac::CFitWindow& window)
     so2.SetShift(novac::SHIFT_TYPE::SHIFT_FIX, 0.0);
     so2.SetSqueeze(novac::SHIFT_TYPE::SHIFT_FIX, 1.0);
     so2.m_path = GetTestDataDirectory() + "2002128M1/Calibrated/2002128M1_SO2_Bogumil_293K.txt";
-    int success = so2.ReadCrossSectionDataFromFile();
-    REQUIRE(success == 0);
+    so2.ReadCrossSectionDataFromFile();
     REQUIRE(so2.m_data != nullptr);
     REQUIRE(so2.m_data->GetSize() == 2048);
+    if (highPassFilter)
+    {
+        novac::HighPassFilter(*so2.m_data);
+    }
 
     novac::CReferenceFile o3;
     o3.SetShift(novac::SHIFT_TYPE::SHIFT_FIX, 0.0);
     o3.SetSqueeze(novac::SHIFT_TYPE::SHIFT_FIX, 1.0);
     o3.m_path = GetTestDataDirectory() + "2002128M1/Calibrated/2002128M1_O3_Voigt_223K.txt";
-    success = o3.ReadCrossSectionDataFromFile();
-    REQUIRE(success == 0);
+    o3.ReadCrossSectionDataFromFile();
+    REQUIRE(o3.m_data != nullptr);
+    REQUIRE(o3.m_data->GetSize() == 2048);
+    if (highPassFilter)
+    {
+        novac::HighPassFilter(*o3.m_data);
+    }
 
     novac::CReferenceFile ring;
     ring.SetShift(novac::SHIFT_TYPE::SHIFT_FIX, 0.0);
     ring.SetSqueeze(novac::SHIFT_TYPE::SHIFT_FIX, 1.0);
     ring.m_path = GetTestDataDirectory() + "2002128M1/Calibrated/2002128M1_Ring.txt";
-    success = ring.ReadCrossSectionDataFromFile();
-    REQUIRE(success == 0);
+    ring.ReadCrossSectionDataFromFile();
+    REQUIRE(ring.m_data != nullptr);
+    REQUIRE(ring.m_data->GetSize() == 2048);
+    if (highPassFilter)
+    {
+        novac::HighPassFilter_Ring(*ring.m_data);
+    }
 
     novac::CReferenceFile fraunhofer;
     fraunhofer.m_path = GetTestDataDirectory() + "2002128M1/Calibrated/2002128M1_Fraunhofer.txt";
-    success = fraunhofer.ReadCrossSectionDataFromFile();
-    REQUIRE(success == 0);
+    fraunhofer.ReadCrossSectionDataFromFile();
+    REQUIRE(fraunhofer.m_data != nullptr);
+    REQUIRE(fraunhofer.m_data->GetSize() == 2048);
+    if (highPassFilter)
+    {
+        novac::HighPassFilter_Ring(*fraunhofer.m_data);
+    }
+    else
+    {
+        novac::Log(*fraunhofer.m_data);
+    }
 
     window.ref[0] = so2;
     window.ref[1] = o3;
@@ -91,7 +110,7 @@ static void SetupFitWindowWithCalibratedReferences(novac::CFitWindow& window)
 
 // Endregion Helper methods
 
-TEST_CASE("EvaluateScan, Invalid fit window - throws Exception (Ruahepu, Avantes)", "[ScanEvaluation][EvaluateScan][IntegrationTest][Avantes]")
+TEST_CASE("EvaluateScan, Invalid fit window - throws Exception", "[ScanEvaluation][EvaluateScan][IntegrationTest][Avantes]")
 {
     // Arrange
     const std::string filename = GetTestDataDirectory() + "2002128M1/2002128M1_230120_0148_0.pak";
@@ -112,8 +131,7 @@ TEST_CASE("EvaluateScan, Invalid fit window - throws Exception (Ruahepu, Avantes
     so2.SetShift(novac::SHIFT_TYPE::SHIFT_FIX, 0.0);
     so2.SetSqueeze(novac::SHIFT_TYPE::SHIFT_FIX, 1.0);
     so2.m_path = GetTestDataDirectory() + "2002128M1/2002128M1_SO2_Bogumil_293K_HP500.txt";
-    int success = so2.ReadCrossSectionDataFromFile();
-    REQUIRE(success == 0);
+    so2.ReadCrossSectionDataFromFile();
 
     Evaluation::CScanEvaluation sut(userSettings, logger);
 
@@ -152,7 +170,7 @@ TEST_CASE("EvaluateScan, Invalid fit window - throws Exception (Ruahepu, Avantes
     }
 }
 
-TEST_CASE("EvaluateScan, scan with saturated sky spectrum expected result - case 1 (Ruahepu, Avantes)", "[ScanEvaluation][EvaluateScan][IntegrationTest][Avantes][2002128M1_230120_0148_0]")
+TEST_CASE("EvaluateScan, scan with saturated sky spectrum expected result ", "[ScanEvaluation][EvaluateScan][IntegrationTest][Avantes][2002128M1_230120_0148_0]")
 {
     // Arrange
     const std::string filename = GetTestDataDirectory() + "2002128M1/2002128M1_230120_0148_0.pak";
@@ -181,7 +199,7 @@ TEST_CASE("EvaluateScan, scan with saturated sky spectrum expected result - case
     REQUIRE(result == nullptr);
 }
 
-TEST_CASE("EvaluateScan, scan with clearly visible plume expected result - case 2 (Ruahepu, Avantes)", "[ScanEvaluation][EvaluateScan][IntegrationTest][Avantes][2002128M1_230120_1907_0]")
+TEST_CASE("EvaluateScan, scan with visible plume)", "[ScanEvaluation][EvaluateScan][IntegrationTest][Avantes][2002128M1_230120_1907_0]")
 {
     // Arrange
     const std::string filename = GetTestDataDirectory() + "2002128M1/2002128M1_230120_1907_0.pak";
@@ -271,7 +289,7 @@ TEST_CASE("EvaluateScan, scan with clearly visible plume expected result - case 
     }
 }
 
-TEST_CASE("EvaluateScan, scan with clearly visible plume and calibrated references expected result - case 3 (Ruahepu, Avantes)", "[ScanEvaluation][EvaluateScan][IntegrationTest][Avantes][2002128M1_230120_1907_0]")
+TEST_CASE("EvaluateScan, scan with visible plume and calibrated references", "[ScanEvaluation][EvaluateScan][IntegrationTest][Avantes][2002128M1_230120_1907_0]")
 {
     // Arrange
     const std::string filename = GetTestDataDirectory() + "2002128M1/2002128M1_230120_1907_0.pak";
@@ -293,7 +311,7 @@ TEST_CASE("EvaluateScan, scan with clearly visible plume and calibrated referenc
     {
         novac::CFitWindow fitWindow;
         fitWindow.fitType = novac::FIT_TYPE::FIT_POLY;
-        SetupFitWindowWithCalibratedReferences(fitWindow);
+        SetupFitWindowWithCalibratedReferences(fitWindow, false);
 
         Evaluation::CScanEvaluation sut(userSettings, logger);
 
@@ -307,9 +325,9 @@ TEST_CASE("EvaluateScan, scan with clearly visible plume and calibrated referenc
         REQUIRE(82.0 == result->GetScanAngle(43));
 
         // A shift has been applied to the DOAS fit.
-        REQUIRE(Approx(0.58).margin(0.01) == result->GetShift(0, 0));
+        REQUIRE(Approx(-0.38).margin(0.01) == result->GetShift(0, 0));
 
-        REQUIRE(Approx(-2.345e17).margin(1e15) == result->GetColumn(0, 0));
+        REQUIRE(Approx(-2.251e17).margin(1e15) == result->GetColumn(0, 0));
 
         // the sky spectrum info should be set
         auto skySpecInfo = result->GetSkySpectrumInfo();
@@ -317,6 +335,37 @@ TEST_CASE("EvaluateScan, scan with clearly visible plume and calibrated referenc
 
         // the dark spectrum info should be set
         auto darkSpecInfo = result->GetDarkSpectrumInfo();
+        REQUIRE(darkSpecInfo.m_startTime == novac::CDateTime(2023, 1, 20, 19, 8, 29, 240));
+    }
+
+    SECTION("Calibrated references with HP500 fit and Fraunhofer Reference")
+    {
+        novac::CFitWindow fitWindow;
+        fitWindow.fitType = novac::FIT_TYPE::FIT_HP_DIV;
+        SetupFitWindowWithCalibratedReferences(fitWindow, true);
+
+        Evaluation::CScanEvaluation sut(userSettings, logger);
+
+        // Act
+        auto result = sut.EvaluateScan(context, scan, fitWindow, spectrometerModel, darkSettings);
+
+        // Assert
+        REQUIRE(result != nullptr);
+        REQUIRE(44 == result->GetEvaluatedNum());
+        REQUIRE(-90.0 == result->GetScanAngle(0));
+        REQUIRE(82.0 == result->GetScanAngle(43));
+
+        // A shift has been applied to the DOAS fit.
+        REQUIRE(Approx(-0.38).margin(0.01) == result->GetShift(0, 0));
+
+        REQUIRE(Approx(-89.43).margin(0.1) == result->GetColumn(0, 0));
+
+        // the sky spectrum info should be set
+        auto& skySpecInfo = result->GetSkySpectrumInfo();
+        REQUIRE(skySpecInfo.m_startTime == novac::CDateTime(2023, 1, 20, 19, 7, 48, 870));
+
+        // the dark spectrum info should be set
+        auto& darkSpecInfo = result->GetDarkSpectrumInfo();
         REQUIRE(darkSpecInfo.m_startTime == novac::CDateTime(2023, 1, 20, 19, 8, 29, 240));
     }
 }

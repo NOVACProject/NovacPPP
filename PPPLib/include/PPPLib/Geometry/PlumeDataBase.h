@@ -56,25 +56,24 @@ public:
 
 private:
 
-    // the structure CPlumeData is used to hold the information about the plume for a
+    // the structure PlumeData is used to hold the information about the plume for a
     //  single point in time
-    class CPlumeData
+    class PlumeData
     {
     public:
-        CPlumeData();
-        CPlumeData(const CPlumeData& p);
-        ~CPlumeData();
-        CPlumeData& operator=(const CPlumeData& p);
+        PlumeData();
+        PlumeData(const PlumeData& p);
+        ~PlumeData();
+        PlumeData& operator=(const PlumeData& p);
 
-        /** The data needs to be labelled with the time
-            when it is valid */
-        novac::CDateTime	validFrom;
-        novac::CDateTime	validTo;
+        /** The data needs to be labelled with the time when it is valid */
+        novac::CDateTime validFrom;
+        novac::CDateTime validTo;
 
         // The plume altitude (meters above sea level)
-        float		altitude;
-        float		altitudeError;
-        Meteorology::MeteorologySource	altitudeSource;
+        double altitude;
+        double altitudeError;
+        Meteorology::MeteorologySource altitudeSource;
     };
 
     // ----------------------------------------------------------------------
@@ -84,9 +83,9 @@ private:
     /** This is the database of plume information. Each item in the list
         holds the information of the plume for a single time frame.
 
-        Each CPlumeData object in the list MUST have an unique time frame.
+        Each PlumeData object in the list MUST have an unique time frame.
         */
-    std::list <CPlumeData> m_dataBase;
+    std::list <PlumeData> m_dataBase;
 
 
     // ----------------------------------------------------------------------
@@ -95,7 +94,7 @@ private:
 
 
     // Calculates the average and error of the plume heights in the given list
-    void CalculateAverageHeight(const std::list <CPlumeData>& plumeList, double& averageAltitude, double& altitudeError) const;
+    void CalculateAverageHeight(const std::list <PlumeData>& plumeList, double& averageAltitude, double& altitudeError) const;
 
 };
 }

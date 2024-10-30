@@ -41,7 +41,6 @@ add_library(PPPLib
 
     ${PppLib_INCLUDE_DIRS}/PPPLib/ContinuationOfProcessing.h
     ${PppLib_INCLUDE_DIRS}/PPPLib/Definitions.h
-    ${PppLib_INCLUDE_DIRS}/PPPLib/Exceptions.h
     ${PppLib_INCLUDE_DIRS}/PPPLib/Gps.h
     ${PppLib_INCLUDE_DIRS}/PPPLib/Logging.h
     ${PppLib_INCLUDE_DIRS}/PPPLib/Measurement.h

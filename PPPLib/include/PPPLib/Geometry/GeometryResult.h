@@ -44,15 +44,15 @@ public:
     novac::Nullable<double> m_plumeCentreError2;
 
     /** The calculated plume height (in meters above sea level) */
-    double m_plumeAltitude = 0.0;
+    novac::Nullable<double> m_plumeAltitude;
 
     /** The estimated error in plume height (in meters) */
-    double m_plumeAltitudeError = 0.0;
+    novac::Nullable<double> m_plumeAltitudeError;
 
     /** The calculated wind-direction (degrees from north) */
-    double m_windDirection = 0.0;
+    novac::Nullable<double> m_windDirection;
 
     /** The estimated error in the calculated wind-direction (degrees) */
-    double m_windDirectionError = 0.0;
+    novac::Nullable<double> m_windDirectionError;
 };
 }

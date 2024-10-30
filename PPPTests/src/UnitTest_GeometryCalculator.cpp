@@ -44,10 +44,10 @@ TEST_CASE("CalculateGeometry with PlumeInScanProperty gives expected wind direct
 
         // Assert
         REQUIRE(returnValue == true);
-        REQUIRE(261.6 == Approx(result.m_windDirection).margin(1.0));
-        REQUIRE(2 == Approx(result.m_windDirectionError).margin(1.0));
-        REQUIRE(3826 == Approx(result.m_plumeAltitude).margin(10.0));
-        REQUIRE(280 == Approx(result.m_plumeAltitudeError).margin(5.0));
+        REQUIRE(261.6 == Approx(result.m_windDirection.Value()).margin(1.0));
+        REQUIRE(2 == Approx(result.m_windDirectionError.Value()).margin(1.0));
+        REQUIRE(3826 == Approx(result.m_plumeAltitude.Value()).margin(10.0));
+        REQUIRE(280 == Approx(result.m_plumeAltitudeError.Value()).margin(5.0));
 
         // The other properties should be filled in as well
         REQUIRE(0.0 == Approx(result.m_plumeCentre1.Value()));
@@ -69,10 +69,10 @@ TEST_CASE("CalculateGeometry with PlumeInScanProperty gives expected wind direct
 
         // Assert
         REQUIRE(returnValue == true);
-        REQUIRE(162.1 == Approx(result.m_windDirection).margin(1.0));
-        REQUIRE(2 == Approx(result.m_windDirectionError).margin(1.0));
-        REQUIRE(3349 == Approx(result.m_plumeAltitude).margin(10.0));
-        REQUIRE(365 == Approx(result.m_plumeAltitudeError).margin(5.0));
+        REQUIRE(162.1 == Approx(result.m_windDirection.Value()).margin(1.0));
+        REQUIRE(2 == Approx(result.m_windDirectionError.Value()).margin(1.0));
+        REQUIRE(3349 == Approx(result.m_plumeAltitude.Value()).margin(10.0));
+        REQUIRE(365 == Approx(result.m_plumeAltitudeError.Value()).margin(5.0));
 
         // The other properties should be filled in as well
         REQUIRE(80.0 == Approx(result.m_plumeCentre1.Value()));
@@ -112,9 +112,9 @@ TEST_CASE("CalculateWindDirection with PlumeInScanProperty gives expected wind d
 
         // Assert
         REQUIRE(returnValue == true);
-        REQUIRE(261.6 == Approx(result.m_windDirection).margin(1.0));
-        REQUIRE(4 == Approx(result.m_windDirectionError).margin(1.0));
-        REQUIRE(NOT_A_NUMBER == result.m_plumeAltitude);
+        REQUIRE(261.6 == Approx(result.m_windDirection.Value()).margin(1.0));
+        REQUIRE(4 == Approx(result.m_windDirectionError.Value()).margin(1.0));
+        REQUIRE(false == result.m_plumeAltitude.HasValue());
 
         // The other properties should be filled in as well
         REQUIRE(0.0 == Approx(result.m_plumeCentre1.Value()));

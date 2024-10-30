@@ -1,6 +1,6 @@
 #include <PPPLib/File/ProcessingFileReader.h>
 #include <PPPLib/VolcanoInfo.h>
-#include <PPPLib/Exceptions.h>
+#include <SpectralEvaluation/Exceptions.h>
 #include <cstring>
 #include <algorithm>
 
@@ -24,7 +24,7 @@ void CProcessingFileReader::ReadProcessingFile(const novac::CString& filename, C
     {
         std::string message = "Cannot open file: " + filename.std_str();
         m_log.Error(message);
-        throw PPPLib::FileIoException(message);
+        throw novac::FileIoException(message);
     }
 
     // parse the file, one line at a time.

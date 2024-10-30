@@ -46,7 +46,7 @@ std::unique_ptr<CExtendedScanResult> CPostEvaluationController::EvaluateScan(
         {
             message << " (" << scan.m_lastErrorMessage << ")";
         }
-        throw PPPLib::FileIoException(message.str());
+        throw novac::FileIoException(message.str());
     }
 
     // ---------- Get the information we need about the instrument ----------

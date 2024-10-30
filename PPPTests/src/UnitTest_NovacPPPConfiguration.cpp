@@ -35,7 +35,7 @@ TEST_CASE("CNovacPPPConfiguration GetInstrumentLocation returns expected value",
             sut.GetInstrumentLocation(instrumentSerial, searchTime);
             REQUIRE(false); // failure
         }
-        catch (PPPLib::NotFoundException& ex)
+        catch (novac::NotFoundException& ex)
         {
             REQUIRE(strstr(ex.message.c_str(), "Cannot find configuration for instrument with serial number ") != nullptr);
         }
@@ -80,7 +80,7 @@ TEST_CASE("CNovacPPPConfiguration GetInstrumentLocation returns expected value",
             sut.GetInstrumentLocation(instrumentSerial, searchTime);
             REQUIRE(false); // failure
         }
-        catch (PPPLib::NotFoundException& ex)
+        catch (novac::NotFoundException& ex)
         {
             REQUIRE(strstr(ex.message.c_str(), "does not have a configured location on 2022.05.05") != nullptr);
         }
@@ -110,7 +110,7 @@ TEST_CASE("CNovacPPPConfiguration GetFitWindow returns expected value", "[CNovac
             sut.GetFitWindow(instrumentSerial, 0, searchTime);
             REQUIRE(false); // failure
         }
-        catch (PPPLib::NotFoundException& ex)
+        catch (novac::NotFoundException& ex)
         {
             REQUIRE(strstr(ex.message.c_str(), "Cannot find configuration for instrument with serial number ") != nullptr);
         }
@@ -154,7 +154,7 @@ TEST_CASE("CNovacPPPConfiguration GetFitWindow returns expected value", "[CNovac
             sut.GetFitWindow(instrumentSerial, 0, searchTime);
             REQUIRE(false); // failure
         }
-        catch (PPPLib::NotFoundException& ex)
+        catch (novac::NotFoundException& ex)
         {
             REQUIRE(strstr(ex.message.c_str(), "does not have a configured fit-window on 2022.05.05") != nullptr);
         }
@@ -175,7 +175,7 @@ TEST_CASE("CNovacPPPConfiguration GetFitWindow returns expected value", "[CNovac
             sut.GetFitWindow(instrumentSerial, 1, searchTime);
             REQUIRE(false); // failure
         }
-        catch (PPPLib::NotFoundException& ex)
+        catch (novac::NotFoundException& ex)
         {
             REQUIRE(strstr(ex.message.c_str(), "does not have a configured fit-window on 2022.05.07") != nullptr);
         }
@@ -212,7 +212,7 @@ TEST_CASE("CNovacPPPConfiguration GetDarkCorrection returns expected value", "[C
             sut.GetDarkCorrection(instrumentSerial, searchTime);
             REQUIRE(false); // failure
         }
-        catch (PPPLib::NotFoundException& ex)
+        catch (novac::NotFoundException& ex)
         {
             REQUIRE(strstr(ex.message.c_str(), "Cannot find configuration for instrument with serial number ") != nullptr);
         }

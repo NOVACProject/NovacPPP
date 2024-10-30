@@ -260,14 +260,14 @@ void ArchiveSettingsFiles(const Configuration::CUserConfiguration& userSettings)
     {
         novac::CString userMessage;
         userMessage.Format("Could not create output directory: %s", (const char*)userSettings.m_outputDirectory);
-        throw PPPLib::FileIoException(userMessage.c_str());
+        throw novac::FileIoException(userMessage.c_str());
     }
 
     if (Filesystem::CreateDirectoryStructure(confCopyDir))
     {
         novac::CString userMessage;
         userMessage.Format("Could not create directory for copied configuration: %s", (const char*)confCopyDir);
-        throw PPPLib::FileIoException(userMessage.c_str());
+        throw novac::FileIoException(userMessage.c_str());
     }
     // we want to copy the setup and processing files to the confCopyDir
     novac::CString processingOutputFile, setupOutputFile;

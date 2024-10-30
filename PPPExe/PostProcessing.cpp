@@ -633,12 +633,7 @@ void CPostProcessing::PrepareEvaluation()
                     }
 
                     // Read in the cross section
-                    if (window.ref[referenceIndex].ReadCrossSectionDataFromFile())
-                    {
-                        m_log.Error(referenceContext, "Failed to read cross section file from disk");
-                        failure = true;
-                        continue;
-                    }
+                    window.ref[referenceIndex].ReadCrossSectionDataFromFile();
 
                     // If we are supposed to high-pass filter the spectra then
                     // we should also high-pass filter the cross-sections
@@ -688,12 +683,8 @@ void CPostProcessing::PrepareEvaluation()
                     }
                 }
 
-                if (window.fraunhoferRef.ReadCrossSectionDataFromFile())
-                {
-                    m_log.Error(referenceContext, "Failed to read Fraunhofer reference file.");
-                    failure = true;
-                    continue;
-                }
+                window.fraunhoferRef.ReadCrossSectionDataFromFile();
+
                 if (window.fitType == novac::FIT_TYPE::FIT_HP_DIV || window.fitType == novac::FIT_TYPE::FIT_HP_SUB)
                 {
                     m_log.Information(referenceContext, "High pass filtering Fraunhofer reference.");
@@ -925,7 +916,7 @@ void CPostProcessing::CalculateGeometries(
                 location[0] = m_setup.GetInstrumentLocation(scanResult1.m_instrumentSerial, scanResult1.m_startTime);
                 location[1] = m_setup.GetInstrumentLocation(scanResult2.m_instrumentSerial, scanResult2.m_startTime);
             }
-            catch (PPPLib::NotFoundException& ex)
+            catch (novac::NotFoundException& ex)
             {
                 m_log.Information(ex.message);
                 continue;
@@ -949,15 +940,15 @@ void CPostProcessing::CalculateGeometries(
             if (geometryCalculator.CalculateGeometry(scanResult1.m_scanProperties, scanResult1.m_startTime, scanResult2.m_scanProperties, scanResult2.m_startTime, location, result))
             {
                 // Check the quality of the measurement before we insert it...
-                if (result.m_plumeAltitudeError > m_userSettings.m_calcGeometry_MaxPlumeAltError)
+                if (result.m_plumeAltitudeError.Value() > m_userSettings.m_calcGeometry_MaxPlumeAltError)
                 {
                     ++nTooLargeAbsoluteError; // too bad, continue.
                 }
-                else if ((result.m_plumeAltitudeError > 0.5 * result.m_plumeAltitude) || (result.m_windDirectionError > m_userSettings.m_calcGeometry_MaxWindDirectionError))
+                else if ((result.m_plumeAltitudeError.Value() > 0.5 * result.m_plumeAltitude.Value()) || (result.m_windDirectionError.Value() > m_userSettings.m_calcGeometry_MaxWindDirectionError))
                 {
                     ++nTooLargeRelativeError;  // too bad, continue.
                 }
-                else if (result.m_windDirectionError > m_userSettings.m_calcGeometry_MaxWindDirectionError)
+                else if (result.m_windDirectionError.Value() > m_userSettings.m_calcGeometry_MaxWindDirectionError)
                 {
                     // ... too bad, continue.
                 }
@@ -970,10 +961,10 @@ void CPostProcessing::CalculateGeometries(
                     geometryResults.push_back(result);
 
                     messageToUser.Format("Calculated a plume altitude of %.0lf +- %.0lf masl and wind direction of %.0lf +- %.0lf degrees by combining measurements two instruments",
-                        result.m_plumeAltitude,
-                        result.m_plumeAltitudeError,
-                        result.m_windDirection,
-                        result.m_windDirectionError);
+                        result.m_plumeAltitude.Value(),
+                        result.m_plumeAltitudeError.Value(),
+                        result.m_windDirection.Value(),
+                        result.m_windDirectionError.Value());
                     m_log.Information(context.With("device1", scanResult1.m_instrumentSerial).With("device2", scanResult2.m_instrumentSerial).WithTimestamp(scanResult1.m_startTime), messageToUser.std_str());
 
                     successfullyCombined = true;
@@ -994,7 +985,7 @@ void CPostProcessing::CalculateGeometries(
             {
                 location = m_setup.GetInstrumentLocation(scanResult1.m_instrumentSerial, scanResult1.m_startTime);
             }
-            catch (PPPLib::NotFoundException& ex)
+            catch (novac::NotFoundException& ex)
             {
                 m_log.Information(context, ex.message);
                 continue;
@@ -1011,10 +1002,11 @@ void CPostProcessing::CalculateGeometries(
                 const Geometry::CGeometryResult& oldResult = *it;
                 if (std::abs(CDateTime::Difference(oldResult.m_averageStartTime, scanResult1.m_startTime)) < m_userSettings.m_calcGeometryValidTime)
                 {
-                    if ((oldResult.m_plumeAltitudeError < plumeHeight.m_plumeAltitudeError) && (oldResult.m_plumeAltitude > NOT_A_NUMBER))
+                    if (oldResult.m_plumeAltitude.HasValue() && 
+                        (!plumeHeight.m_plumeAltitude || oldResult.m_plumeAltitudeError.Value() < plumeHeight.m_plumeAltitudeError))
                     {
-                        plumeHeight.m_plumeAltitude = oldResult.m_plumeAltitude;
-                        plumeHeight.m_plumeAltitudeError = oldResult.m_plumeAltitudeError;
+                        plumeHeight.m_plumeAltitude = oldResult.m_plumeAltitude.Value();
+                        plumeHeight.m_plumeAltitudeError = oldResult.m_plumeAltitudeError.Value();
                         plumeHeight.m_plumeAltitudeSource = oldResult.m_calculationType;
                     }
                 }
@@ -1025,7 +1017,7 @@ void CPostProcessing::CalculateGeometries(
             Geometry::CGeometryCalculator geometryCalculator(m_log, m_userSettings);
             if (geometryCalculator.CalculateWindDirection(scanResult1.m_scanProperties, scanResult1.m_startTime, plumeHeight, location, result))
             {
-                if (result.m_windDirectionError > m_userSettings.m_calcGeometry_MaxWindDirectionError)
+                if (result.m_windDirectionError.Value() > m_userSettings.m_calcGeometry_MaxWindDirectionError)
                 {
                     continue;
                 }
@@ -1059,13 +1051,13 @@ void CPostProcessing::CalculateGeometries(
         windDirections.reserve(geometryResults.size());
         for each (const auto & g in geometryResults)
         {
-            if (g.m_plumeAltitude > 0.1 && g.m_plumeAltitude != NOT_A_NUMBER)
+            if (g.m_plumeAltitude.HasValue())
             {
-                plumeHeights.push_back(g.m_plumeAltitude);
+                plumeHeights.push_back(g.m_plumeAltitude.Value());
             }
-            if (std::abs(g.m_windDirection) < 365.0)
+            if (g.m_windDirection.HasValue())
             {
-                windDirections.push_back(g.m_windDirection);
+                windDirections.push_back(g.m_windDirection.Value());
             }
         }
 
@@ -1451,8 +1443,8 @@ void CPostProcessing::WriteCalculatedGeometriesToFile(novac::LogContext context,
             fprintf(f, "%02d:%02d:%02d;", result.m_averageStartTime.hour, result.m_averageStartTime.minute, result.m_averageStartTime.second);
             fprintf(f, "%.1lf;", result.m_startTimeDifference / 60.0);
             fprintf(f, "%s;%s;", result.m_instrumentSerial1.c_str(), result.m_instrumentSerial2.c_str());
-            fprintf(f, "%.0lf;%.0lf;", result.m_plumeAltitude, result.m_plumeAltitudeError);
-            fprintf(f, "%.0lf;%.0lf;", result.m_windDirection, result.m_windDirectionError);
+            fprintf(f, "%.0lf;%.0lf;", result.m_plumeAltitude.Value(), result.m_plumeAltitudeError.Value());
+            fprintf(f, "%.0lf;%.0lf;", result.m_windDirection.Value(), result.m_windDirectionError.Value());
 
             fprintf(f, "%.1f;%.1f;", result.m_plumeCentre1.Value(), result.m_plumeCentreError1.Value());
             fprintf(f, "%.1f;%.1f\n", result.m_plumeCentre2.Value(), result.m_plumeCentreError2.Value());
@@ -1463,8 +1455,8 @@ void CPostProcessing::WriteCalculatedGeometriesToFile(novac::LogContext context,
             fprintf(f, "%02d:%02d:%02d;", result.m_averageStartTime.hour, result.m_averageStartTime.minute, result.m_averageStartTime.second);
             fprintf(f, "0;");
             fprintf(f, "%s;;", result.m_instrumentSerial1.c_str());
-            fprintf(f, "%.0lf;%.0lf;", result.m_plumeAltitude, result.m_plumeAltitudeError);
-            fprintf(f, "%.0lf;%.0lf;", result.m_windDirection, result.m_windDirectionError);
+            fprintf(f, "%.0lf;%.0lf;", result.m_plumeAltitude.Value(), result.m_plumeAltitudeError.Value());
+            fprintf(f, "%.0lf;%.0lf;", result.m_windDirection.Value(), result.m_windDirectionError.Value());
 
             fprintf(f, "%.1f;%.1f;", result.m_plumeCentre1.Value(), result.m_plumeCentreError1.Value());
             fprintf(f, ";\n");
@@ -1481,13 +1473,13 @@ void CPostProcessing::InsertCalculatedGeometriesIntoDataBase(novac::LogContext c
 
     for (const auto& result : geometryResults)
     {
-        if (result.m_plumeAltitude > 0.0)
+        if (result.m_plumeAltitude.HasValue())
         {
             // insert the plume height into the plume height database
             this->m_plumeDataBase.InsertPlumeHeight(result);
         }
 
-        if (result.m_windDirection > NOT_A_NUMBER)
+        if (result.m_windDirection.HasValue())
         {
             try
             {
@@ -1501,9 +1493,9 @@ void CPostProcessing::InsertCalculatedGeometriesIntoDataBase(novac::LogContext c
                 validTo.Increment(m_userSettings.m_calcGeometryValidTime);
 
                 // insert the wind-direction into the wind database
-                m_windDataBase.InsertWindDirection(validFrom, validTo, result.m_windDirection, result.m_windDirectionError, result.m_calculationType, nullptr);
+                m_windDataBase.InsertWindDirection(validFrom, validTo, result.m_windDirection.Value(), result.m_windDirectionError.Value(), result.m_calculationType, nullptr);
             }
-            catch (PPPLib::NotFoundException& ex)
+            catch (novac::NotFoundException& ex)
             {
                 m_log.Information(context, ex.message);
             }
@@ -1570,7 +1562,7 @@ void CPostProcessing::CalculateDualBeamWindSpeeds(novac::LogContext context, con
                 }
             }
         }
-        catch (PPPLib::NotFoundException& ex)
+        catch (novac::NotFoundException& ex)
         {
             novac::LogContext fileContext = context.With(novac::LogContext::FileName, fileNameAndPath.std_str());
             m_log.Information(fileContext, ex.message);
@@ -1644,7 +1636,7 @@ void CPostProcessing::CalculateDualBeamWindSpeeds(novac::LogContext context, con
                 m_log.Information(fileContext, "Failed to calculate wind speed from measurement.");
             }
         }
-        catch (PPPLib::NotFoundException& ex)
+        catch (novac::NotFoundException& ex)
         {
             m_log.Information(fileContext, ex.message);
         }
