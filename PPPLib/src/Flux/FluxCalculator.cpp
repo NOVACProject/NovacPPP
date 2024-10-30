@@ -417,7 +417,7 @@ bool CFluxCalculator::CalculateFlux(
     scanAngle2.reserve(result.GetEvaluatedNum());
     column.reserve(result.GetEvaluatedNum());
     unsigned int numberOfGoodDataPoints = 0;
-    for (unsigned long i = 0; i < result.GetEvaluatedNum(); ++i)
+    for (long i = 0; i < result.GetEvaluatedNum(); ++i)
     {
         if (result.IsBad(i) || result.IsDeleted(i))
         {

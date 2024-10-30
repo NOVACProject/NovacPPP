@@ -35,7 +35,7 @@ int CEvaluationConfiguration::SetFitWindow(int index, const novac::CFitWindow& w
         return 1;
     }
 
-    if (index >= m_windows.size())
+    if (static_cast<size_t>(index) >= m_windows.size())
     {
         m_windows.resize(1 + index);
     }

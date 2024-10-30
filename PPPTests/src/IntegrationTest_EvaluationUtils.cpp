@@ -16,7 +16,7 @@ void VerifyScanCanBeRead(novac::CScanFileHandler& scan, const std::string filena
     bool readOk = scan.CheckScanFile(context, filename); // TODO: Add unit tests to this as well
     if (!readOk)
     {
-        printf(scan.m_lastErrorMessage.c_str());
+        printf("%s", scan.m_lastErrorMessage.c_str());
         REQUIRE(readOk == true);
     }
 }
