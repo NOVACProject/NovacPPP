@@ -93,7 +93,7 @@ TEST_CASE("EvaluationLogFileHandler, valid scan file read successfully - Case 1"
     REQUIRE(sut.m_scan[0].m_spec[50].m_referenceResult[2].m_columnError == Approx(7.61e-03));
 }
 
-TEST_CASE("EvaluationLogFileHandler, valid scan file from ReEvaluation in NovacProgram read successfully - Case 2", "[ReadEvaluationLog][FileHandler][IntegrationTest]")
+TEST_CASE("EvaluationLogFileHandler, valid scan file from ReEvaluation in NovacProgram", "[ReadEvaluationLog][FileHandler][IntegrationTest]")
 {
     const std::string filename = GetTestDataDirectory() + "2002128M1/2002128M1_230120_1907_0_ReEvaluation.txt";
     novac::ConsoleLog logger;

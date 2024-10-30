@@ -2,3 +2,5 @@
 /*.dll
 /*.ilk
 /*.pdb
+/*.exe.report*.xml
+/*.exe.testcaselist*

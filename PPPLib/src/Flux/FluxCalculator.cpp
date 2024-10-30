@@ -50,12 +50,6 @@ bool CFluxCalculator::CalculateFlux(
         m_log.Error(context, "Recieved evaluation result where the instrument serial is not set. Could not calculate flux.");
         return false;
     }
-    else if (evaluationResult.m_scanProperties.completeness < m_userSettings.m_completenessLimitFlux + 0.01)
-    {
-        errorMessage.Format("Scan has completeness = %.2lf which is less than limit of %.2lf. Rejected!", evaluationResult.m_scanProperties.completeness, m_userSettings.m_completenessLimitFlux);
-        m_log.Information(context, errorMessage.std_str());
-        return false;
-    }
 
     context = context.With(novac::LogContext::Device, evaluationResult.m_instrumentSerial).WithTimestamp(evaluationResult.m_startTime);
 
@@ -109,14 +103,32 @@ bool CFluxCalculator::CalculateFlux(
     // Extract the scan
     Evaluation::CScanResult& result = reader.m_scan[0];
 
-    // Make sure we have set the offset of the scan
-    result.SetOffset(evaluationResult.m_scanProperties.offset);
+    // Make sure we have set the offset, and completeness of the scan
+    if (evaluationResult.m_scanProperties.completeness < 0.01)
+    {
+        if (result.CalculateOffset(m_userSettings.m_molecule))
+        {
+            m_log.Information(context, "Failed to calculate the offset of the scan, no flux can be calculated.");
+            return false;
+        }
+    }
+    else
+    {
+        result.SetOffset(evaluationResult.m_scanProperties.offset);
+    }
 
-    // Check that the completeness is higher than our limit...
     std::string message;
     if (!result.CalculatePlumeCentre(m_userSettings.m_molecule, message))
     {
-        m_log.Information(context, message + " Scan does not see the plume, no flux can be calculated");
+        m_log.Information(context, message + " Scan does not see the plume, no flux can be calculated.");
+        return false;
+    }
+
+    // Check that the completeness is higher than our limit...
+    if (result.m_plumeProperties.completeness < m_userSettings.m_completenessLimitFlux + 0.01)
+    {
+        errorMessage.Format("Scan has completeness = %.2lf which is less than limit of %.2lf. Rejected!", result.m_plumeProperties.completeness, m_userSettings.m_completenessLimitFlux);
+        m_log.Information(context, errorMessage.std_str());
         return false;
     }
 

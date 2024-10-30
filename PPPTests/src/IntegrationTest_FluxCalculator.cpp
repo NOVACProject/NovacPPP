@@ -22,10 +22,12 @@ static std::string GetTestDataDirectory()
 
 // Endregion Helper methods
 
-TEST_CASE("CalculateFlux, valid scan but very low intensity values in evaluation log, cannot calculate flux (Ruahepu, Avantes)", "[CFluxCalculator][CalculateFlux][IntegrationTest][Avantes]")
+TEST_CASE("CalculateFlux, very low intensity in evaluation log, cannot calculate flux", "[CFluxCalculator][CalculateFlux][IntegrationTest][Avantes]")
 {
     // Arrange
-    const std::string filename = GetTestDataDirectory() + "2002128M1/2002128M1_230120_1907_0.txt";
+    Evaluation::CExtendedScanResult evaluationResult;
+    evaluationResult.m_evalLogFile.push_back(GetTestDataDirectory() + "2002128M1/2002128M1_230120_1907_0.txt");
+    evaluationResult.m_startTime = novac::CDateTime(2023, 1, 20, 19, 07, 00);
     novac::ConsoleLog logger;
     novac::LogContext context;
 
@@ -51,7 +53,7 @@ TEST_CASE("CalculateFlux, valid scan but very low intensity values in evaluation
         Flux::FluxResult fluxResult;
 
         // Act
-        bool success = sut.CalculateFlux(context, filename, windDataBase, plumeAltitude, fluxResult);
+        bool success = sut.CalculateFlux(context, evaluationResult, windDataBase, plumeAltitude, fluxResult);
 
         // Assert
         REQUIRE(!success);
@@ -63,7 +65,7 @@ TEST_CASE("CalculateFlux, valid scan but very low intensity values in evaluation
         configuration.m_instrument.push_back(instrumentConfiguration);
 
         // Act
-        bool success = sut.CalculateFlux(context, filename, windDataBase, plumeAltitude, fluxResult);
+        bool success = sut.CalculateFlux(context, evaluationResult, windDataBase, plumeAltitude, fluxResult);
 
         // Assert
         REQUIRE(!success);
@@ -86,17 +88,20 @@ TEST_CASE("CalculateFlux, valid scan but very low intensity values in evaluation
         windDataBase.InsertWindField(windField);
 
         // Act
-        bool success = sut.CalculateFlux(context, filename, windDataBase, plumeAltitude, fluxResult);
+        bool success = sut.CalculateFlux(context, evaluationResult, windDataBase, plumeAltitude, fluxResult);
 
         // Assert
         REQUIRE(!success);
     }
 }
 
-TEST_CASE("CalculateFlux, reads values from configuration and verifies input (Ruahepu, Avantes)", "[CFluxCalculator][CalculateFlux][IntegrationTest][Avantes][2002128M1_230120_1907_0_ReEvaluation]")
+TEST_CASE("CalculateFlux, reads values from configuration and verifies input", "[CFluxCalculator][CalculateFlux][IntegrationTest][Avantes][2002128M1_230120_1907_0_ReEvaluation]")
 {
     // Arrange
-    const std::string filename = GetTestDataDirectory() + "2002128M1/2002128M1_230120_1907_0_ReEvaluation.txt";
+    Evaluation::CExtendedScanResult evaluationResult;
+    evaluationResult.m_evalLogFile.push_back(GetTestDataDirectory() + "2002128M1/2002128M1_230120_1907_0_ReEvaluation.txt");
+    evaluationResult.m_instrumentSerial = "2002128M1";
+    evaluationResult.m_startTime = novac::CDateTime(2023, 1, 20, 19, 07, 00);
     novac::ConsoleLog logger;
     novac::LogContext context;
 
@@ -121,7 +126,7 @@ TEST_CASE("CalculateFlux, reads values from configuration and verifies input (Ru
         Flux::CFluxCalculator sut(logger, configuration, userSettings);
 
         // Act
-        bool success = sut.CalculateFlux(context, filename, windDataBase, plumeAltitude, fluxResult);
+        bool success = sut.CalculateFlux(context, evaluationResult, windDataBase, plumeAltitude, fluxResult);
 
         // Assert
         REQUIRE(!success);
@@ -135,7 +140,7 @@ TEST_CASE("CalculateFlux, reads values from configuration and verifies input (Ru
         Flux::CFluxCalculator sut(logger, configuration, userSettings);
 
         // Act
-        bool success = sut.CalculateFlux(context, filename, windDataBase, plumeAltitude, fluxResult);
+        bool success = sut.CalculateFlux(context, evaluationResult, windDataBase, plumeAltitude, fluxResult);
 
         // Assert
         REQUIRE(!success);
@@ -163,7 +168,7 @@ TEST_CASE("CalculateFlux, reads values from configuration and verifies input (Ru
         Flux::CFluxCalculator sut(logger, configuration, userSettings);
 
         // Act
-        bool success = sut.CalculateFlux(context, filename, windDataBase, plumeAltitude, fluxResult);
+        bool success = sut.CalculateFlux(context, evaluationResult, windDataBase, plumeAltitude, fluxResult);
 
         // Assert
         REQUIRE(!success);
@@ -192,7 +197,7 @@ TEST_CASE("CalculateFlux, reads values from configuration and verifies input (Ru
 
         // Act
         Flux::FluxResult fluxResult;
-        bool success = sut.CalculateFlux(context, filename, windDataBase, plumeAltitude, fluxResult);
+        bool success = sut.CalculateFlux(context, evaluationResult, windDataBase, plumeAltitude, fluxResult);
 
         // Assert
         REQUIRE(success);
@@ -204,10 +209,13 @@ TEST_CASE("CalculateFlux, reads values from configuration and verifies input (Ru
     }
 }
 
-TEST_CASE("CalculateFlux, valid scan with column values in molec/cm2 calculates flux (Ruahepu, Avantes)", "[CFluxCalculator][CalculateFlux][IntegrationTest][Avantes][2002128M1_230120_1907_0_ReEvaluation]")
+TEST_CASE("CalculateFlux, valid scan with column values in molec/cm2 calculates flux", "[CFluxCalculator][CalculateFlux][IntegrationTest][Avantes][2002128M1_230120_1907_0_ReEvaluation]")
 {
     // Arrange
-    const std::string filename = GetTestDataDirectory() + "2002128M1/2002128M1_230120_1907_0_ReEvaluation.txt";
+    Evaluation::CExtendedScanResult evaluationResult;
+    evaluationResult.m_evalLogFile.push_back(GetTestDataDirectory() + "2002128M1/2002128M1_230120_1907_0_ReEvaluation.txt");
+    evaluationResult.m_instrumentSerial = "2002128M1";
+    evaluationResult.m_startTime = novac::CDateTime(2023, 1, 20, 19, 07, 00);
     novac::ConsoleLog logger;
     novac::LogContext context;
 
@@ -254,7 +262,7 @@ TEST_CASE("CalculateFlux, valid scan with column values in molec/cm2 calculates 
 
         // Act
         Flux::FluxResult fluxResult;
-        bool success = sut.CalculateFlux(context, filename, windDataBase, plumeAltitude, fluxResult);
+        bool success = sut.CalculateFlux(context, evaluationResult, windDataBase, plumeAltitude, fluxResult);
 
         // Assert
         REQUIRE(success);
@@ -297,7 +305,7 @@ TEST_CASE("CalculateFlux, valid scan with column values in molec/cm2 calculates 
 
         // Act
         Flux::FluxResult fluxResult;
-        bool success = sut.CalculateFlux(context, filename, windDataBase, plumeAltitude, fluxResult);
+        bool success = sut.CalculateFlux(context, evaluationResult, windDataBase, plumeAltitude, fluxResult);
 
         // Assert
         REQUIRE(success);

@@ -1123,7 +1123,7 @@ void CPostProcessing::CalculateFluxes(novac::LogContext context, const std::vect
         // Calculate the flux. This also takes care of writing
         // the results to file
         Flux::FluxResult fluxResult;
-        if (fluxCalc.CalculateFlux(fileContext, evalLog.std_str(), m_windDataBase, plumeHeight, fluxResult))
+        if (fluxCalc.CalculateFlux(fileContext, scanResult, m_windDataBase, plumeHeight, fluxResult))
         {
             novac::CString messageToUser;
             messageToUser.Format("Calculated flux of %lf [kg/s] for scan.");
