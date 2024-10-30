@@ -18,6 +18,7 @@
 
 namespace Flux
 {
+
 CFluxCalculator::CFluxCalculator(
     novac::ILogger& log,
     const Configuration::CNovacPPPConfiguration& setup,
@@ -27,35 +28,42 @@ CFluxCalculator::CFluxCalculator(
 
 bool CFluxCalculator::CalculateFlux(
     novac::LogContext context,
-    const std::string& evalLogFileName,
+    const Evaluation::CExtendedScanResult& evaluationResult,
     const Meteorology::CWindDataBase& windDataBase,
     const Geometry::PlumeHeight& plumeAltitude,
     FluxResult& fluxResult)
 {
-    novac::CString errorMessage, serial;
+    novac::CString errorMessage;
 
-    if (!Filesystem::IsExistingFile(evalLogFileName))
+    if (evaluationResult.m_evalLogFile.empty())
+    {
+        m_log.Error(context, "Recieved evaluation result which does not have a evaluation log file name set. Could not calculate flux.");
+        return false;
+    }
+    else if (!Filesystem::IsExistingFile(evaluationResult.m_evalLogFile.front()))
     {
         m_log.Error(context, "Recieved evaluation log which could not be found. Could not calculate flux.");
         return false;
     }
-
-    // Get some information about the scan from the file-name
-    novac::CDateTime skyStartTime;
-    int channel;
-    MEASUREMENT_MODE mode;
-    const std::string shortFileName = novac::GetFileName(evalLogFileName);
-    if (!novac::CFileUtils::GetInfoFromFileName(shortFileName, skyStartTime, serial, channel, mode))
+    else if (evaluationResult.m_instrumentSerial.size() == 0)
     {
-        m_log.Error(context, "Failed to read instrument information from the name of the evaluation log.");
+        m_log.Error(context, "Recieved evaluation result where the instrument serial is not set. Could not calculate flux.");
+        return false;
+    }
+    else if (evaluationResult.m_scanProperties.completeness < m_userSettings.m_completenessLimitFlux + 0.01)
+    {
+        errorMessage.Format("Scan has completeness = %.2lf which is less than limit of %.2lf. Rejected!", evaluationResult.m_scanProperties.completeness, m_userSettings.m_completenessLimitFlux);
+        m_log.Information(context, errorMessage.std_str());
+        return false;
     }
 
-    context = context.With(novac::LogContext::Device, serial.std_str());
+    context = context.With(novac::LogContext::Device, evaluationResult.m_instrumentSerial).WithTimestamp(evaluationResult.m_startTime);
 
     // Find the location of this instrument
     Configuration::CInstrumentLocation instrLocation;
-    if (GetLocation(context, serial, skyStartTime, instrLocation))
+    if (GetLocation(context, evaluationResult.m_instrumentSerial, evaluationResult.m_startTime, instrLocation))
     {
+        m_log.Information(context, "Failed to retrieve the location of the instrument at the time of the measurement.");
         return false;
     }
     if (instrLocation.m_coneangle < 45.0)
@@ -66,9 +74,9 @@ bool CFluxCalculator::CalculateFlux(
 
     // Get the wind field at the time of the collection of this scan
     Meteorology::WindField windField;
-    if (!windDataBase.GetWindField(skyStartTime, novac::CGPSData(instrLocation.m_latitude, instrLocation.m_longitude, plumeAltitude.m_plumeAltitude), Meteorology::InterpolationMethod::NearestNeighbour, windField))
+    if (!windDataBase.GetWindField(evaluationResult.m_startTime, novac::CGPSData(instrLocation.m_latitude, instrLocation.m_longitude, plumeAltitude.m_plumeAltitude), Meteorology::InterpolationMethod::NearestNeighbour, windField))
     {
-        m_log.Error(context, "Could not retrieve wind field at time of measurement. Could not calculate flux");
+        m_log.Information(context, "Failed to retrieve a wind field at the time of the measurement. Could not calculate flux.");
         return false;
     }
 
@@ -82,53 +90,38 @@ bool CFluxCalculator::CalculateFlux(
     }
 
     // Read in the evaluation log file 
-    FileHandler::CEvaluationLogFileHandler reader(m_log, evalLogFileName, m_userSettings.m_molecule);
+    FileHandler::CEvaluationLogFileHandler reader(m_log, evaluationResult.m_evalLogFile.front(), m_userSettings.m_molecule);
     if (RETURN_CODE::SUCCESS != reader.ReadEvaluationLog())
     {
-        m_log.Error("Failed to read evaluation log");
+        m_log.Error(context, "Failed to read evaluation log");
         return false;
     }
     if (reader.m_scan.size() == 0)
     {
-        m_log.Error("Recieved evaluation log file with no scans inside. Cannot calculate flux");
+        m_log.Error(context, "Recieved evaluation log file with no scans inside. Cannot calculate flux");
         return false;
     }
     else if (reader.m_scan.size() > 1)
     {
-        m_log.Error("Recieved evaluation log file with more than one scans inside. Can only calculate flux for the first scan.");
+        m_log.Error(context, "Recieved evaluation log file with more than one scans inside. Can only calculate flux for the first scan.");
     }
 
     // Extract the scan
     Evaluation::CScanResult& result = reader.m_scan[0];
 
-    // Improve on the start-time of the scan...
-    result.GetSkyStartTime(skyStartTime);
-
-    // Calculate the offset of the scan
-    if (result.CalculateOffset(CMolecule(m_userSettings.m_molecule)))
-    {
-        m_log.Information(context, "Could not calculate offset for scan. No flux can be calculated.");
-        return false;
-    }
+    // Make sure we have set the offset of the scan
+    result.SetOffset(evaluationResult.m_scanProperties.offset);
 
     // Check that the completeness is higher than our limit...
     std::string message;
-    if (!result.CalculatePlumeCentre(CMolecule(m_userSettings.m_molecule), message))
+    if (!result.CalculatePlumeCentre(m_userSettings.m_molecule, message))
     {
         m_log.Information(context, message + " Scan does not see the plume, no flux can be calculated");
         return false;
     }
 
-    const double completeness = result.GetCalculatedPlumeCompleteness();
-    if (completeness < (m_userSettings.m_completenessLimitFlux + 0.01))
-    {
-        errorMessage.Format("Scan has completeness = %.2lf which is less than limit of %.2lf. Rejected!", completeness, m_userSettings.m_completenessLimitFlux);
-        m_log.Information(context, errorMessage.std_str());
-        return false;
-    }
-
     // Calculate the flux
-    if (!CalculateFlux(context, result, CMolecule(m_userSettings.m_molecule), windField, relativePlumeHeight, instrLocation.m_compass, instrLocation.m_coneangle, instrLocation.m_tilt))
+    if (!CalculateFlux(context, result, m_userSettings.m_molecule, windField, relativePlumeHeight, instrLocation.m_compass, instrLocation.m_coneangle, instrLocation.m_tilt))
     {
         m_log.Information(context, "Flux calculation failed. No flux generated");
         return false;
@@ -136,41 +129,9 @@ bool CFluxCalculator::CalculateFlux(
     fluxResult = result.GetFluxResult();
 
     // Make a simple estimate of the quality of the flux measurement
-    FluxQuality windFieldQuality = FluxQuality::Green;
-    FluxQuality plumeHeightQuality = FluxQuality::Green;
-    FluxQuality completenessQuality = FluxQuality::Green;
-
-    switch (windField.GetWindSpeedSource())
-    {
-    case Meteorology::MeteorologySource::Default:				windFieldQuality = FluxQuality::Red; break;
-    case Meteorology::MeteorologySource::User:					windFieldQuality = FluxQuality::Red; break;
-    case Meteorology::MeteorologySource::EcmwfForecast:		windFieldQuality = FluxQuality::Green; break;
-    case Meteorology::MeteorologySource::EcmwfAnalysis:		windFieldQuality = FluxQuality::Green; break;
-    case Meteorology::MeteorologySource::DualBeamMeasurement:windFieldQuality = FluxQuality::Green; break;
-    case Meteorology::MeteorologySource::ModelledWrf:			windFieldQuality = FluxQuality::Green; break;
-    case Meteorology::MeteorologySource::NoaaGdas:			windFieldQuality = FluxQuality::Green; break;
-    case Meteorology::MeteorologySource::NoaaFnl:				windFieldQuality = FluxQuality::Green; break;
-    default:									            windFieldQuality = FluxQuality::Yellow; break;
-    }
-    switch (relativePlumeHeight.m_plumeAltitudeSource)
-    {
-    case Meteorology::MeteorologySource::Default:				plumeHeightQuality = FluxQuality::Red; break;
-    case Meteorology::MeteorologySource::User:					plumeHeightQuality = FluxQuality::Red; break;
-    case Meteorology::MeteorologySource::GeometryCalculationTwoInstruments:	plumeHeightQuality = FluxQuality::Green; break;
-    default:									            plumeHeightQuality = FluxQuality::Yellow; break;
-    }
-    if (fluxResult.m_completeness < 0.7)
-    {
-        completenessQuality = FluxQuality::Red;
-    }
-    else if (fluxResult.m_completeness < 0.9)
-    {
-        completenessQuality = FluxQuality::Yellow;
-    }
-    else
-    {
-        completenessQuality = FluxQuality::Green;
-    }
+    FluxQuality windFieldQuality = WindFieldFluxQuality(windField);
+    FluxQuality plumeHeightQuality = PlumeHeightFluxQuality(relativePlumeHeight);
+    FluxQuality completenessQuality = CompletessFluxQuality(fluxResult);
 
     // If any of the parameters has a low quality, then the result is judged to have a low quality...
     if (windFieldQuality == FluxQuality::Red || plumeHeightQuality == FluxQuality::Red || completenessQuality == FluxQuality::Red)
@@ -188,6 +149,46 @@ bool CFluxCalculator::CalculateFlux(
 
     // ok
     return true;
+}
+
+FluxQuality CFluxCalculator::CompletessFluxQuality(const Flux::FluxResult& fluxResult)
+{
+    if (fluxResult.m_completeness < 0.7)
+    {
+        return FluxQuality::Red;
+    }
+    else if (fluxResult.m_completeness < 0.9)
+    {
+        return FluxQuality::Yellow;
+    }
+    return FluxQuality::Green;
+}
+
+FluxQuality CFluxCalculator::PlumeHeightFluxQuality(const Geometry::PlumeHeight& relativePlumeHeight)
+{
+    switch (relativePlumeHeight.m_plumeAltitudeSource)
+    {
+    case Meteorology::MeteorologySource::Default:                           return FluxQuality::Red;
+    case Meteorology::MeteorologySource::User:                              return FluxQuality::Red;
+    case Meteorology::MeteorologySource::GeometryCalculationTwoInstruments: return FluxQuality::Green;
+    default:                                                                return FluxQuality::Yellow;
+    }
+}
+
+FluxQuality CFluxCalculator::WindFieldFluxQuality(const Meteorology::WindField& windField)
+{
+    switch (windField.GetWindSpeedSource())
+    {
+    case Meteorology::MeteorologySource::Default:               return FluxQuality::Red;
+    case Meteorology::MeteorologySource::User:                  return FluxQuality::Red;
+    case Meteorology::MeteorologySource::EcmwfForecast:         return FluxQuality::Green;
+    case Meteorology::MeteorologySource::EcmwfAnalysis:         return FluxQuality::Green;
+    case Meteorology::MeteorologySource::DualBeamMeasurement:   return FluxQuality::Green;
+    case Meteorology::MeteorologySource::ModelledWrf:           return FluxQuality::Green;
+    case Meteorology::MeteorologySource::NoaaGdas:              return FluxQuality::Green;
+    case Meteorology::MeteorologySource::NoaaFnl:               return FluxQuality::Green;
+    default:                                                    return FluxQuality::Yellow;
+    }
 }
 
 int CFluxCalculator::GetLocation(

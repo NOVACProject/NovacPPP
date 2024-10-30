@@ -151,7 +151,7 @@ void CPostProcessing::DoPostProcessing_Flux()
     WriteCalculatedGeometriesToFile(context, geometryResults);
 
     // 4.2 Insert the calculated geometries into the plume height database
-    InsertCalculatedGeometriesIntoDataBase(context, geometryResults);
+    InsertCalculatedGeometriesIntoDatabase(context, geometryResults);
 
     // 5. Calculate the wind-speeds from the wind-speed measurements
     //  the plume heights are taken from the database
@@ -1002,7 +1002,7 @@ void CPostProcessing::CalculateGeometries(
                 const Geometry::CGeometryResult& oldResult = *it;
                 if (std::abs(CDateTime::Difference(oldResult.m_averageStartTime, scanResult1.m_startTime)) < m_userSettings.m_calcGeometryValidTime)
                 {
-                    if (oldResult.m_plumeAltitude.HasValue() && 
+                    if (oldResult.m_plumeAltitude.HasValue() &&
                         (!plumeHeight.m_plumeAltitude || oldResult.m_plumeAltitudeError.Value() < plumeHeight.m_plumeAltitudeError))
                     {
                         plumeHeight.m_plumeAltitude = oldResult.m_plumeAltitude.Value();
@@ -1029,7 +1029,7 @@ void CPostProcessing::CalculateGeometries(
                 // tell the user   
                 messageToUser.Format("Calculated a wind direction of %.0lf +- %.0lf degrees from a scan",
                     result.m_windDirection, result.m_windDirectionError);
-                m_log.Debug(context.With(novac::LogContext::Device, scanResult1.m_instrumentSerial).WithTimestamp(result.m_averageStartTime), messageToUser.std_str());
+                m_log.Information(context.With(novac::LogContext::Device, scanResult1.m_instrumentSerial).WithTimestamp(result.m_averageStartTime), messageToUser.std_str());
             }
             else
             {
@@ -1072,13 +1072,8 @@ void CPostProcessing::CalculateGeometries(
     m_log.Information(context, messageToUser.std_str());
 }
 
-void CPostProcessing::CalculateFluxes(novac::LogContext context, const std::vector<Evaluation::CExtendedScanResult>& evalLogFiles)
+void CPostProcessing::CalculateFluxes(novac::LogContext context, const std::vector<Evaluation::CExtendedScanResult>& scanResults)
 {
-    CDateTime scanStartTime;
-    novac::CString serial;
-    Geometry::PlumeHeight plumeHeight; // the altitude of the plume, in meters above sea level
-    MEASUREMENT_MODE measMode;
-    int channel;
     Flux::CFluxStatistics stat;
 
     // we keep the calculated fluxes in a list
@@ -1090,32 +1085,38 @@ void CPostProcessing::CalculateFluxes(novac::LogContext context, const std::vect
     // Loop through the list of evaluation log files. For each of them, find
     // the best available wind-speed, wind-direction and plume height and
     // calculate the flux.
-    for (const auto& scanResult : evalLogFiles)
+    for (const auto& scanResult : scanResults)
     {
         // Get the name of this eval-log
         const novac::CString& evalLog = scanResult.m_evalLogFile[m_userSettings.m_mainFitWindow];
         const CPlumeInScanProperty& plume = scanResult.m_scanProperties;
 
-        novac::LogContext fileContext = context.With(novac::LogContext::FileName, evalLog.std_str());
+        const novac::LogContext fileContext = context.With(novac::LogContext::FileName, evalLog.std_str());
+
+        // If this is not a flux-measurement, then there's no point in calculating any flux for it
+        if (scanResult.m_measurementMode != MEASUREMENT_MODE::MODE_FLUX)
+        {
+            continue;
+        }
 
         // if the completeness is too low then ignore this scan.
         if (plume.completeness < (m_userSettings.m_completenessLimitFlux + 0.01))
         {
             novac::CString messageToUser;
-            messageToUser.Format("Scan has completeness = %.2lf which is less than limit of %.2lf. Rejected!", plume.completeness, m_userSettings.m_completenessLimitFlux);
+            messageToUser.Format("Scan has completeness = %.2lf which is less than limit of %.2lf. Will not calculate any flux.", plume.completeness, m_userSettings.m_completenessLimitFlux);
             m_log.Information(fileContext, messageToUser.std_str());
             continue;
         }
 
-        // Extract the date and time of day when the measurement was made
-        novac::CFileUtils::GetInfoFromFileName(evalLog, scanStartTime, serial, channel, measMode);
-
-        // If this is not a flux-measurement, then there's no point in calculating any flux for it
-        if (measMode != MEASUREMENT_MODE::MODE_FLUX)
-            continue;
-
         // Extract a plume height at this time of day
-        m_plumeDataBase.GetPlumeHeight(scanStartTime, plumeHeight);
+        Geometry::PlumeHeight plumeHeight;
+        if (!m_plumeDataBase.GetPlumeHeight(scanResult.m_startTime, plumeHeight))
+        {
+            std::stringstream msg;
+            msg << "Failed to get plume height at the time of the measurement (" << scanResult.m_startTime << ") no flux calculated for scan.";
+            m_log.Information(fileContext, msg.str());
+            continue;
+        }
 
         m_log.Information(fileContext, "Calculating flux");
 
@@ -1409,7 +1410,9 @@ void CPostProcessing::WriteFluxResult_Txt(const std::list<Flux::FluxResult>& cal
 void CPostProcessing::WriteCalculatedGeometriesToFile(novac::LogContext context, const std::vector<Geometry::CGeometryResult>& geometryResults)
 {
     if (geometryResults.size() == 0)
+    {
         return; // nothing to write...
+    }
 
     FILE* f = nullptr;
     const std::string geomLogFile = m_userSettings.m_outputDirectory + "/" + "GeometryLog.csv";
@@ -1455,7 +1458,7 @@ void CPostProcessing::WriteCalculatedGeometriesToFile(novac::LogContext context,
             fprintf(f, "%02d:%02d:%02d;", result.m_averageStartTime.hour, result.m_averageStartTime.minute, result.m_averageStartTime.second);
             fprintf(f, "0;");
             fprintf(f, "%s;;", result.m_instrumentSerial1.c_str());
-            fprintf(f, "%.0lf;%.0lf;", result.m_plumeAltitude.Value(), result.m_plumeAltitudeError.Value());
+            fprintf(f, "0;0;");
             fprintf(f, "%.0lf;%.0lf;", result.m_windDirection.Value(), result.m_windDirectionError.Value());
 
             fprintf(f, "%.1f;%.1f;", result.m_plumeCentre1.Value(), result.m_plumeCentreError1.Value());
@@ -1465,17 +1468,12 @@ void CPostProcessing::WriteCalculatedGeometriesToFile(novac::LogContext context,
     fclose(f);
 }
 
-void CPostProcessing::InsertCalculatedGeometriesIntoDataBase(novac::LogContext context, const std::vector<Geometry::CGeometryResult>& geometryResults)
+void CPostProcessing::InsertCalculatedGeometriesIntoDatabase(novac::LogContext context, const std::vector<Geometry::CGeometryResult>& geometryResults)
 {
-    Meteorology::WindField windField;
-    CDateTime validFrom, validTo;
-    Configuration::CInstrumentLocation location;
-
     for (const auto& result : geometryResults)
     {
         if (result.m_plumeAltitude.HasValue())
         {
-            // insert the plume height into the plume height database
             this->m_plumeDataBase.InsertPlumeHeight(result);
         }
 
@@ -1484,12 +1482,13 @@ void CPostProcessing::InsertCalculatedGeometriesIntoDataBase(novac::LogContext c
             try
             {
                 // get the location of the instrument at the time of the measurement
-                location = m_setup.GetInstrumentLocation(result.m_instrumentSerial1, result.m_averageStartTime);
+                // TODO: This was retrieved but not used further down. Should it be used?
+                // const auto location = m_setup.GetInstrumentLocation(result.m_instrumentSerial1, result.m_averageStartTime);
 
                 // get the time-interval that the measurement is valid for
-                validFrom = CDateTime(result.m_averageStartTime);
+                CDateTime validFrom = result.m_averageStartTime;
                 validFrom.Decrement(m_userSettings.m_calcGeometryValidTime);
-                validTo = CDateTime(result.m_averageStartTime);
+                CDateTime validTo = result.m_averageStartTime;
                 validTo.Increment(m_userSettings.m_calcGeometryValidTime);
 
                 // insert the wind-direction into the wind database

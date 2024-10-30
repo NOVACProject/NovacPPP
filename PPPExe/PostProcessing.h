@@ -153,7 +153,7 @@ private:
     /** Inserts the calculated geometry results into the databases.
         The wind directions will be inserted into m_windDataBase
         The plume altitudes will be inserted into m_plumeDataBase */
-    void InsertCalculatedGeometriesIntoDataBase(novac::LogContext context, const std::vector<Geometry::CGeometryResult>& geometryResults);
+    void InsertCalculatedGeometriesIntoDatabase(novac::LogContext context, const std::vector<Geometry::CGeometryResult>& geometryResults);
 
     /** This calculates the wind speeds from the dual-beam measurements that has been made
         @param evalLogs - list of CExtendedScanResult, each holding the full path and filename

@@ -1,8 +1,9 @@
 #pragma once
 
+#include <PPPLib/PPPLib.h>
 #include <PPPLib/Flux/FluxResult.h>
 #include <PPPLib/Evaluation/ScanResult.h>
-#include <PPPLib/PPPLib.h>
+#include <PPPLib/Evaluation/ExtendedScanResult.h>
 #include <PPPLib/Configuration/NovacPPPConfiguration.h>
 #include <PPPLib/Configuration/UserConfiguration.h>
 #include <PPPLib/Meteorology/WindDataBase.h>
@@ -51,8 +52,9 @@ public:
 
     /** Calculates the flux from the scan found in the given evaluation log file.
         NOTICE: This assumes that the column values in the scan are in molecules / cm2.
-        @param evalLogFileName - the name of the .txt-file that contains the result of the evaluation.
-            The function will fail if this file does not contain any, or multiple scans.
+        @param evaluationResult the result of the evaluation.
+            This should contain the name of the evaluation log where the column data is to be saved,
+            the start time of the scan and the serial number of the device.
         @param windDataBase - a database with information about the wind.
             The parameters for the wind will be taken from this database.
             The function fails if no acceptable wind-field could be found
@@ -63,11 +65,10 @@ public:
         @return true on success. */
     bool CalculateFlux(
         novac::LogContext context,
-        const std::string& evalLogFileName,
+        const Evaluation::CExtendedScanResult& evaluationResult,
         const Meteorology::CWindDataBase& windDataBase,
         const Geometry::PlumeHeight& plumeAltitude,
         FluxResult& fluxResult);
-
 
     /** Calculate the flux in this scan, using the supplied compass direction and coneAngle.
         NOTICE: This assumes that the column values in the scan are in molecules / cm2.
@@ -142,5 +143,13 @@ private:
         novac::LogContext context,
         const Flux::FluxResult& fluxResult,
         const Evaluation::CScanResult* result);
+
+
+    static FluxQuality CompletessFluxQuality(const Flux::FluxResult& fluxResult);
+
+    static FluxQuality PlumeHeightFluxQuality(const Geometry::PlumeHeight& relativePlumeHeight);
+
+    static FluxQuality WindFieldFluxQuality(const Meteorology::WindField& windField);
+
 };
 }
