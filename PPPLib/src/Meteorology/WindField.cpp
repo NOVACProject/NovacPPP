@@ -1,9 +1,10 @@
 #include <PPPLib/Meteorology/WindField.h>
 
-using namespace Meteorology;
+namespace Meteorology
+{
 
 // global function that converts a MeteorologySource item to string
-void Meteorology::MetSourceToString(const MeteorologySource src, novac::CString& str)
+void MetSourceToString(const MeteorologySource src, novac::CString& str)
 {
     if (MeteorologySource::User == src)
         str.Format("user");
@@ -31,7 +32,7 @@ void Meteorology::MetSourceToString(const MeteorologySource src, novac::CString&
         str.Format("unknown");
 }
 
-MeteorologySource Meteorology::StringToMetSource(const novac::CString& str)
+MeteorologySource StringToMetSource(const novac::CString& str)
 {
     novac::CString trimmedStr(str);
     trimmedStr.Trim(); // remove blanks in the beginning and in the end
@@ -107,7 +108,7 @@ MeteorologySource Meteorology::StringToMetSource(const novac::CString& str)
     }
 }
 
-int Meteorology::GetSourceQuality(MeteorologySource src)
+int GetSourceQuality(MeteorologySource src)
 {
     MeteorologySource list[] = {
         MeteorologySource::DualBeamMeasurement,
@@ -136,14 +137,14 @@ int Meteorology::GetSourceQuality(MeteorologySource src)
 }
 
 WindField::WindField(double windSpeed, MeteorologySource windSpeedSrc, double windDir, MeteorologySource windDirSrc, const novac::CDateTime& validFrom, const novac::CDateTime& validTo, double lat, double lon, double alt)
-    : m_windSpeed(windSpeed), m_windSpeedSource(windSpeedSrc), m_windSpeedError(0.0),
-    m_windDirection(windDir), m_windDirectionSource(windDirSrc), m_windDirectionError(0.0),
+    : m_windSpeed(windSpeed), m_windSpeedError(0.0), m_windSpeedSource(windSpeedSrc),
+    m_windDirection(windDir), m_windDirectionError(0.0), m_windDirectionSource(windDirSrc),
     m_validFrom(validFrom), m_validTo(validTo), m_location(lat, lon, alt)
 {}
 
 WindField::WindField(double windSpeed, double windSpeedErr, MeteorologySource windSpeedSrc, double windDir, double windDirErr, MeteorologySource windDirSrc, const novac::CDateTime& validFrom, const novac::CDateTime& validTo, double lat, double lon, double alt)
-    : m_windSpeed(windSpeed), m_windSpeedSource(windSpeedSrc), m_windSpeedError(windSpeedErr),
-    m_windDirection(windDir), m_windDirectionSource(windDirSrc), m_windDirectionError(windDirErr),
+    : m_windSpeed(windSpeed), m_windSpeedError(windSpeedErr), m_windSpeedSource(windSpeedSrc), 
+    m_windDirection(windDir), m_windDirectionError(windDirErr), m_windDirectionSource(windDirSrc),
     m_validFrom(validFrom), m_validTo(validTo), m_location(lat, lon, alt)
 {
 }
@@ -182,7 +183,7 @@ MeteorologySource WindField::GetWindSpeedSource() const
 /** Gets the source of the wind-speed */
 void WindField::GetWindSpeedSource(novac::CString& str) const
 {
-    return Meteorology::MetSourceToString(m_windSpeedSource, str);
+    return MetSourceToString(m_windSpeedSource, str);
 }
 
 /** Gets the estimate for the total error in the wind-speed */
@@ -213,7 +214,7 @@ MeteorologySource WindField::GetWindDirectionSource() const
 /** Gets the source of the wind-direction */
 void WindField::GetWindDirectionSource(novac::CString& str) const
 {
-    return Meteorology::MetSourceToString(m_windDirectionSource, str);
+    return MetSourceToString(m_windDirectionSource, str);
 }
 
 /** Gets the estimate for the total error in the wind-direction */
@@ -242,3 +243,5 @@ void WindField::GetValidPosition(double& lat, double& lon, double& alt) const
     lon = this->m_location.m_longitude;
     alt = this->m_location.m_altitude;
 }
+
+} // namespace Meteorology

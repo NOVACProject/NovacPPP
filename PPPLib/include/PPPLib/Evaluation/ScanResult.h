@@ -33,7 +33,7 @@ namespace Evaluation
 class CScanResult : public novac::BasicScanEvaluationResult
 {
 public:
-    CScanResult();
+    CScanResult() = default;
 
     CScanResult(const CScanResult&);
     CScanResult& operator=(const CScanResult& s2);
@@ -50,10 +50,10 @@ public:
     novac::CPlumeInScanProperty m_plumeProperties;
 
     /** The type of the instrument used for this scan */
-    INSTRUMENT_TYPE m_instrumentType;
+    INSTRUMENT_TYPE m_instrumentType = INSTRUMENT_TYPE::INSTR_GOTHENBURG;
 
     /** Flag to signal if this is a wind measurement, a scan, or something else. */
-    MEASUREMENT_MODE m_measurementMode;
+    MEASUREMENT_MODE m_measurementMode = MEASUREMENT_MODE::MODE_UNKNOWN;
 
     // ----------------------------------------------------------------------
     // --------------------- PUBLIC METHODS ---------------------------------
@@ -365,43 +365,14 @@ public:
     /** Returns the type of the instrument used */
     INSTRUMENT_TYPE GetInstrumentType() const;
 
-    /** Getting the estimated geometrical error */
-    double GetGeometricalError() const;
-
-    /** Getting the scattering Error */
-    double GetScatteringError() const;
-
-    /** Getting the spectroscopical error */
-    double GetSpectroscopicalError() const;
-
-    /** Getting the estimated geometrical error */
-    void SetGeometricalError(double err);
-
-    /** Getting the scattering Error */
-    void SetScatteringError(double err);
-
-    /** Getting the spectroscopical error */
-    void SetSpectroscopicalError(double err);
 private:
 
     // ----------------------------------------------------------------------
     // --------------------- PRIVATE DATA -----------------------------------
     // ----------------------------------------------------------------------
 
-    /** The estimated error (in percent) in the geometrical setup for
-        this flux-calculation. */
-    double m_geomError;
-
-    /** The estimated error (in percent) due to scattering inside or below the
-        plume for this flux-calculation */
-    double m_scatteringError;
-
-    /** The estimated error (in percent) of the spectral results due
-        to incertainties in cross-sections, slit-functions, stray-light etc. */
-    double m_spectroscopyError;
-
     /** The number of evaluations */
-    unsigned long m_specNum;
+    unsigned long m_specNum = 0;
 
     // ----------------------------------------------------------------------
     // -------------------- PRIVATE METHODS ---------------------------------

@@ -1049,7 +1049,7 @@ void CPostProcessing::CalculateGeometries(
         std::vector<double> windDirections;
         plumeHeights.reserve(geometryResults.size());
         windDirections.reserve(geometryResults.size());
-        for each (const auto & g in geometryResults)
+        for (const auto & g : geometryResults)
         {
             if (g.m_plumeAltitude.HasValue())
             {
@@ -1415,7 +1415,7 @@ void CPostProcessing::WriteCalculatedGeometriesToFile(novac::LogContext context,
     }
 
     FILE* f = nullptr;
-    const std::string geomLogFile = m_userSettings.m_outputDirectory + "/" + "GeometryLog.csv";
+    const std::string geomLogFile = m_userSettings.m_outputDirectory.std_str() + "/" + "GeometryLog.csv";
 
     if (Filesystem::IsExistingFile(geomLogFile))
     {

@@ -10,7 +10,7 @@
 
 #ifndef MAX_PATH
 #define MAX_PATH 512
-#endif MAX_PATH
+#endif
 
 bool Evaluation::PostEvaluationIO::GetArchivingfileName(
     novac::ILogger& log,

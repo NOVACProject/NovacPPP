@@ -13,25 +13,12 @@ using namespace novac;
 
 extern novac::CVolcanoInfo g_volcanoes; // <-- A list of all known volcanoes
 
-CScanResult::CScanResult()
-{
-    m_specNum = 0;
-    m_geomError = 30.0; // best-case guess, 30%
-    m_spectroscopyError = 15.0; // best-case guess, 15%
-    m_scatteringError = 30.0; // best-case guess, 30%
-    m_measurementMode = MEASUREMENT_MODE::MODE_UNKNOWN;
-    m_instrumentType = INSTRUMENT_TYPE::INSTR_GOTHENBURG;
-}
-
 CScanResult::CScanResult(const CScanResult& s2) :
     m_flux(s2.m_flux),
     m_plumeProperties(s2.m_plumeProperties),
-    m_geomError(s2.m_geomError),
-    m_scatteringError(s2.m_scatteringError),
-    m_spectroscopyError(s2.m_spectroscopyError),
-    m_specNum(s2.m_specNum),
+    m_instrumentType(s2.m_instrumentType),
     m_measurementMode(s2.m_measurementMode),
-    m_instrumentType(s2.m_instrumentType)
+    m_specNum(s2.m_specNum)    
 {
     this->m_spec = s2.m_spec;
     this->m_specInfo = s2.m_specInfo;
@@ -49,11 +36,6 @@ CScanResult& CScanResult::operator=(const CScanResult& s2)
     this->m_flux = s2.m_flux;
 
     this->m_plumeProperties = s2.m_plumeProperties;
-
-    // The errors
-    m_geomError = s2.m_geomError;
-    m_scatteringError = s2.m_scatteringError;
-    m_spectroscopyError = s2.m_spectroscopyError;
 
     this->m_plumeProperties = s2.m_plumeProperties;
 
@@ -832,40 +814,4 @@ void CScanResult::SetInstrumentType(INSTRUMENT_TYPE type)
 INSTRUMENT_TYPE CScanResult::GetInstrumentType() const
 {
     return this->m_instrumentType;
-}
-
-/** Getting the estimated geometrical error */
-double CScanResult::GetGeometricalError() const
-{
-    return m_geomError;
-}
-
-/** Getting the scattering Error */
-double CScanResult::GetScatteringError() const
-{
-    return m_scatteringError;
-}
-
-/** Getting the spectroscopical error */
-double CScanResult::GetSpectroscopicalError() const
-{
-    return m_spectroscopyError;
-}
-
-/** Getting the estimated geometrical error */
-void CScanResult::SetGeometricalError(double err)
-{
-    m_geomError = err;
-}
-
-/** Getting the scattering Error */
-void CScanResult::SetScatteringError(double err)
-{
-    m_scatteringError = err;
-}
-
-/** Getting the spectroscopical error */
-void CScanResult::SetSpectroscopicalError(double err)
-{
-    m_spectroscopyError = err;
 }

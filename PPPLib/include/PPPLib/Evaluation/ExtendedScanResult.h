@@ -34,7 +34,7 @@ public:
     }
 
     CExtendedScanResult(std::string serial, novac::CDateTime scanStartTime, MEASUREMENT_MODE mode)
-        : m_instrumentSerial(serial), m_startTime(scanStartTime), m_measurementMode(mode)
+        : m_instrumentSerial(serial), m_measurementMode(mode), m_startTime(scanStartTime)
     {
         m_evalLogFile.reserve(MAX_FIT_WINDOWS);
         m_fitWindowName.reserve(MAX_FIT_WINDOWS);
