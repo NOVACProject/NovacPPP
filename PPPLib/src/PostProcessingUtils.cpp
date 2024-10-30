@@ -186,7 +186,7 @@ void PrepareEvaluation(novac::ILogger& logger, std::string tempDirectory, Config
                             }
                             else
                             {
-                                HighPassFilter(*window.ref[referenceIndex].m_data);
+                                HighPassFilter(*window.ref[referenceIndex].m_data, CrossSectionUnit::cm2_molecule);
                             }
                         }
                         else

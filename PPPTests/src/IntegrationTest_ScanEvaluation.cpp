@@ -60,7 +60,7 @@ static void SetupFitWindowWithCalibratedReferences(novac::CFitWindow& window, bo
     REQUIRE(so2.m_data->GetSize() == 2048);
     if (highPassFilter)
     {
-        novac::HighPassFilter(*so2.m_data);
+        novac::HighPassFilter(*so2.m_data, novac::CrossSectionUnit::cm2_molecule);
     }
 
     novac::CReferenceFile o3;
@@ -72,7 +72,7 @@ static void SetupFitWindowWithCalibratedReferences(novac::CFitWindow& window, bo
     REQUIRE(o3.m_data->GetSize() == 2048);
     if (highPassFilter)
     {
-        novac::HighPassFilter(*o3.m_data);
+        novac::HighPassFilter(*o3.m_data, novac::CrossSectionUnit::cm2_molecule);
     }
 
     novac::CReferenceFile ring;
