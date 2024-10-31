@@ -135,7 +135,7 @@ RETURN_CODE Evaluation::PostEvaluationIO::WriteEvaluationResult(
     novac::CDateTime dateTime;
 
     // get the file-name that we want to have 
-    GetArchivingfileName(log, pakFile, txtFile, window->name, scan->GetFileName(), outputDirectory, result->GetMeasurementMode());
+    GetArchivingfileName(log, pakFile, txtFile, window->name, scan->GetFileName(), outputDirectory, result->m_measurementMode);
     if (txtFileName != nullptr)
     {
         txtFileName->Format(txtFile);
@@ -172,28 +172,10 @@ RETURN_CODE Evaluation::PostEvaluationIO::WriteEvaluationResult(
     string.AppendFormat("\ttemperature=%.2f\n", result->GetTemperature());
 
     // The mode
-    if (result->IsDirectSunMeasurement())
-        string.Append("\tmode=direct_sun\n");
-    else if (result->IsLunarMeasurement())
-        string.Append("\tmode=lunar\n");
-    else if (result->IsWindMeasurement())
-        string.Append("\tmode=wind\n");
-    else if (result->IsStratosphereMeasurement())
-        string.Append("\tmode=stratospheric\n");
-    else if (result->IsCompositionMeasurement())
-        string.Append("\tmode=composition\n");
-    else
-        string.Append("\tmode=plume\n");
+    string.AppendFormat("\tmode=%s\n", novac::ToString(result->m_measurementMode).c_str());
 
     // The type of instrument used...
-    if (instrLocation->m_instrumentType == novac::NovacInstrumentType::Gothenburg)
-    {
-        string.Append("\tinstrumenttype=gothenburg\n");
-    }
-    else if (instrLocation->m_instrumentType == novac::NovacInstrumentType::Heidelberg)
-    {
-        string.Append("\tinstrumenttype=heidelberg\n");
-    }
+    string.AppendFormat("\tinstrumenttype=%s\n", novac::ToString(instrLocation->m_instrumentType).c_str());
 
     // Finally, the version of the file and the version of the program
     string.Append("\tversion=2.2\n");
@@ -215,7 +197,7 @@ RETURN_CODE Evaluation::PostEvaluationIO::WriteEvaluationResult(
     // windField.GetPlumeHeightSource(phSrc);
 
         // Get the information on where the plume is seen
-    const double plumeCompleteness = result->GetCalculatedPlumeCompleteness();
+    const double plumeCompleteness = result->m_plumeProperties.completeness.ValueOrDefault(NOT_A_NUMBER);
     const double plumeCentre1 = result->m_plumeProperties.plumeCenter.ValueOrDefault(NOT_A_NUMBER);
     const double plumeCentre2 = result->m_plumeProperties.plumeCenter2.ValueOrDefault(NOT_A_NUMBER);
 
@@ -453,9 +435,9 @@ RETURN_CODE Evaluation::PostEvaluationIO::AppendToEvaluationSummaryFile(
     fprintf(f, "%.2lf\t", result->GetTemperature());
 
     // the calculated plume parameters
-    fprintf(f, "%.2lf\t", result->GetOffset());
+    fprintf(f, "%.2lf\t", result->m_plumeProperties.offset.ValueOrDefault(NOT_A_NUMBER));
     fprintf(f, "%.2lf\t", result->m_plumeProperties.plumeCenter.ValueOrDefault(NOT_A_NUMBER));
-    fprintf(f, "%.2lf\t", result->GetCalculatedPlumeCompleteness());
+    fprintf(f, "%.2lf\t", result->m_plumeProperties.completeness.ValueOrDefault(NOT_A_NUMBER));
 
     // the number of evaluated spectra
     fprintf(f, "%ld\t", result->GetEvaluatedNum());

@@ -279,19 +279,19 @@ void CommandLineParser::ParseCommandLineOptions(
                 const std::string moleculeName = std::string(buffer.data());
                 if (novac::Equals(moleculeName, "BrO"))
                 {
-                    userSettings.m_molecule = StandardMolecule::BrO;
+                    userSettings.m_molecule = novac::StandardMolecule::BrO;
                 }
                 else if (novac::Equals(moleculeName, "NO2"))
                 {
-                    userSettings.m_molecule = StandardMolecule::NO2;
+                    userSettings.m_molecule = novac::StandardMolecule::NO2;
                 }
                 else if (novac::Equals(moleculeName, "O3"))
                 {
-                    userSettings.m_molecule = StandardMolecule::O3;
+                    userSettings.m_molecule = novac::StandardMolecule::O3;
                 }
                 else
                 {
-                    userSettings.m_molecule = StandardMolecule::SO2;
+                    userSettings.m_molecule = novac::StandardMolecule::SO2;
                 }
                 log.Information(context.With("cmd", str_molecule), "Updated molecule");
             }

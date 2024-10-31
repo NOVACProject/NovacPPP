@@ -7,7 +7,6 @@
 
 #include <PPPLib/PPPLib.h>
 #include <PPPLib/Flux/FluxResult.h>
-#include <PPPLib/Molecule.h>
 #include <PPPLib/MFC/CString.h>
 #include <PPPLib/MFC/CArray.h>
 
@@ -91,58 +90,6 @@ public:
         development purposes only. */
     bool CheckGoodnessOfFit(const novac::CSpectrumInfo& info, int index, const novac::SpectrometerModel* spectrometer, float chi2Limit = -1, float upperLimit = -1, float lowerLimit = -1);
 
-    /** Gets the offset of the scan. The offset is calculated as the average of the
-      three lowest columns values (bad values are skipped). After this function has
-      been called the actual offset can be retrieved by a call to 'GetOffset'.
-      @param specie - The name of the specie for which the offset should be found.
-      @return 0 on success. @return 1 - if any error occurs. */
-    int CalculateOffset(const CMolecule& specie);
-
-    /** Tries to find a plume in the last scan result. If the plume is found
-            this function returns true, and the centre of the plume (in scanAngles)
-            is given in 'plumeCentre', the width of the plume (in scanAngles)
-            is given in 'plumeWidth' and the estimated completeness of the plume
-            is given in 'plumeCompleteness' (ranging from 0.0 to 1.0)
-            */
-    bool CalculatePlumeCentre(const CMolecule& specie, novac::CPlumeInScanProperty& plumeProperties, std::string& message);
-
-    /** Tries to find a plume in the last scan result. If the plume is found
-        this function returns true. The result of the calculations is stored in
-        the member-variables 'm_plumeCentre' and 'm_plumeCompleteness' */
-    bool CalculatePlumeCentre(const CMolecule& specie, std::string& message);
-
-    /** Checks the kind of measurement that we have here and sets the
-        flag 'm_measurementMode' to the appropriate value... */
-    novac::MeasurementMode CheckMeasurementMode();
-
-    /** Checks the kind of measurement that we have here without
-        setting the flag 'm_measurementMode' */
-    novac::MeasurementMode GetMeasurementMode() const;
-
-    /** Returns true if this is a flux measurement */
-    bool IsFluxMeasurement();
-
-    /** Returns true if this is a wind-speed measurement */
-    bool IsWindMeasurement() const;
-
-    /** Returns true if this is a wind-speed measurement of Gothenburg type */
-    bool IsWindMeasurement_Gothenburg() const;
-
-    /** Returns true if this is a wind-speed measurement of Heidelberg type */
-    bool IsWindMeasurement_Heidelberg() const;
-
-    /** Returns true if this is a stratospheric mode measurement */
-    bool IsStratosphereMeasurement() const;
-
-    /** Returns true if this is a direct-sun mode measurement */
-    bool IsDirectSunMeasurement() const;
-
-    /** Returns true if this is a lunar mode measurement */
-    bool IsLunarMeasurement() const;
-
-    /** Returns true if this is a composition mode measurement */
-    bool IsCompositionMeasurement() const;
-
     /** Returns the calculated flux */
     double GetFlux() const { return m_flux.m_flux; }
 
@@ -155,20 +102,8 @@ public:
     /** Set the flux to the given value. ONLY USED FOR READING EVALUATION-LOGS */
     void SetFlux(double flux) { this->m_flux.m_flux = flux; }
 
-    /** returns the offset of the measurement */
-    double GetOffset() const { return m_plumeProperties.offset; }
-
     /** returns the temperature of the system at the time of the measurement */
     double GetTemperature() const { return m_skySpecInfo.m_temperature; }
-
-    /** Fills in the supplied CPlumeInScanProperty object with the calculated properties of this scan */
-    void GetCalculatedPlumeProperties(novac::CPlumeInScanProperty& properties) const { properties = m_plumeProperties; }
-
-    /** Returns the calculated plume-completeness */
-    double GetCalculatedPlumeCompleteness() const { return m_plumeProperties.completeness; }
-
-    /** Sets the offset of the measurement */
-    void SetOffset(double offset) { m_plumeProperties.offset = offset; }
 
     /** returns the number of spectra evaluated */
     long  GetEvaluatedNum() const { return m_specNum; }
@@ -268,7 +203,7 @@ public:
         @param spectrumNum - the zero based index into the list of evaluated
             spectra.*/
     double GetColumn(unsigned long spectrumNum, unsigned long specieNum) const;
-    double GetColumn(unsigned long spectrumNum, CMolecule& mol) const;
+    double GetColumn(unsigned long spectrumNum, novac::Molecule& mol) const;
 
     /** returns the error for the evaluated column for specie number
             'specieNum' and spectrum number 'specNum'
@@ -354,13 +289,6 @@ public:
     novac::NovacInstrumentType GetInstrumentType() const;
 
 private:
-
-    // ----------------------------------------------------------------------
-    // --------------------- PRIVATE DATA -----------------------------------
-    // ----------------------------------------------------------------------
-
-    /** The number of evaluations */
-    unsigned long m_specNum = 0;
 
     // ----------------------------------------------------------------------
     // -------------------- PRIVATE METHODS ---------------------------------

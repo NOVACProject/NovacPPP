@@ -84,7 +84,7 @@ public:
     bool CalculateFlux(
         novac::LogContext context,
         Evaluation::CScanResult& result,
-        const CMolecule& specie,
+        const novac::Molecule& specie,
         const Meteorology::WindField& wind,
         const Geometry::PlumeHeight& relativePlumeHeight,
         double compass,

@@ -25,7 +25,7 @@ void CUserConfiguration::Clear()
     m_doEvaluations = true;
 
     // the molecule
-    m_molecule = StandardMolecule::SO2;
+    m_molecule = novac::StandardMolecule::SO2;
 
     // The volcano that we should process
     m_volcano = 0;

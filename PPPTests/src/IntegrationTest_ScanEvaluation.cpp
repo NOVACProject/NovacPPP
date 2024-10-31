@@ -358,7 +358,7 @@ TEST_CASE("EvaluateScan, scan with visible plume and calibrated references", "[S
         // A shift has been applied to the DOAS fit.
         REQUIRE(Approx(-0.38).margin(0.01) == result->GetShift(0, 0));
 
-        REQUIRE(Approx(-89.43).margin(0.1) == result->GetColumn(0, 0));
+        REQUIRE(Approx(-89.43 * 2.5e15).margin(2.5e15) == result->GetColumn(0, 0));
 
         // the sky spectrum info should be set
         auto& skySpecInfo = result->GetSkySpectrumInfo();

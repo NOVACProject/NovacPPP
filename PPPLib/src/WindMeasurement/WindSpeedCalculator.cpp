@@ -557,11 +557,15 @@ RETURN_CODE CWindSpeedCalculator::CalculateCorrelation(const novac::CString& eva
     {
         for (scanIndex[k] = 0; scanIndex[k] < reader[k].m_scan.size(); ++scanIndex[k])
         {
-            if (reader[k].m_scan[scanIndex[k]].IsWindMeasurement())
+            if (novac::IsWindMeasurement(reader[k].m_scan[scanIndex[k]]))
+            {
                 break;
+            }
         }
         if (scanIndex[k] == reader[k].m_scan.size())
-            return RETURN_CODE::FAIL;		// <-- no wind-speed measurement found
+        {
+            return RETURN_CODE::FAIL; // <-- no wind-speed measurement found
+        }
     }
 
     // 2a. Check the measurement series to make sure that they are the same 
@@ -679,18 +683,22 @@ RETURN_CODE CWindSpeedCalculator::CalculateCorrelation_Heidelberg(const novac::C
     // 1. Read the evaluation-log
     FileHandler::CEvaluationLogFileHandler reader(m_log, evalLog.std_str(), m_userSettings.m_molecule);
     if (RETURN_CODE::SUCCESS != reader.ReadEvaluationLog())
+    {
         return RETURN_CODE::FAIL;
+    }
 
     // 2. Find the wind-speed measurement series in the log-files
     for (scanIndex = 0; scanIndex < reader.m_scan.size(); ++scanIndex)
     {
-        if (reader.m_scan[scanIndex].IsWindMeasurement_Heidelberg())
+        if (novac::IsWindMeasurement_Heidelberg(reader.m_scan[scanIndex]))
         {
             break;
         }
     }
     if (scanIndex == reader.m_scan.size())
+    {
         return RETURN_CODE::FAIL; // <-- no wind-speed measurement found
+    }
 
     // 3. Create the wind-speed measurement series
 

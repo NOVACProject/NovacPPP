@@ -103,29 +103,22 @@ bool CFluxCalculator::CalculateFlux(
     // Extract the scan
     Evaluation::CScanResult& result = reader.m_scan[0];
 
-    // Make sure we have set the offset, and completeness of the scan
-    if (evaluationResult.m_scanProperties.completeness < 0.01)
-    {
-        if (result.CalculateOffset(m_userSettings.m_molecule))
-        {
-            m_log.Information(context, "Failed to calculate the offset of the scan, no flux can be calculated.");
-            return false;
-        }
-    }
-    else
-    {
-        result.SetOffset(evaluationResult.m_scanProperties.offset);
-    }
+    // Get the measurement mode
+    result.m_measurementMode = novac::CheckMeasurementMode(result);
 
+    // Make sure we have set the offset, and completeness of the scan
     std::string message;
-    if (!result.CalculatePlumeCentre(m_userSettings.m_molecule, message))
+    auto plumeProperties = CalculatePlumeProperties(result, m_userSettings.m_molecule, message);
+    if (plumeProperties == nullptr || !plumeProperties->completeness.HasValue())
     {
         m_log.Information(context, message + " Scan does not see the plume, no flux can be calculated.");
         return false;
     }
+    result.m_plumeProperties = *plumeProperties;
+
 
     // Check that the completeness is higher than our limit...
-    if (result.m_plumeProperties.completeness < m_userSettings.m_completenessLimitFlux + 0.01)
+    if (result.m_plumeProperties.completeness.Value() < m_userSettings.m_completenessLimitFlux + 0.01)
     {
         errorMessage.Format("Scan has completeness = %.2lf which is less than limit of %.2lf. Rejected!", result.m_plumeProperties.completeness, m_userSettings.m_completenessLimitFlux);
         m_log.Information(context, errorMessage.std_str());
@@ -319,7 +312,7 @@ RETURN_CODE CFluxCalculator::WriteFluxResult(
     string.AppendFormat("%.1lf\t", result->m_plumeProperties.plumeCenter.ValueOrDefault(NOT_A_NUMBER));
 
     // 13. Output the plume completeness
-    string.AppendFormat("%.2lf\t", result->GetCalculatedPlumeCompleteness());
+    string.AppendFormat("%.2lf\t", result->m_plumeProperties.completeness.ValueOrDefault(NOT_A_NUMBER));
 
     // 14. Output the cone-angle of the scanner
     string.AppendFormat("%.1lf\t", fluxResult.m_coneAngle);
@@ -395,17 +388,20 @@ RETURN_CODE CFluxCalculator::WriteFluxResult(
 bool CFluxCalculator::CalculateFlux(
     novac::LogContext context,
     Evaluation::CScanResult& result,
-    const CMolecule& specie,
+    const novac::Molecule& specie,
     const Meteorology::WindField& wind,
     const Geometry::PlumeHeight& relativePlumeHeight,
     double compass,
     double coneAngle,
     double tilt)
 {
+    assert(result.m_plumeProperties.offset.HasValue()); // assumption here that the offset and plume center has already been checked
+    assert(result.m_measurementMode != novac::MeasurementMode::Unknown); // assumption here that the mode has already been checked
+
     Meteorology::WindField modifiedWind;
 
     // If this is a not a flux measurement, then don't calculate any flux
-    if (!result.IsFluxMeasurement())
+    if (result.m_measurementMode != novac::MeasurementMode::Flux)
     {
         m_log.Information(context, "Measurement is not a flux measurement, cannot calculate flux.");
         return false;
@@ -485,7 +481,7 @@ bool CFluxCalculator::CalculateFlux(
     fluxResult.m_instrument = result.GetSerial();
 
     // Calculate the flux
-    fluxResult.m_flux = Flux::CFluxCalculator::CalculateFlux(context, scanAngle.data(), scanAngle2.data(), column.data(), specie.Convert_MolecCm2_to_kgM2(result.m_plumeProperties.offset), numberOfGoodDataPoints, wind, relativePlumeHeight, compass, result.m_instrumentType, coneAngle, tilt);
+    fluxResult.m_flux = Flux::CFluxCalculator::CalculateFlux(context, scanAngle.data(), scanAngle2.data(), column.data(), specie.Convert_MolecCm2_to_kgM2(result.m_plumeProperties.offset.Value()), numberOfGoodDataPoints, wind, relativePlumeHeight, compass, result.m_instrumentType, coneAngle, tilt);
     fluxResult.m_windField = wind;
     fluxResult.m_plumeHeight = relativePlumeHeight;
     fluxResult.m_compass = compass;
@@ -498,16 +494,8 @@ bool CFluxCalculator::CalculateFlux(
         return false;
     }
 
-    // calculate the completeness and centre of the plume
-    std::string message;
-    if (!result.CalculatePlumeCentre(specie, message))
-    {
-        m_log.Information(context, message + " Scan does not see the plume, no flux can be calculated");
-        return false;
-    }
-
-    fluxResult.m_scanOffset = result.m_plumeProperties.offset;
-    fluxResult.m_completeness = result.m_plumeProperties.completeness;
+    fluxResult.m_scanOffset = result.m_plumeProperties.offset.Value();
+    fluxResult.m_completeness = result.m_plumeProperties.completeness.Value();
     fluxResult.m_plumeCentre[0] = result.m_plumeProperties.plumeCenter.ValueOrDefault(NOT_A_NUMBER);
     fluxResult.m_plumeCentre[1] = result.m_plumeProperties.plumeCenter2.ValueOrDefault(NOT_A_NUMBER);
     fluxResult.m_instrumentType = result.m_instrumentType;
@@ -518,16 +506,16 @@ bool CFluxCalculator::CalculateFlux(
     // 1. the wind field
     modifiedWind = wind;
     modifiedWind.SetWindDirection(wind.GetWindDirection() - wind.GetWindDirectionError(), wind.GetWindDirectionSource());
-    double flux1 = Flux::CFluxCalculator::CalculateFlux(context, scanAngle.data(), scanAngle2.data(), column.data(), specie.Convert_MolecCm2_to_kgM2(result.m_plumeProperties.offset), numberOfGoodDataPoints, modifiedWind, relativePlumeHeight, compass, result.m_instrumentType, coneAngle, tilt);
+    double flux1 = Flux::CFluxCalculator::CalculateFlux(context, scanAngle.data(), scanAngle2.data(), column.data(), specie.Convert_MolecCm2_to_kgM2(result.m_plumeProperties.offset.Value()), numberOfGoodDataPoints, modifiedWind, relativePlumeHeight, compass, result.m_instrumentType, coneAngle, tilt);
 
     modifiedWind.SetWindDirection(wind.GetWindDirection() + wind.GetWindDirectionError(), wind.GetWindDirectionSource());
-    double flux2 = Flux::CFluxCalculator::CalculateFlux(context, scanAngle.data(), scanAngle2.data(), column.data(), specie.Convert_MolecCm2_to_kgM2(result.m_plumeProperties.offset), numberOfGoodDataPoints, modifiedWind, relativePlumeHeight, compass, result.m_instrumentType, coneAngle, tilt);
+    double flux2 = Flux::CFluxCalculator::CalculateFlux(context, scanAngle.data(), scanAngle2.data(), column.data(), specie.Convert_MolecCm2_to_kgM2(result.m_plumeProperties.offset.Value()), numberOfGoodDataPoints, modifiedWind, relativePlumeHeight, compass, result.m_instrumentType, coneAngle, tilt);
 
     double fluxErrorDueToWindDirection = std::max(std::abs(flux2 - fluxResult.m_flux), std::abs(flux1 - fluxResult.m_flux));
 
     double fluxErrorDueToWindSpeed = fluxResult.m_flux * wind.GetWindSpeedError() / wind.GetWindSpeed();
 
-    fluxResult.m_fluxError_Wind = sqrt(fluxErrorDueToWindDirection * fluxErrorDueToWindDirection + fluxErrorDueToWindSpeed * fluxErrorDueToWindSpeed);
+    fluxResult.m_fluxError_Wind = std::sqrt(fluxErrorDueToWindDirection * fluxErrorDueToWindDirection + fluxErrorDueToWindSpeed * fluxErrorDueToWindSpeed);
 
     // 2. the plume height
     fluxResult.m_fluxError_PlumeHeight = fluxResult.m_flux * relativePlumeHeight.m_plumeAltitudeError / relativePlumeHeight.m_plumeAltitude;

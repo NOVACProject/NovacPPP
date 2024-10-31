@@ -19,7 +19,7 @@ TEST_CASE("EvaluationLogFileHandler, valid scan file read successfully - Case 1"
     const std::string filename = GetTestDataDirectory() + "2002128M1/2002128M1_230120_1907_0.txt";
     novac::ConsoleLog logger;
 
-    FileHandler::CEvaluationLogFileHandler sut(logger, filename, StandardMolecule::SO2);
+    FileHandler::CEvaluationLogFileHandler sut(logger, filename, novac::StandardMolecule::SO2);
 
     // Act
     auto returnCode = sut.ReadEvaluationLog();
@@ -98,7 +98,7 @@ TEST_CASE("EvaluationLogFileHandler, valid scan file from ReEvaluation in NovacP
     const std::string filename = GetTestDataDirectory() + "2002128M1/2002128M1_230120_1907_0_ReEvaluation.txt";
     novac::ConsoleLog logger;
 
-    FileHandler::CEvaluationLogFileHandler sut(logger, filename, StandardMolecule::SO2);
+    FileHandler::CEvaluationLogFileHandler sut(logger, filename, novac::StandardMolecule::SO2);
 
     // Act
     auto returnCode = sut.ReadEvaluationLog();

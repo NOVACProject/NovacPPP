@@ -1,11 +1,11 @@
 #pragma once
 
 #include <SpectralEvaluation/DateTime.h>
+#include <SpectralEvaluation/Molecule.h>
 #include <SpectralEvaluation/Configuration/SkySettings.h>
 #include <SpectralEvaluation/Spectra/WavelengthRange.h>
 
 #include <PPPLib/Definitions.h>
-#include <PPPLib/Molecule.h>
 #include <PPPLib/Configuration/ProcessingMode.h>
 #include <PPPLib/MFC/CString.h>
 
@@ -90,7 +90,7 @@ public:
 
     /** The molecule of main interest.
         This is the one the fluxes will be calculated for if the processing mode is 'flux' */
-    StandardMolecule m_molecule;
+    novac::StandardMolecule m_molecule;
 #define str_molecule "molecule"
 
     // ------------------------------------------------------------------------

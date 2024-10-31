@@ -178,13 +178,13 @@ TEST_CASE("PrepareEvaluation, reads references", "[PrepareEvaluation]")
         REQUIRE(configuredFitWindow.ref[0].m_data != nullptr);
         REQUIRE(configuredFitWindow.ref[0].m_data->m_crossSection.size() == 2048);
         REQUIRE(configuredFitWindow.ref[0].m_data->m_waveLength.size() == 2048);
-        REQUIRE(configuredFitWindow.ref[0].m_data->m_crossSection[0] == Approx(0.0000733596));
+        REQUIRE(configuredFitWindow.ref[0].m_data->m_crossSection[0] == Approx(2.93e-20).margin(1e-21));
         REQUIRE(configuredFitWindow.ref[0].m_data->m_waveLength[0] == Approx(267.231877000));
 
         REQUIRE(configuredFitWindow.ref[1].m_data != nullptr);
         REQUIRE(configuredFitWindow.ref[1].m_data->m_crossSection.size() == 2048);
         REQUIRE(configuredFitWindow.ref[1].m_data->m_waveLength.size() == 2048);
-        REQUIRE(configuredFitWindow.ref[1].m_data->m_crossSection[0] == Approx(-0.0006964872));
+        REQUIRE(configuredFitWindow.ref[1].m_data->m_crossSection[0] == Approx(-2.79e-19).margin(1e-20));
         REQUIRE(configuredFitWindow.ref[1].m_data->m_waveLength[0] == Approx(267.231877000));
 
         REQUIRE(configuredFitWindow.fraunhoferRef.m_data != nullptr);

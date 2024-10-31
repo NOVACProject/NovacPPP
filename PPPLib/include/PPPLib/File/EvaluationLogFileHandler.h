@@ -18,7 +18,7 @@ public:
     CEvaluationLogFileHandler(
         novac::ILogger& log,
         std::string evaluationLog,
-        CMolecule molecule,
+        novac::Molecule molecule,
         novac::SpectrometerModel* spectrometerModel = nullptr);
 
     /** The evaluation log */
@@ -56,7 +56,7 @@ public:
     /** The names of the species that were found in this evaluation log */
     std::vector<std::string> m_specieName;
 
-    CMolecule m_molecule;
+    novac::Molecule m_molecule;
 
     /** The instrument-type for the instrument that generated the results */
     novac::NovacInstrumentType m_instrumentType;

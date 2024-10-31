@@ -10,6 +10,7 @@
 #include <SpectralEvaluation/File/File.h>
 #include <SpectralEvaluation/VectorUtils.h>
 
+#include <assert.h>
 #include <chrono>
 #include <sstream>
 
@@ -119,7 +120,7 @@ std::unique_ptr<CExtendedScanResult> CPostEvaluationController::EvaluateScan(
         return nullptr;
     }
 
-    const int specieIndex = lastResult->GetSpecieIndex(CMolecule(m_userSettings.m_molecule).name);
+    const int specieIndex = lastResult->GetSpecieIndex(Molecule(m_userSettings.m_molecule).name);
 
     {
         std::stringstream msg;
@@ -134,8 +135,15 @@ std::unique_ptr<CExtendedScanResult> CPostEvaluationController::EvaluateScan(
     }
 
     // 9. Get the mode of the evaluation
-    lastResult->CheckMeasurementMode();
+    lastResult->m_measurementMode = CheckMeasurementMode(*lastResult);
     lastResult->GetStartTime(0, startTime);
+
+    // Get the properties of the plume.
+    auto plumeProperties = novac::CalculatePlumeProperties(*lastResult, m_userSettings.m_molecule, errorMessageStr);
+    if (plumeProperties != nullptr)
+    {
+        lastResult->m_plumeProperties = *plumeProperties;
+    }
 
     // 10. Append the results to the evaluation-summary log
     PostEvaluationIO::AppendToEvaluationSummaryFile(m_userSettings.m_outputDirectory.std_str(), lastResult, &scan, &instrLocation, &fitWindow, windField);
@@ -161,12 +169,11 @@ std::unique_ptr<CExtendedScanResult> CPostEvaluationController::EvaluateScan(
     }
 
     // 12. Return the properties of the scan
-    auto result = std::make_unique<CExtendedScanResult>(scan.GetDeviceSerial(), scan.GetScanStartTime(), lastResult->GetMeasurementMode());
+    auto result = std::make_unique<CExtendedScanResult>(scan.GetDeviceSerial(), scan.GetScanStartTime(), lastResult->m_measurementMode);
     result->m_evalLogFile.push_back(evaluationLogFileName.std_str());
     result->m_fitWindowName.push_back(fitWindow.name);
     result->m_pakFile = scan.GetFileName();
-
-    lastResult->GetCalculatedPlumeProperties(result->m_scanProperties);
+    result->m_scanProperties = lastResult->m_plumeProperties;
 
     std::stringstream msg;
     msg << "Scan sees the plume at scan angle: " << result->m_scanProperties.plumeCenter << " +-" << result->m_scanProperties.plumeCenterError << " [deg]. Completeness: " << result->m_scanProperties.completeness;
@@ -179,22 +186,23 @@ std::unique_ptr<CExtendedScanResult> CPostEvaluationController::EvaluateScan(
 
 bool CPostEvaluationController::IsGoodEnoughToCalculateFlux(LogContext context, std::unique_ptr<CScanResult>& result) const
 {
-    if (MeasurementMode::Flux != result->GetMeasurementMode())
+    assert(result->m_measurementMode != MeasurementMode::Unknown);
+
+    if (MeasurementMode::Flux != result->m_measurementMode)
     {
         m_log.Information(context, "Scan is not a flux measurement, no flux will be calculated.");
         return false;
     }
 
-    if (0 != result->CalculateOffset(CMolecule(m_userSettings.m_molecule)))
+    if (!result->m_plumeProperties.offset.HasValue())
     {
         m_log.Information(context, "Failed to calculate the offset of the scan, no flux will be calculated.");
         return false;
     }
 
-    std::string message;
-    if (!result->CalculatePlumeCentre(CMolecule(m_userSettings.m_molecule), message))
+    if (!result->m_plumeProperties.plumeCenter.HasValue())
     {
-        m_log.Information(context, message + " Scan does not see the plume, no flux will be calculated.");
+        m_log.Information(context, "Scan does not see the plume, no flux will be calculated.");
         return false;
     }
 

@@ -722,7 +722,8 @@ void CPostProcessing::CalculateGeometries(
         ++nFilesChecked1; // for debugging...
 
         // if this scan does not see a large enough portion of the plume, then ignore it...
-        if (scanResult1.m_scanProperties.completeness < m_userSettings.m_calcGeometry_CompletenessLimit)
+        if (!scanResult1.m_scanProperties.completeness.HasValue() || 
+            scanResult1.m_scanProperties.completeness.Value() < m_userSettings.m_calcGeometry_CompletenessLimit)
         {
             continue;
         }
@@ -745,7 +746,8 @@ void CPostProcessing::CalculateGeometries(
             ++nFilesChecked2; // for debugging...
 
             // if this scan does not see a large enough portion of the plume, then ignore it...
-            if (scanResult2.m_scanProperties.completeness < m_userSettings.m_calcGeometry_CompletenessLimit)
+            if (!scanResult2.m_scanProperties.completeness.HasValue() ||
+                scanResult2.m_scanProperties.completeness.Value() < m_userSettings.m_calcGeometry_CompletenessLimit)
             {
                 continue;
             }
@@ -960,12 +962,18 @@ void CPostProcessing::CalculateFluxes(novac::LogContext context, const std::vect
         {
             continue;
         }
+        if (!plume.completeness.HasValue())
+        {
+            m_log.Information(fileContext, "Scan does not see the plume. Will not calculate any flux.");
+            continue;
+
+        }
 
         // if the completeness is too low then ignore this scan.
-        if (plume.completeness < (m_userSettings.m_completenessLimitFlux + 0.01))
+        if (plume.completeness.Value() < (m_userSettings.m_completenessLimitFlux + 0.01))
         {
             novac::CString messageToUser;
-            messageToUser.Format("Scan has completeness = %.2lf which is less than limit of %.2lf. Will not calculate any flux.", plume.completeness, m_userSettings.m_completenessLimitFlux);
+            messageToUser.Format("Scan has completeness = %.2lf which is less than limit of %.2lf. Will not calculate any flux.", plume.completeness.Value(), m_userSettings.m_completenessLimitFlux);
             m_log.Information(fileContext, messageToUser.std_str());
             continue;
         }
@@ -1702,20 +1710,17 @@ std::vector<Evaluation::CExtendedScanResult> CPostProcessing::LocateEvaluationLo
 
         Evaluation::CScanResult scanResult = logReader.m_scan[0];
 
-        if (0 != scanResult.CalculateOffset(CMolecule(m_userSettings.m_molecule)))
-        {
-            m_log.Information(filenameContext, "Failed to calculate the offset of the scan, no flux will be calculated.");
-            continue;
-        }
-
         std::string message;
-        if (!scanResult.CalculatePlumeCentre(CMolecule(m_userSettings.m_molecule), message))
+        auto plumeProperties = novac::CalculatePlumeProperties(scanResult, m_userSettings.m_molecule, message);
+        if (plumeProperties == nullptr)
         {
             m_log.Information(filenameContext, message + " Scan does not see the plume, no flux will be calculated.");
             continue;
         }
         else
         {
+            scanResult.m_plumeProperties = *plumeProperties;
+
             std::stringstream msg;
             msg << "Scan sees the plume at: " << scanResult.m_plumeProperties.plumeCenter;
             msg << " +- " << scanResult.m_plumeProperties.plumeCenterError;

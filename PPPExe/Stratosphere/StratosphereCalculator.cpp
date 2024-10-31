@@ -3,7 +3,6 @@
 
 #include <PPPLib/Logging.h>
 #include <PPPLib/Evaluation/ScanResult.h>
-#include <PPPLib/Molecule.h>
 #include <PPPLib/File/EvaluationLogFileHandler.h>
 #include <PPPLib/File/Filesystem.h>
 
@@ -72,7 +71,7 @@ CStratosphereCalculator::CStratosphereCalculator(
     novac::ILogger& log,
     const Configuration::CNovacPPPConfiguration& setup,
     const Configuration::CUserConfiguration& userSettings)
-        : m_log(log), m_setup(setup), m_userSettings(userSettings)
+    : m_log(log), m_setup(setup), m_userSettings(userSettings)
 {
 }
 
@@ -116,7 +115,7 @@ void CStratosphereCalculator::BuildMeasurementList(const std::list <Evaluation::
 {
     std::list<Evaluation::CExtendedScanResult>::const_iterator p = results.begin();
     novac::CString mainFitWindowName = novac::CString(m_userSettings.m_fitWindowsToUse[m_userSettings.m_mainFitWindow]);
-    CMolecule specie = CMolecule(m_userSettings.m_molecule);
+    Molecule specie = Molecule(m_userSettings.m_molecule);
 
     // loop through all the evaluation log files
     while (p != results.end())
@@ -221,10 +220,9 @@ void CStratosphereCalculator::InsertIntoMeasurementList(const CMeasurementDay& m
 
 double CStratosphereCalculator::GetAMF_ZenithMeasurement(const CGPSData& location, const CDateTime& gmtTime)
 {
-    double SZA, SAZ;
-    novac::GetSunPosition(gmtTime, location.m_latitude, location.m_longitude, SZA, SAZ);
+    novac::SolarPosition sun = novac::GetSunPosition(gmtTime, location);
 
-    return 1.0 / cos(DEGREETORAD * SZA);
+    return 1.0 / std::cos(sun.zenithAngle.InRadians());
 }
 
 

@@ -18,7 +18,7 @@ using namespace FileHandler;
 CEvaluationLogFileHandler::CEvaluationLogFileHandler(
     novac::ILogger &log,
     std::string evaluationLog,
-    CMolecule molecule,
+    novac::Molecule molecule,
     novac::SpectrometerModel *spectrometerModel)
     : m_evaluationLog(evaluationLog), m_molecule(molecule), m_log(log)
 {
@@ -414,12 +414,6 @@ RETURN_CODE CEvaluationLogFileHandler::ReadEvaluationLog()
                         m_scan.back().RemoveResult(0); // remove dark
                     }
 
-                    // 2. Calculate the offset
-                    if (m_scan.size() >= 0)
-                    {
-                        m_scan.back().CalculateOffset(m_molecule);
-                    }
-
                     // start the next scan.
                 }
 
@@ -671,9 +665,6 @@ RETURN_CODE CEvaluationLogFileHandler::ReadEvaluationLog()
         newResult.RemoveResult(0); // remove sky
         newResult.RemoveResult(0); // remove dark
     }
-
-    // Calculate the offset
-    newResult.CalculateOffset(m_molecule);
 
     // Insert the new scan
     m_scan.push_back(newResult);
@@ -1188,27 +1179,12 @@ RETURN_CODE CEvaluationLogFileHandler::WriteEvaluationLog(const std::string &fil
         string.AppendFormat("\tflux=%.2lf\n", scan.GetFlux());
         string.AppendFormat("\tbattery=%.2f\n", scan.GetBatteryVoltage());
         string.AppendFormat("\ttemperature=%.2f\n", scan.GetTemperature());
+
         // The mode
-        if (scan.IsDirectSunMeasurement())
-            string.Append("\tmode=direct_sun\n");
-        else if (scan.IsWindMeasurement())
-            string.Append("\tmode=wind\n");
-        else if (scan.IsStratosphereMeasurement())
-            string.Append("\tmode=stratospheric\n");
-        else if (scan.IsCompositionMeasurement())
-            string.Append("\tmode=composition\n");
-        else
-            string.Append("\tmode=plume\n");
+        string.AppendFormat("\tmode=%s\n", novac::ToString(scan.m_measurementMode).c_str());
 
         // The type of instrument used...
-        if (scan.GetInstrumentType() == novac::NovacInstrumentType::Gothenburg)
-        {
-            string.Append("\tinstrumenttype=gothenburg\n");
-        }
-        else if (scan.GetInstrumentType() == novac::NovacInstrumentType::Heidelberg)
-        {
-            string.Append("\tinstrumenttype=heidelberg\n");
-        }
+        string.AppendFormat("\tinstrumenttype=%s\n", novac::ToString(scan.m_instrumentType).c_str());
 
         // Finally, the version of the file and the version of the program
         string.Append("\tversion=2.0\n");
