@@ -78,8 +78,8 @@ std::unique_ptr<CExtendedScanResult> CPostEvaluationController::EvaluateScan(
             novac::CString archivePakFileName, archiveTxtFileName;
 
             // loop through all possible measurement modes and see if the evaluation log file already exists
-            MEASUREMENT_MODE modes[] = { MEASUREMENT_MODE::MODE_FLUX, MEASUREMENT_MODE::MODE_WINDSPEED, MEASUREMENT_MODE::MODE_STRATOSPHERE, MEASUREMENT_MODE::MODE_DIRECT_SUN,
-                                        MEASUREMENT_MODE::MODE_COMPOSITION, MEASUREMENT_MODE::MODE_LUNAR, MEASUREMENT_MODE::MODE_TROPOSPHERE, MEASUREMENT_MODE::MODE_MAXDOAS };
+            MeasurementMode modes[] = { MeasurementMode::Flux, MeasurementMode::Windspeed, MeasurementMode::Stratosphere, MeasurementMode::DirectSun,
+                                        MeasurementMode::Composition, MeasurementMode::Lunar, MeasurementMode::Troposphere, MeasurementMode::MaxDoas };
             for (int k = 0; k < 8; ++k)
             {
                 PostEvaluationIO::GetArchivingfileName(m_log, archivePakFileName, archiveTxtFileName, fitWindowName, pakFileName, m_userSettings.m_outputDirectory.std_str(), modes[k]);
@@ -179,7 +179,7 @@ std::unique_ptr<CExtendedScanResult> CPostEvaluationController::EvaluateScan(
 
 bool CPostEvaluationController::IsGoodEnoughToCalculateFlux(LogContext context, std::unique_ptr<CScanResult>& result) const
 {
-    if (MEASUREMENT_MODE::MODE_FLUX != result->GetMeasurementMode())
+    if (MeasurementMode::Flux != result->GetMeasurementMode())
     {
         m_log.Information(context, "Scan is not a flux measurement, no flux will be calculated.");
         return false;

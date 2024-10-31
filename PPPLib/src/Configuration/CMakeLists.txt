@@ -8,7 +8,6 @@ set(NPPLIB_CONFIGURATION_HEADERS
     ${PppLib_INCLUDE_DIRS}/PPPLib/Configuration/EvaluationConfiguration.h
     ${PppLib_INCLUDE_DIRS}/PPPLib/Configuration/InstrumentCalibrationConfiguration.h
     ${PppLib_INCLUDE_DIRS}/PPPLib/Configuration/InstrumentConfiguration.h
-    ${PppLib_INCLUDE_DIRS}/PPPLib/Configuration/InstrumentType.h
     ${PppLib_INCLUDE_DIRS}/PPPLib/Configuration/InstrumentLocation.h
     ${PppLib_INCLUDE_DIRS}/PPPLib/Configuration/LocationConfiguration.h
     ${PppLib_INCLUDE_DIRS}/PPPLib/Configuration/NovacPPPConfiguration.h

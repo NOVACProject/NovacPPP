@@ -19,7 +19,7 @@ bool Evaluation::PostEvaluationIO::GetArchivingfileName(
     const novac::CString& fitWindowName,
     const novac::CString& temporaryScanFile,
     std::string outputDirectory,
-    MEASUREMENT_MODE mode)
+    novac::MeasurementMode mode)
 {
     novac::CSpectrumIO reader;
     novac::CSpectrum tmpSpec;
@@ -88,14 +88,14 @@ bool Evaluation::PostEvaluationIO::GetArchivingfileName(
     // 4c. Write the code for the measurement mode
     switch (mode)
     {
-    case MEASUREMENT_MODE::MODE_FLUX:   modeStr.Format("flux"); break;
-    case MEASUREMENT_MODE::MODE_WINDSPEED: modeStr.Format("wind"); break;
-    case MEASUREMENT_MODE::MODE_STRATOSPHERE: modeStr.Format("stra"); break;
-    case MEASUREMENT_MODE::MODE_DIRECT_SUN: modeStr.Format("dsun"); break;
-    case MEASUREMENT_MODE::MODE_COMPOSITION:  modeStr.Format("comp"); break;
-    case MEASUREMENT_MODE::MODE_LUNAR:  modeStr.Format("luna"); break;
-    case MEASUREMENT_MODE::MODE_TROPOSPHERE:  modeStr.Format("trop"); break;
-    case MEASUREMENT_MODE::MODE_MAXDOAS:  modeStr.Format("maxd"); break;
+    case novac::MeasurementMode::Flux:   modeStr.Format("flux"); break;
+    case novac::MeasurementMode::Windspeed: modeStr.Format("wind"); break;
+    case novac::MeasurementMode::Stratosphere: modeStr.Format("stra"); break;
+    case novac::MeasurementMode::DirectSun: modeStr.Format("dsun"); break;
+    case novac::MeasurementMode::Composition:  modeStr.Format("comp"); break;
+    case novac::MeasurementMode::Lunar:  modeStr.Format("luna"); break;
+    case novac::MeasurementMode::Troposphere:  modeStr.Format("trop"); break;
+    case novac::MeasurementMode::MaxDoas:  modeStr.Format("maxd"); break;
     default:    modeStr.Format("unkn"); break;
     }
 
@@ -186,11 +186,11 @@ RETURN_CODE Evaluation::PostEvaluationIO::WriteEvaluationResult(
         string.Append("\tmode=plume\n");
 
     // The type of instrument used...
-    if (instrLocation->m_instrumentType == INSTRUMENT_TYPE::INSTR_GOTHENBURG)
+    if (instrLocation->m_instrumentType == novac::NovacInstrumentType::Gothenburg)
     {
         string.Append("\tinstrumenttype=gothenburg\n");
     }
-    else if (instrLocation->m_instrumentType == INSTRUMENT_TYPE::INSTR_HEIDELBERG)
+    else if (instrLocation->m_instrumentType == novac::NovacInstrumentType::Heidelberg)
     {
         string.Append("\tinstrumenttype=heidelberg\n");
     }
@@ -234,7 +234,7 @@ RETURN_CODE Evaluation::PostEvaluationIO::WriteEvaluationResult(
 
     string.AppendFormat("\tplumecompleteness=%.2lf\n", plumeCompleteness);
     string.AppendFormat("\tplumecentre=%.2lf\n", plumeCentre1);
-    if (instrLocation->m_instrumentType == INSTRUMENT_TYPE::INSTR_HEIDELBERG)
+    if (instrLocation->m_instrumentType == novac::NovacInstrumentType::Heidelberg)
         string.AppendFormat("\tplumecentre_phi=%.2lf\n", plumeCentre2);
     string.AppendFormat("\tplumeedge1=%.2lf\n", result->m_plumeProperties.plumeEdgeLow.ValueOrDefault(NOT_A_NUMBER));
     string.AppendFormat("\tplumeedge2=%.2lf\n", result->m_plumeProperties.plumeEdgeHigh.ValueOrDefault(NOT_A_NUMBER));
@@ -250,11 +250,11 @@ RETURN_CODE Evaluation::PostEvaluationIO::WriteEvaluationResult(
 
 
     // 1. write the header
-    if (instrLocation->m_instrumentType == INSTRUMENT_TYPE::INSTR_GOTHENBURG)
+    if (instrLocation->m_instrumentType == novac::NovacInstrumentType::Gothenburg)
     {
         string.Format("#scanangle\t");
     }
-    else if (instrLocation->m_instrumentType == INSTRUMENT_TYPE::INSTR_HEIDELBERG)
+    else if (instrLocation->m_instrumentType == novac::NovacInstrumentType::Heidelberg)
     {
         string.Format("#observationangle\tazimuth\t");
     }

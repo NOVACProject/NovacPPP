@@ -445,12 +445,12 @@ int CWindSpeedCalculator::CalculateWindSpeed(const novac::CString& evalLog1, con
     relativePlumeHeight.m_plumeAltitude -= location.m_altitude;
 
     // Calculate the correlation between the time series
-    if (location.m_instrumentType == INSTRUMENT_TYPE::INSTR_GOTHENBURG)
+    if (location.m_instrumentType == NovacInstrumentType::Gothenburg)
     {
         if (RETURN_CODE::SUCCESS != CalculateCorrelation(evalLog1, evalLog2))
             return 1;
     }
-    else if (location.m_instrumentType == INSTRUMENT_TYPE::INSTR_HEIDELBERG)
+    else if (location.m_instrumentType == NovacInstrumentType::Heidelberg)
     {
         if (RETURN_CODE::SUCCESS != CalculateCorrelation_Heidelberg(evalLog1))
             return 1;
@@ -461,7 +461,7 @@ int CWindSpeedCalculator::CalculateWindSpeed(const novac::CString& evalLog1, con
 
     // 1. Get the distance between the two viewing directions...
     double scanAngle = 0.0;
-    if (location.m_instrumentType == INSTRUMENT_TYPE::INSTR_GOTHENBURG)
+    if (location.m_instrumentType == NovacInstrumentType::Gothenburg)
     {
         if (fabs(location.m_coneangle - 90.0) < 1)
         {

@@ -200,7 +200,7 @@ std::map<SpectrometerId, std::vector<CPostCalibration::BasicScanInfo>> CPostCali
         novac::CDateTime startTime;
         CString serial;
         int channel;
-        MEASUREMENT_MODE mode;
+        MeasurementMode mode;
 
         BasicScanInfo info;
 

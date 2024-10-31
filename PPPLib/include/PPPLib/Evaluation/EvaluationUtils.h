@@ -1,5 +1,6 @@
 #pragma once
 
+#include <SpectralEvaluation/NovacEnums.h>
 #include <SpectralEvaluation/File/ScanFileHandler.h>
 #include <SpectralEvaluation/Evaluation/FitWindow.h>
 #include <SpectralEvaluation/Spectra/SpectrometerModel.h>
@@ -7,7 +8,6 @@
 #include <PPPLib/Configuration/InstrumentConfiguration.h>
 #include <PPPLib/Configuration/UserConfiguration.h>
 #include <PPPLib/PostProcessingStatistics.h>
-#include <PPPLib/Measurement.h>
 
 namespace Evaluation
 {

@@ -28,7 +28,7 @@ public:
         const novac::CString& fitWindowName,
         const novac::CString& temporaryScanFile,
         std::string outputDirectory,
-        MEASUREMENT_MODE mode);
+        novac::MeasurementMode mode);
 
     /** Writes the evaluation result to the appropriate log file.
         @param result - a CScanResult holding information about the result

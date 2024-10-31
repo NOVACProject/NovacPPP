@@ -15,10 +15,7 @@ extern novac::CVolcanoInfo g_volcanoes; // <-- A list of all known volcanoes
 
 CScanResult::CScanResult(const CScanResult& s2) :
     m_flux(s2.m_flux),
-    m_plumeProperties(s2.m_plumeProperties),
-    m_instrumentType(s2.m_instrumentType),
-    m_measurementMode(s2.m_measurementMode),
-    m_specNum(s2.m_specNum)    
+    m_specNum(s2.m_specNum)
 {
     this->m_spec = s2.m_spec;
     this->m_specInfo = s2.m_specInfo;
@@ -28,6 +25,10 @@ CScanResult::CScanResult(const CScanResult& s2) :
 
     this->m_skySpecInfo = s2.m_skySpecInfo;
     this->m_darkSpecInfo = s2.m_darkSpecInfo;
+
+    this->m_plumeProperties = s2.m_plumeProperties;
+    this->m_instrumentType = s2.m_instrumentType;
+    this->m_measurementMode = s2.m_measurementMode;
 }
 
 CScanResult& CScanResult::operator=(const CScanResult& s2)
@@ -203,7 +204,6 @@ bool CScanResult::CalculatePlumeCentre(const CMolecule& specie, std::string& mes
 
 bool CScanResult::CalculatePlumeCentre(const CMolecule& specie, CPlumeInScanProperty& plumeProperties, std::string& message)
 {
-    unsigned long i; // iterator
     double offset = m_plumeProperties.offset;
     m_plumeProperties = CPlumeInScanProperty(); // notify that the plume-centre position is unknown
     m_plumeProperties.offset = offset; // we didn't mean to mess with the offset...
@@ -211,7 +211,9 @@ bool CScanResult::CalculatePlumeCentre(const CMolecule& specie, CPlumeInScanProp
     // if this is a wind-speed measurement, then there's no use to try to 
     //  calculate the plume-centre
     if (this->IsWindMeasurement())
+    {
         return false;
+    }
 
     // get the specie index
     int specieIndex = GetSpecieIndex(specie.name);
@@ -227,7 +229,7 @@ bool CScanResult::CalculatePlumeCentre(const CMolecule& specie, CPlumeInScanProp
     std::vector<double> column(m_specNum);
     std::vector<double> columnError(m_specNum);
     std::vector<bool> badEval(m_specNum);
-    for (i = 0; i < m_specNum; ++i)
+    for (unsigned long i = 0; i < m_specNum; ++i)
     {
         if (m_spec[i].IsBad() || m_spec[i].IsDeleted())
         {
@@ -476,27 +478,27 @@ std::string CScanResult::GetSerial() const
 
 /** Checks the kind of measurement that we have here and sets the flag 'm_measurementMode'
         to the appropriate value... */
-MEASUREMENT_MODE CScanResult::CheckMeasurementMode()
+MeasurementMode CScanResult::CheckMeasurementMode()
 {
     if (IsStratosphereMeasurement())
     {
-        m_measurementMode = MEASUREMENT_MODE::MODE_STRATOSPHERE;
+        m_measurementMode = MeasurementMode::Stratosphere;
     }
     else if (IsWindMeasurement())
     {
-        m_measurementMode = MEASUREMENT_MODE::MODE_WINDSPEED;
+        m_measurementMode = MeasurementMode::Windspeed;
     }
     else if (this->IsDirectSunMeasurement())
     {
-        m_measurementMode = MEASUREMENT_MODE::MODE_DIRECT_SUN;
+        m_measurementMode = MeasurementMode::DirectSun;
     }
     else if (this->IsCompositionMeasurement())
     {
-        m_measurementMode = MEASUREMENT_MODE::MODE_COMPOSITION;
+        m_measurementMode = MeasurementMode::Composition;
     }
     else
     {
-        m_measurementMode = MEASUREMENT_MODE::MODE_FLUX;
+        m_measurementMode = MeasurementMode::Flux;
     }
 
     return m_measurementMode;
@@ -504,27 +506,27 @@ MEASUREMENT_MODE CScanResult::CheckMeasurementMode()
 
 /** Checks the kind of measurement that we have here and sets the flag 'm_measurementMode'
         to the appropriate value... */
-MEASUREMENT_MODE CScanResult::GetMeasurementMode() const
+MeasurementMode CScanResult::GetMeasurementMode() const
 {
     if (IsStratosphereMeasurement())
     {
-        return MEASUREMENT_MODE::MODE_STRATOSPHERE;
+        return MeasurementMode::Stratosphere;
     }
     else if (IsWindMeasurement())
     {
-        return MEASUREMENT_MODE::MODE_WINDSPEED;
+        return MeasurementMode::Windspeed;
     }
     else if (this->IsDirectSunMeasurement())
     {
-        return MEASUREMENT_MODE::MODE_DIRECT_SUN;
+        return MeasurementMode::DirectSun;
     }
     else if (this->IsCompositionMeasurement())
     {
-        return MEASUREMENT_MODE::MODE_COMPOSITION;
+        return MeasurementMode::Composition;
     }
     else
     {
-        return MEASUREMENT_MODE::MODE_FLUX;
+        return MeasurementMode::Flux;
     }
 }
 
@@ -539,7 +541,7 @@ bool CScanResult::IsStratosphereMeasurement() const
         return false;
 
     // Check if we've already checked the mode
-    if (m_measurementMode == MEASUREMENT_MODE::MODE_STRATOSPHERE)
+    if (m_measurementMode == MeasurementMode::Stratosphere)
         return true;
 
     // If the measurement started at a time when the Solar Zenith Angle 
@@ -579,13 +581,13 @@ bool CScanResult::IsFluxMeasurement()
 {
 
     // Check if we've already checked the mode
-    if (m_measurementMode == MEASUREMENT_MODE::MODE_FLUX)
+    if (m_measurementMode == MeasurementMode::Flux)
         return true;
 
     // Then check the measurement mode
     this->CheckMeasurementMode();
 
-    if (m_measurementMode == MEASUREMENT_MODE::MODE_FLUX)
+    if (m_measurementMode == MeasurementMode::Flux)
     {
         return true;
     }
@@ -615,7 +617,7 @@ bool CScanResult::IsWindMeasurement_Gothenburg() const
         return false;
 
     // Check if we've already checked the mode
-    if (m_measurementMode == MEASUREMENT_MODE::MODE_WINDSPEED)
+    if (m_measurementMode == MeasurementMode::Windspeed)
         return true;
 
     // If the measurement started at a time when the Solar Zenith Angle 
@@ -665,7 +667,7 @@ bool CScanResult::IsWindMeasurement_Heidelberg() const
         return false;
 
     // Check if we've already checked the mode
-    if (m_measurementMode == MEASUREMENT_MODE::MODE_WINDSPEED)
+    if (m_measurementMode == MeasurementMode::Windspeed)
         return true;
 
     // Check if the channel-number is equal to 0
@@ -805,13 +807,13 @@ RETURN_CODE CScanResult::GetStopTime(unsigned long index, CDateTime& t) const
 }
 
 /** Sets the type of the instrument used */
-void CScanResult::SetInstrumentType(INSTRUMENT_TYPE type)
+void CScanResult::SetInstrumentType(NovacInstrumentType type)
 {
     this->m_instrumentType = type;
 }
 
 /** Sets the type of the instrument used */
-INSTRUMENT_TYPE CScanResult::GetInstrumentType() const
+NovacInstrumentType CScanResult::GetInstrumentType() const
 {
     return this->m_instrumentType;
 }

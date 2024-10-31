@@ -21,7 +21,7 @@ void CInstrumentLocation::Clear()
     this->m_validFrom = CDateTime(0000, 00, 00, 0, 0, 0);
     this->m_validTo = CDateTime(9999, 12, 31, 23, 59, 59);
     this->m_volcano = "";
-    this->m_instrumentType = INSTRUMENT_TYPE::INSTR_GOTHENBURG;
+    this->m_instrumentType = NovacInstrumentType::Gothenburg;
     this->m_spectrometerModel = "S2000";
 }
 

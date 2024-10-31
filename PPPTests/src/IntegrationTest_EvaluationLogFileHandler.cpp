@@ -29,7 +29,7 @@ TEST_CASE("EvaluationLogFileHandler, valid scan file read successfully - Case 1"
 
     REQUIRE(sut.m_evaluationLog == filename);
     REQUIRE(sut.m_molecule.name == "SO2");
-    REQUIRE(sut.m_instrumentType == INSTRUMENT_TYPE::INSTR_GOTHENBURG);
+    REQUIRE(sut.m_instrumentType == novac::NovacInstrumentType::Gothenburg);
     REQUIRE(sut.m_spectrometerModel.modelName == "AVASPEC"); // this should have been retrieved from the data
 
     REQUIRE(sut.m_specieName.size() == 3);
@@ -108,7 +108,7 @@ TEST_CASE("EvaluationLogFileHandler, valid scan file from ReEvaluation in NovacP
 
     REQUIRE(sut.m_evaluationLog == filename);
     REQUIRE(sut.m_molecule.name == "SO2");
-    REQUIRE(sut.m_instrumentType == INSTRUMENT_TYPE::INSTR_GOTHENBURG);
+    REQUIRE(sut.m_instrumentType == novac::NovacInstrumentType::Gothenburg);
     REQUIRE(sut.m_spectrometerModel.modelName == "AVASPEC"); // this should have been retrieved from the data
 
     REQUIRE(sut.m_specieName.size() == 4);

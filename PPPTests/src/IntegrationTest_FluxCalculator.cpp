@@ -205,7 +205,7 @@ TEST_CASE("CalculateFlux, reads values from configuration and verifies input", "
         REQUIRE(fluxResult.m_compass == 123.456); // this value should be taken frm the configuration, not from the contents of the scan.
         REQUIRE(fluxResult.m_coneAngle == 60.0); // same value as in the evaluation log file
         REQUIRE(fluxResult.m_instrument == "2002128M1"); // same value as in the evaluation log file
-        REQUIRE(fluxResult.m_instrumentType == INSTRUMENT_TYPE::INSTR_GOTHENBURG); // same value as in the evaluation log file
+        REQUIRE(fluxResult.m_instrumentType == novac::NovacInstrumentType::Gothenburg); // same value as in the evaluation log file
     }
 }
 
@@ -270,7 +270,7 @@ TEST_CASE("CalculateFlux, valid scan with column values in molec/cm2 calculates 
         REQUIRE(fluxResult.m_compass == 266.0);
         REQUIRE(fluxResult.m_coneAngle == 60.0);
         REQUIRE(fluxResult.m_instrument == "2002128M1");
-        REQUIRE(fluxResult.m_instrumentType == INSTRUMENT_TYPE::INSTR_GOTHENBURG);
+        REQUIRE(fluxResult.m_instrumentType == novac::NovacInstrumentType::Gothenburg);
 
         REQUIRE(fluxResult.m_completeness == Approx(0.852).margin(0.001));
         REQUIRE(fluxResult.m_plumeCentre[0] == Approx(50.0).margin(0.1));

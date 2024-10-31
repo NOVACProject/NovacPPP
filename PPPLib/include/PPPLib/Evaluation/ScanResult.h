@@ -2,12 +2,10 @@
 
 #include <SpectralEvaluation/Spectra/Spectrum.h>
 #include <SpectralEvaluation/Evaluation/EvaluationResult.h>
-#include <SpectralEvaluation/Flux/PlumeInScanProperty.h>
 #include <SpectralEvaluation/Evaluation/FitParameter.h>
 #include <SpectralEvaluation/Evaluation/BasicScanEvaluationResult.h>
 
 #include <PPPLib/PPPLib.h>
-#include <PPPLib/Measurement.h>
 #include <PPPLib/Flux/FluxResult.h>
 #include <PPPLib/Molecule.h>
 #include <PPPLib/MFC/CString.h>
@@ -44,16 +42,6 @@ public:
 
     /** The calculated flux and the parameters used to calculate the flux */
     Flux::FluxResult m_flux;
-
-    /** This contains the parameters of the plume that is seen in this scan,
-        such as the completeness or the centre angle of the plume. */
-    novac::CPlumeInScanProperty m_plumeProperties;
-
-    /** The type of the instrument used for this scan */
-    INSTRUMENT_TYPE m_instrumentType = INSTRUMENT_TYPE::INSTR_GOTHENBURG;
-
-    /** Flag to signal if this is a wind measurement, a scan, or something else. */
-    MEASUREMENT_MODE m_measurementMode = MEASUREMENT_MODE::MODE_UNKNOWN;
 
     // ----------------------------------------------------------------------
     // --------------------- PUBLIC METHODS ---------------------------------
@@ -125,11 +113,11 @@ public:
 
     /** Checks the kind of measurement that we have here and sets the
         flag 'm_measurementMode' to the appropriate value... */
-    MEASUREMENT_MODE CheckMeasurementMode();
+    novac::MeasurementMode CheckMeasurementMode();
 
     /** Checks the kind of measurement that we have here without
         setting the flag 'm_measurementMode' */
-    MEASUREMENT_MODE GetMeasurementMode() const;
+    novac::MeasurementMode GetMeasurementMode() const;
 
     /** Returns true if this is a flux measurement */
     bool IsFluxMeasurement();
@@ -360,10 +348,10 @@ public:
     const novac::CString GetSpecieName(unsigned long spectrumNum, unsigned long specieNum) const { return (IsValidSpectrumIndex(spectrumNum)) ? m_spec[spectrumNum].m_referenceResult[specieNum].m_specieName : 0; }
 
     /** Sets the type of the instrument used */
-    void SetInstrumentType(INSTRUMENT_TYPE type);
+    void SetInstrumentType(novac::NovacInstrumentType type);
 
     /** Returns the type of the instrument used */
-    INSTRUMENT_TYPE GetInstrumentType() const;
+    novac::NovacInstrumentType GetInstrumentType() const;
 
 private:
 

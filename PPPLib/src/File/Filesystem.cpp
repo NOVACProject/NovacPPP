@@ -45,7 +45,7 @@ void SearchDirectoryForFiles(const novac::CString& path, bool includeSubdirector
                 {
                     int channel;
                     CDateTime startTime;
-                    MEASUREMENT_MODE mode;
+                    MeasurementMode mode;
                     novac::CString serial;
                     novac::CFileUtils::GetInfoFromFileName(fileName, startTime, serial, channel, mode);
 

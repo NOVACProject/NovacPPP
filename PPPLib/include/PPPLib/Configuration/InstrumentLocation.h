@@ -1,8 +1,8 @@
 #pragma once
 
-#include <PPPLib/Configuration/InstrumentType.h>
 #include <SpectralEvaluation/DateTime.h>
 #include <SpectralEvaluation/GPSData.h>
+#include <SpectralEvaluation/NovacEnums.h>
 #include <PPPLib/MFC/CString.h>
 
 /**
@@ -52,7 +52,7 @@ public:
     double m_tilt = 0.0;
 
     /** The type of instrument that was used */
-    INSTRUMENT_TYPE m_instrumentType = INSTRUMENT_TYPE::INSTR_GOTHENBURG;
+    novac::NovacInstrumentType m_instrumentType = novac::NovacInstrumentType::Gothenburg;
 
     /** The type of spectrometer */
     std::string m_spectrometerModel = "S2000";

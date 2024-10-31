@@ -24,8 +24,8 @@ bool Evaluation::IsGoodEnoughToEvaluate(
         return false;
     }
 
-    if ((instrLocation.m_instrumentType == INSTRUMENT_TYPE::INSTR_GOTHENBURG && skySpectrum.ExposureTime() > userSettings.m_maxExposureTime_got) ||
-        (instrLocation.m_instrumentType == INSTRUMENT_TYPE::INSTR_HEIDELBERG && skySpectrum.ExposureTime() > userSettings.m_maxExposureTime_hei))
+    if ((instrLocation.m_instrumentType == novac::NovacInstrumentType::Gothenburg && skySpectrum.ExposureTime() > userSettings.m_maxExposureTime_got) ||
+        (instrLocation.m_instrumentType == novac::NovacInstrumentType::Heidelberg && skySpectrum.ExposureTime() > userSettings.m_maxExposureTime_hei))
     {
         std::stringstream msg;
         msg << "Sky spectrum has too long exposure time (" << skySpectrum.ExposureTime() << " ms)";

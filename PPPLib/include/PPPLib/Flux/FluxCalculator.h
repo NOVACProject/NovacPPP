@@ -106,7 +106,7 @@ public:
         const Meteorology::WindField& wind,
         const Geometry::PlumeHeight& relativePlumeHeight,
         double compass,
-        INSTRUMENT_TYPE type,
+        novac::NovacInstrumentType type,
         double coneAngle = 90.0,
         double tilt = 0.0);
 

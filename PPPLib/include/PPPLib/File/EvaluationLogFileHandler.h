@@ -43,7 +43,7 @@ public:
             @param result - the evaluation result, can be NULL
             @param string - will on return be filled with the output line to be written to the evaluation-log.
             @return SUCCESS - always */
-    static RETURN_CODE FormatEvaluationResult(const novac::CSpectrumInfo* info, const novac::CEvaluationResult* result, INSTRUMENT_TYPE iType, double maxIntensity, int nSpecies, novac::CString& string);
+    static RETURN_CODE FormatEvaluationResult(const novac::CSpectrumInfo* info, const novac::CEvaluationResult* result, novac::NovacInstrumentType iType, double maxIntensity, int nSpecies, novac::CString& string);
 
     // ------------------- PUBLIC DATA -------------------------
 
@@ -59,7 +59,7 @@ public:
     CMolecule m_molecule;
 
     /** The instrument-type for the instrument that generated the results */
-    INSTRUMENT_TYPE m_instrumentType;
+    novac::NovacInstrumentType m_instrumentType;
 
     /** The additional spectrum information of one spectrum. */
     novac::CSpectrumInfo m_specInfo;

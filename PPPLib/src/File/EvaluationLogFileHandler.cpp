@@ -48,7 +48,7 @@ CEvaluationLogFileHandler::CEvaluationLogFileHandler(
         m_col.squeezeError[i] = 12;
     }
 
-    m_instrumentType = INSTRUMENT_TYPE::INSTR_GOTHENBURG;
+    m_instrumentType = novac::NovacInstrumentType::Gothenburg;
 
     if (spectrometerModel != nullptr)
     {
@@ -977,11 +977,11 @@ void CEvaluationLogFileHandler::ParseScanInformation(novac::CSpectrumInfo &scanI
             sscanf(pt + 15, "%s", instrumentType);
             if (novac::Equals(instrumentType, "heidelberg"))
             {
-                m_instrumentType = INSTRUMENT_TYPE::INSTR_HEIDELBERG;
+                m_instrumentType = novac::NovacInstrumentType::Heidelberg;
             }
             else
             {
-                m_instrumentType = INSTRUMENT_TYPE::INSTR_GOTHENBURG;
+                m_instrumentType = novac::NovacInstrumentType::Gothenburg;
             }
         }
     }
@@ -1201,11 +1201,11 @@ RETURN_CODE CEvaluationLogFileHandler::WriteEvaluationLog(const std::string &fil
             string.Append("\tmode=plume\n");
 
         // The type of instrument used...
-        if (scan.GetInstrumentType() == INSTRUMENT_TYPE::INSTR_GOTHENBURG)
+        if (scan.GetInstrumentType() == novac::NovacInstrumentType::Gothenburg)
         {
             string.Append("\tinstrumenttype=gothenburg\n");
         }
-        else if (scan.GetInstrumentType() == INSTRUMENT_TYPE::INSTR_HEIDELBERG)
+        else if (scan.GetInstrumentType() == novac::NovacInstrumentType::Heidelberg)
         {
             string.Append("\tinstrumenttype=heidelberg\n");
         }
@@ -1238,11 +1238,11 @@ RETURN_CODE CEvaluationLogFileHandler::WriteEvaluationLog(const std::string &fil
         fprintf(f, "%s", string.c_str());
 
         // ----------------------- write the header --------------------------------
-        if (m_instrumentType == INSTRUMENT_TYPE::INSTR_GOTHENBURG)
+        if (m_instrumentType == novac::NovacInstrumentType::Gothenburg)
         {
             string.Format("#scanangle\t");
         }
-        else if (m_instrumentType == INSTRUMENT_TYPE::INSTR_HEIDELBERG)
+        else if (m_instrumentType == novac::NovacInstrumentType::Heidelberg)
         {
             string.Format("#observationangle\tazimuth\t");
         }
@@ -1279,7 +1279,7 @@ RETURN_CODE CEvaluationLogFileHandler::WriteEvaluationLog(const std::string &fil
     return RETURN_CODE::SUCCESS;
 }
 
-RETURN_CODE CEvaluationLogFileHandler::FormatEvaluationResult(const novac::CSpectrumInfo *info, const novac::CEvaluationResult *result, INSTRUMENT_TYPE iType, double maxIntensity, int nSpecies, novac::CString &string)
+RETURN_CODE CEvaluationLogFileHandler::FormatEvaluationResult(const novac::CSpectrumInfo *info, const novac::CEvaluationResult *result, novac::NovacInstrumentType iType, double maxIntensity, int nSpecies, novac::CString &string)
 {
     if (result != nullptr && result->m_referenceResult.size() < static_cast<size_t>(nSpecies))
     {
@@ -1290,7 +1290,7 @@ RETURN_CODE CEvaluationLogFileHandler::FormatEvaluationResult(const novac::CSpec
     string.Format("%.0lf\t", info->m_scanAngle);
 
     // 2. The azimuth angle
-    if (iType == INSTRUMENT_TYPE::INSTR_HEIDELBERG)
+    if (iType == novac::NovacInstrumentType::Heidelberg)
     {
         string.AppendFormat("%.0lf\t", info->m_scanAngle2);
     }

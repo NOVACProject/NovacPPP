@@ -26,7 +26,7 @@ void CFileUtils::GetDirectory(CString& fileName)
     }
 }
 
-bool CFileUtils::GetInfoFromFileName(const CString fileName, CDateTime& start, CString& serial, int& channel, MEASUREMENT_MODE& mode)
+bool CFileUtils::GetInfoFromFileName(const CString fileName, CDateTime& start, CString& serial, int& channel, MeasurementMode& mode)
 {
     CString sDate, sTime;
     int iDate, iTime;
@@ -36,7 +36,7 @@ bool CFileUtils::GetInfoFromFileName(const CString fileName, CDateTime& start, C
     start = CDateTime();
     serial = "";
     channel = 0;
-    mode = MEASUREMENT_MODE::MODE_FLUX;
+    mode = MeasurementMode::Flux;
 
     // make a local copy of the filename
     CString name;
@@ -122,43 +122,43 @@ bool CFileUtils::GetInfoFromFileName(const CString fileName, CDateTime& start, C
     }
     if (Equals(resToken, "flux", 4))
     {
-        mode = MEASUREMENT_MODE::MODE_FLUX;
+        mode = MeasurementMode::Flux;
     }
     else if (Equals(resToken, "wind", 4))
     {
-        mode = MEASUREMENT_MODE::MODE_WINDSPEED;
+        mode = MeasurementMode::Windspeed;
     }
     else if (Equals(resToken, "stra", 4))
     {
-        mode = MEASUREMENT_MODE::MODE_STRATOSPHERE;
+        mode = MeasurementMode::Stratosphere;
     }
     else if (Equals(resToken, "dsun", 4))
     {
-        mode = MEASUREMENT_MODE::MODE_DIRECT_SUN;
+        mode = MeasurementMode::DirectSun;
     }
     else if (Equals(resToken, "comp", 4))
     {
-        mode = MEASUREMENT_MODE::MODE_COMPOSITION;
+        mode = MeasurementMode::Composition;
     }
     else if (Equals(resToken, "luna", 4))
     {
-        mode = MEASUREMENT_MODE::MODE_LUNAR;
+        mode = MeasurementMode::Lunar;
     }
     else if (Equals(resToken, "trop", 4))
     {
-        mode = MEASUREMENT_MODE::MODE_TROPOSPHERE;
+        mode = MeasurementMode::Troposphere;
     }
     else if (Equals(resToken, "maxd", 4))
     {
-        mode = MEASUREMENT_MODE::MODE_MAXDOAS;
+        mode = MeasurementMode::MaxDoas;
     }
     else if (Equals(resToken, "unkn", 4))
     {
-        mode = MEASUREMENT_MODE::MODE_UNKNOWN;
+        mode = MeasurementMode::Unknown;
     }
     else
     {
-        mode = MEASUREMENT_MODE::MODE_UNKNOWN;
+        mode = MeasurementMode::Unknown;
     }
 
     return true;

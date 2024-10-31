@@ -13,7 +13,7 @@ TEST_CASE("CNovacPPPConfiguration GetInstrumentLocation returns expected value",
     configuredLocation.m_altitude = 1633;
     configuredLocation.m_compass = 172.0;
     configuredLocation.m_coneangle = 60.0;
-    configuredLocation.m_instrumentType = INSTRUMENT_TYPE::INSTR_GOTHENBURG;
+    configuredLocation.m_instrumentType = NovacInstrumentType::Gothenburg;
     configuredLocation.m_latitude = -39.237137;
     configuredLocation.m_longitude = 175.556395;
     configuredLocation.m_locationName = "RUD02_Iwikau_Village";
@@ -190,7 +190,7 @@ TEST_CASE("CNovacPPPConfiguration GetDarkCorrection returns expected value", "[C
     configuredLocation.m_altitude = 1633;
     configuredLocation.m_compass = 172.0;
     configuredLocation.m_coneangle = 60.0;
-    configuredLocation.m_instrumentType = INSTRUMENT_TYPE::INSTR_GOTHENBURG;
+    configuredLocation.m_instrumentType = NovacInstrumentType::Gothenburg;
     configuredLocation.m_latitude = -39.237137;
     configuredLocation.m_longitude = 175.556395;
     configuredLocation.m_locationName = "RUD02_Iwikau_Village";

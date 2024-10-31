@@ -1,8 +1,8 @@
 #pragma once
 
 #include <PPPLib/Definitions.h>
-#include <PPPLib/Measurement.h>
 #include <SpectralEvaluation/DateTime.h>
+#include <SpectralEvaluation/NovacEnums.h>
 #include <SpectralEvaluation/Flux/PlumeInScanProperty.h>
 
 namespace Evaluation
@@ -33,7 +33,7 @@ public:
         m_fitWindowName.reserve(MAX_FIT_WINDOWS);
     }
 
-    CExtendedScanResult(std::string serial, novac::CDateTime scanStartTime, MEASUREMENT_MODE mode)
+    CExtendedScanResult(std::string serial, novac::CDateTime scanStartTime, novac::MeasurementMode mode)
         : m_instrumentSerial(serial), m_measurementMode(mode), m_startTime(scanStartTime)
     {
         m_evalLogFile.reserve(MAX_FIT_WINDOWS);
@@ -42,7 +42,7 @@ public:
 
     std::string m_instrumentSerial = "";
 
-    MEASUREMENT_MODE m_measurementMode = MEASUREMENT_MODE::MODE_FLUX;
+    novac::MeasurementMode m_measurementMode = novac::MeasurementMode::Flux;
 
     /** The full path and file-name to the .pak-file containing the spectra
         from which this result was computed. */

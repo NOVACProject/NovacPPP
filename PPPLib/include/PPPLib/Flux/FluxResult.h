@@ -1,7 +1,7 @@
 #pragma once
 
 #include <SpectralEvaluation/DateTime.h>
-#include <PPPLib/Configuration/InstrumentType.h>
+#include <SpectralEvaluation/NovacEnums.h>
 #include <PPPLib/Meteorology/MeteorologySource.h>
 #include <PPPLib/Meteorology/WindField.h>
 #include <PPPLib/Geometry/PlumeHeight.h>
@@ -66,7 +66,7 @@ public:
     std::string m_instrument;
 
     /** The type of the instrument that collected this scan */
-    INSTRUMENT_TYPE m_instrumentType = INSTRUMENT_TYPE::INSTR_GOTHENBURG;
+    novac::NovacInstrumentType m_instrumentType = novac::NovacInstrumentType::Gothenburg;
 
     /** The calculated offset of the scan */
     double m_scanOffset = 0.0;

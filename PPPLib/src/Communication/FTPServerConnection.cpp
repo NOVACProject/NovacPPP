@@ -445,7 +445,7 @@ void DownloadFile(
     novac::CString userMessage;
     CDateTime start;
     int channel;
-    MEASUREMENT_MODE mode;
+    MeasurementMode mode;
 
     // if this is a .pak-file then check the date when it was created
     if (novac::CFileUtils::GetInfoFromFileName(fileInfo.fileName, start, serial, channel, mode))

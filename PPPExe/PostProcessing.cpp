@@ -728,7 +728,7 @@ void CPostProcessing::CalculateGeometries(
         }
 
         // If this is not a flux-measurement, then there's no use in trying to use it...
-        if (scanResult1.m_measurementMode != MEASUREMENT_MODE::MODE_FLUX)
+        if (scanResult1.m_measurementMode != MeasurementMode::Flux)
         {
             continue;
         }
@@ -759,7 +759,7 @@ void CPostProcessing::CalculateGeometries(
             }
 
             // If this is not a flux-measurement, then there's no use in trying to use it...
-            if (scanResult2.m_measurementMode != MEASUREMENT_MODE::MODE_FLUX)
+            if (scanResult2.m_measurementMode != MeasurementMode::Flux)
             {
                 continue;
             }
@@ -956,7 +956,7 @@ void CPostProcessing::CalculateFluxes(novac::LogContext context, const std::vect
         const novac::LogContext fileContext = context.With(novac::LogContext::FileName, evalLog.std_str());
 
         // If this is not a flux-measurement, then there's no point in calculating any flux for it
-        if (scanResult.m_measurementMode != MEASUREMENT_MODE::MODE_FLUX)
+        if (scanResult.m_measurementMode != MeasurementMode::Flux)
         {
             continue;
         }
@@ -1058,7 +1058,7 @@ void CPostProcessing::WriteFluxResult_XML(const std::list<Flux::FluxResult>& cal
         fprintf(f, "\t\t<serial>%s</serial>\n", fluxResult.m_instrument.c_str());
 
         // extract the instrument type
-        if (fluxResult.m_instrumentType == INSTRUMENT_TYPE::INSTR_HEIDELBERG)
+        if (fluxResult.m_instrumentType == NovacInstrumentType::Heidelberg)
         {
             typeStr.Format("heidelberg");
         }
@@ -1191,7 +1191,7 @@ void CPostProcessing::WriteFluxResult_Txt(const std::list<Flux::FluxResult>& cal
     for (const Flux::FluxResult& fluxResult : calculatedFluxes)
     {
         // extract the instrument type
-        if (fluxResult.m_instrumentType == INSTRUMENT_TYPE::INSTR_HEIDELBERG)
+        if (fluxResult.m_instrumentType == NovacInstrumentType::Heidelberg)
         {
             typeStr.Format("heidelberg");
         }
@@ -1376,7 +1376,7 @@ void CPostProcessing::CalculateDualBeamWindSpeeds(novac::LogContext context, con
     novac::CString userMessage, windLogFile;
     CDateTime startTime, startTime2;
     int channel, channel2, nWindMeasFound = 0;
-    MEASUREMENT_MODE meas_mode, meas_mode2;
+    MeasurementMode meas_mode, meas_mode2;
     Configuration::CInstrumentLocation location;
     WindSpeedMeasurement::CWindSpeedCalculator calculator(m_log, m_userSettings);
     Geometry::PlumeHeight plumeHeight;
@@ -1397,14 +1397,14 @@ void CPostProcessing::CalculateDualBeamWindSpeeds(novac::LogContext context, con
 
             novac::CFileUtils::GetInfoFromFileName(fileName, startTime, serial, channel, meas_mode);
 
-            if (meas_mode == MEASUREMENT_MODE::MODE_WINDSPEED)
+            if (meas_mode == MeasurementMode::Windspeed)
             {
                 ++nWindMeasFound;
 
                 // first check if this is a heidelberg instrument
                 location = m_setup.GetInstrumentLocation(serial.std_str(), startTime);
 
-                if (location.m_instrumentType == INSTRUMENT_TYPE::INSTR_HEIDELBERG)
+                if (location.m_instrumentType == NovacInstrumentType::Heidelberg)
                 {
                     // this is a heidelberg instrument
                     heidelbergList.push_back(fileNameAndPath.std_str());
@@ -1683,7 +1683,7 @@ std::vector<Evaluation::CExtendedScanResult> CPostProcessing::LocateEvaluationLo
     {
         int channel;
         CDateTime startTime;
-        MEASUREMENT_MODE mode;
+        MeasurementMode mode;
         novac::CString serial;
         novac::CFileUtils::GetInfoFromFileName(filename, startTime, serial, channel, mode);
 

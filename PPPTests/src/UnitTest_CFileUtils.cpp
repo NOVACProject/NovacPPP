@@ -8,7 +8,7 @@ TEST_CASE("GetInfoFromFileName behaves as expected", "[CFileUtils]")
     CDateTime start;
     CString serial;
     int channel;
-    MEASUREMENT_MODE mode;
+    MeasurementMode mode;
 
     SECTION("Finds correct serial")
     {
@@ -43,10 +43,10 @@ TEST_CASE("GetInfoFromFileName behaves as expected", "[CFileUtils]")
     SECTION("Finds correct mode")
     {
         CFileUtils::GetInfoFromFileName("D2J2134_170129_0317_1.pak", start, serial, channel, mode);
-        REQUIRE(mode == MEASUREMENT_MODE::MODE_FLUX); // default
+        REQUIRE(mode == MeasurementMode::Flux); // default
 
         CFileUtils::GetInfoFromFileName("D2J2134_170129_0317_1_wind.pak", start, serial, channel, mode);
-        REQUIRE(mode == MEASUREMENT_MODE::MODE_WINDSPEED);
+        REQUIRE(mode == MeasurementMode::Windspeed);
     }
 }
 }

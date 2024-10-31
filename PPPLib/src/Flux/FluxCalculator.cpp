@@ -547,7 +547,7 @@ double CFluxCalculator::CalculateFlux(
     const Meteorology::WindField& wind,
     const Geometry::PlumeHeight& relativePlumeHeight,
     double compass,
-    INSTRUMENT_TYPE type,
+    novac::NovacInstrumentType type,
     double coneAngle,
     double tilt)
 {
@@ -559,12 +559,12 @@ double CFluxCalculator::CalculateFlux(
     assert(!std::isnan(windDirection));
     assert(!std::isnan(plumeHeight));
 
-    if (type == INSTRUMENT_TYPE::INSTR_HEIDELBERG)
+    if (type == novac::NovacInstrumentType::Heidelberg)
     {
         m_log.Debug(context, "Calculating flux for Mark-II type instrument");
         return CalculateFluxHeidelbergScanner(scanAngle, scanAngle2, column, offset, nDataPoints, windSpeed, windDirection, plumeHeight, compass);
     }
-    else if (type == INSTRUMENT_TYPE::INSTR_GOTHENBURG)
+    else if (type == novac::NovacInstrumentType::Gothenburg)
     {
         if (coneAngle < 10.0 || coneAngle > 91.0)
         {
