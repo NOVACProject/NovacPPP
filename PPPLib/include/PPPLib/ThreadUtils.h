@@ -1,10 +1,5 @@
-#ifndef NOVAC_PPPLIB_THREAD_UTILS_H
-#define NOVAC_PPPLIB_THREAD_UTILS_H
-
-#include <thread>
 #include <mutex>
 #include <list>
-#include <PPPLib/MFC/CList.h>
 
 namespace novac
 {
@@ -14,8 +9,7 @@ struct GuardedValue
 public:
     GuardedValue()
         : m_value(0)
-    {
-    }
+    {}
 
     int GetValue() const
     {
@@ -51,8 +45,7 @@ struct GuardedList
 public:
     GuardedList()
         : m_items()
-    {
-    }
+    {}
 
     void Clear()
     {
@@ -67,8 +60,7 @@ public:
     }
 
     /** Attempts to get the first item in the list.
-        @return true if the list contained any items and the first item was retrieved, otherwise false.
-    */
+        @return true if the list contained any items and the first item was retrieved, otherwise false. */
     bool PopFront(T& item)
     {
         std::lock_guard<std::mutex> lock(guard);
@@ -82,21 +74,11 @@ public:
     }
 
     template<class Y>
-    void CopyTo(novac::CList<Y, Y&>& dst)
-    {
-        std::lock_guard<std::mutex> lock(guard);
-        for (T item : m_items)
-        {
-            dst.AddTail(Y(item));
-        }
-    }
-
-    template<class Y>
     void CopyTo(std::vector<Y>& dst)
     {
         std::lock_guard<std::mutex> lock(guard);
         dst.clear();
-        dst.resize(m_items.size());
+        dst.reserve(m_items.size());
         for (T item : m_items)
         {
             dst.push_back(Y(item));
@@ -115,5 +97,3 @@ private:
 };
 
 }  // namespace novac
-
-#endif  // NOVAC_PPPLIB_THREAD_UTILS_H

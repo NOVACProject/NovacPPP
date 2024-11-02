@@ -19,12 +19,10 @@ using namespace novac;
 
 CScanEvaluation::CScanEvaluation(const Configuration::CUserConfiguration& userSettings, novac::ILogger& log)
     : ScanEvaluationBase(log), m_userSettings(userSettings)
-{
-}
+{}
 
 CScanEvaluation::~CScanEvaluation()
-{
-}
+{}
 
 std::unique_ptr<CScanResult> CScanEvaluation::EvaluateScan(
     novac::LogContext context,
@@ -221,7 +219,7 @@ std::unique_ptr<CScanResult> CScanEvaluation::EvaluateOpenedScan(
         if (ret == 0)
         {
             // if something went wrong when reading the spectrum
-            if (scan.m_lastError == novac::CSpectrumIO::ERROR_SPECTRUM_NOT_FOUND || scan.m_lastError == novac::CSpectrumIO::ERROR_EOF)
+            if (scan.m_lastError == novac::FileError::SpectrumNotFound || scan.m_lastError == novac::FileError::EndOfFile)
             {
                 // at the end of the file, quit the 'while' loop
                 break;
@@ -231,10 +229,10 @@ std::unique_ptr<CScanResult> CScanEvaluation::EvaluateOpenedScan(
                 novac::CString errMsg = "Faulty spectrum found in pak file.";
                 switch (scan.m_lastError)
                 {
-                case novac::CSpectrumIO::ERROR_CHECKSUM_MISMATCH:
+                case novac::FileError::ChecksumMismatch:
                     errMsg.Append(", Checksum mismatch. Spectrum ignored");
                     break;
-                case novac::CSpectrumIO::ERROR_DECOMPRESS:
+                case novac::FileError::DecompressionError:
                     errMsg.Append(", Decompression error. Spectrum ignored");
                     break;
                 default:

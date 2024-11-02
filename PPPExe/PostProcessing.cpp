@@ -722,7 +722,7 @@ void CPostProcessing::CalculateGeometries(
         ++nFilesChecked1; // for debugging...
 
         // if this scan does not see a large enough portion of the plume, then ignore it...
-        if (!scanResult1.m_scanProperties.completeness.HasValue() || 
+        if (!scanResult1.m_scanProperties.completeness.HasValue() ||
             scanResult1.m_scanProperties.completeness.Value() < m_userSettings.m_calcGeometry_CompletenessLimit)
         {
             continue;
@@ -1587,7 +1587,9 @@ void CPostProcessing::SortEvaluationLogs(std::vector<Evaluation::CExtendedScanRe
 
     // If this list consists of only one element, then we're done
     if (evalLogs.size() <= 1)
+    {
         return;
+    }
 
     // Divide the list into two, and sort each one of them
     int index = 0;
@@ -1611,6 +1613,12 @@ void CPostProcessing::SortEvaluationLogs(std::vector<Evaluation::CExtendedScanRe
     {
         Evaluation::CExtendedScanResult& leftItem = *iteratorLeft;
         Evaluation::CExtendedScanResult& rightItem = *iteratorRight;
+
+        // While we're looking through the data, do some sanity check of the data.
+        assert(!leftItem.m_instrumentSerial.empty());
+        assert(!rightItem.m_instrumentSerial.empty());
+        assert(!leftItem.m_evalLogFile.empty());
+        assert(!rightItem.m_evalLogFile.empty());
 
         if (rightItem.m_startTime < leftItem.m_startTime)
         {

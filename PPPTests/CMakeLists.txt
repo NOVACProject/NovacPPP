@@ -21,6 +21,7 @@ add_executable(PPPTests
     ${CMAKE_CURRENT_LIST_DIR}/src/UnitTest_CString.cpp
     ${CMAKE_CURRENT_LIST_DIR}/src/UnitTest_CStringTokenizer.cpp
     ${CMAKE_CURRENT_LIST_DIR}/src/UnitTest_GeometryCalculator.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/src/UnitTest_GuardedList.cpp
     ${CMAKE_CURRENT_LIST_DIR}/src/UnitTest_EvaluationConfiguration.cpp
     ${CMAKE_CURRENT_LIST_DIR}/src/UnitTest_EvaluationConfigurationParser.cpp
     ${CMAKE_CURRENT_LIST_DIR}/src/UnitTest_NovacPPPConfiguration.cpp
