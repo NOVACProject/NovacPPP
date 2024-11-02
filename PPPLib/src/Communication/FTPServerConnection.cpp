@@ -10,7 +10,7 @@
 #include <PPPLib/MFC/CSingleLock.h>
 #include <PPPLib/MFC/CFtpUtils.h>
 #include <PPPLib/MFC/CFileUtils.h>
-#include <PPPLib/ThreadUtils.h>
+#include <SpectralEvaluation/ThreadUtils.h>
 #include <Poco/Net/FTPClientSession.h>
 #include <Poco/Net/NetException.h>
 #include <Poco/Path.h>
@@ -145,7 +145,7 @@ int CFTPServerConnection::DownloadDataFromFTP(
     downloadThread.join();
 
     // copy the data to the output list
-    downloadedFiles.CopyTo<std::string>(pakFileList);
+    downloadedFiles.CopyTo(pakFileList);
 
     return 0;
 }

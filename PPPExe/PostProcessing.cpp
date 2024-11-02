@@ -35,7 +35,7 @@
 #include <PPPLib/File/Filesystem.h>
 #include <PPPLib/VolcanoInfo.h>
 #include <PPPLib/MFC/CFileUtils.h>
-#include <PPPLib/ThreadUtils.h>
+#include <SpectralEvaluation/ThreadUtils.h>
 #include <SpectralEvaluation/Evaluation/CrossSectionData.h>
 #include <SpectralEvaluation/Calibration/StandardCrossSectionSetup.h>
 #include <SpectralEvaluation/VectorUtils.h>

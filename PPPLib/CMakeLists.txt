@@ -47,7 +47,6 @@ add_library(PPPLib
     ${PppLib_INCLUDE_DIRS}/PPPLib/PostProcessingStatistics.h
     ${PppLib_INCLUDE_DIRS}/PPPLib/PostProcessingUtils.h
     ${PppLib_INCLUDE_DIRS}/PPPLib/SpectrometerId.h
-    ${PppLib_INCLUDE_DIRS}/PPPLib/ThreadUtils.h
     ${PppLib_INCLUDE_DIRS}/PPPLib/VolcanoInfo.h
 
     ${CMAKE_CURRENT_LIST_DIR}/src/ContinuationOfProcessing.cpp
