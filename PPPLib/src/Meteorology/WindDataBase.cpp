@@ -1,5 +1,5 @@
 #include <PPPLib/Meteorology/WindDataBase.h>
-#include <PPPLib/Gps.h>
+#include <SpectralEvaluation/GPSData.h>
 #include <math.h>
 
 namespace Meteorology
@@ -414,7 +414,6 @@ bool CWindDataBase::GetWindField_Exact(const novac::CDateTime& time, const novac
     }
 }
 
-// This function takes the wind-field in the nearest datapoint in the database
 bool CWindDataBase::GetWindField_Nearest(const novac::CDateTime& time, const novac::CGPSData& location, WindField& windField) const
 {
     double smallestDistance = 1e99; // the smallest distance from a point in the database to 'location'
@@ -426,7 +425,7 @@ bool CWindDataBase::GetWindField_Nearest(const novac::CDateTime& time, const nov
         const novac::CGPSData& pos = GetLocation(k);
 
         // compare the position with the given one
-        double dist = Gps::GpsMath::GPSDistance(location.m_latitude, location.m_longitude, pos.m_latitude, pos.m_longitude);
+        const double dist = novac::GpsMath::Distance(location, pos);
         if (dist < smallestDistance)
         {
             closestPoint = k;

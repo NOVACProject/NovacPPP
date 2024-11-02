@@ -41,7 +41,6 @@ add_library(PPPLib
 
     ${PppLib_INCLUDE_DIRS}/PPPLib/ContinuationOfProcessing.h
     ${PppLib_INCLUDE_DIRS}/PPPLib/Definitions.h
-    ${PppLib_INCLUDE_DIRS}/PPPLib/Gps.h
     ${PppLib_INCLUDE_DIRS}/PPPLib/Logging.h
     ${PppLib_INCLUDE_DIRS}/PPPLib/PPPLib.h
     ${PppLib_INCLUDE_DIRS}/PPPLib/PostProcessingStatistics.h
@@ -50,7 +49,6 @@ add_library(PPPLib
     ${PppLib_INCLUDE_DIRS}/PPPLib/VolcanoInfo.h
 
     ${CMAKE_CURRENT_LIST_DIR}/src/ContinuationOfProcessing.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/src/Gps.cpp
     ${CMAKE_CURRENT_LIST_DIR}/src/VolcanoInfo.cpp
     ${CMAKE_CURRENT_LIST_DIR}/src/PostProcessingStatistics.cpp
     ${CMAKE_CURRENT_LIST_DIR}/src/PostProcessingUtils.cpp
