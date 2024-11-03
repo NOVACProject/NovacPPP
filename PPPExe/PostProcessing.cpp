@@ -959,7 +959,7 @@ void CPostProcessing::CalculateFluxes(novac::LogContext context, const std::vect
         const novac::CString& evalLog = scanResult.m_evalLogFile[m_userSettings.m_mainFitWindow];
         const CPlumeInScanProperty& plume = scanResult.m_scanProperties;
 
-        const novac::LogContext fileContext = context.With(novac::LogContext::FileName, evalLog.std_str());
+        const novac::LogContext fileContext = context.With(novac::LogContext::FileName, novac::GetFileName(evalLog.std_str()));
 
         // If this is not a flux-measurement, then there's no point in calculating any flux for it
         if (scanResult.m_measurementMode != MeasurementMode::Flux)
@@ -970,7 +970,6 @@ void CPostProcessing::CalculateFluxes(novac::LogContext context, const std::vect
         {
             m_log.Information(fileContext, "Scan does not see the plume. Will not calculate any flux.");
             continue;
-
         }
 
         // if the completeness is too low then ignore this scan.
@@ -992,8 +991,6 @@ void CPostProcessing::CalculateFluxes(novac::LogContext context, const std::vect
             continue;
         }
 
-        m_log.Information(fileContext, "Calculating flux");
-
         // Calculate the flux. This also takes care of writing
         // the results to file
         Flux::FluxResult fluxResult;
@@ -1003,6 +1000,10 @@ void CPostProcessing::CalculateFluxes(novac::LogContext context, const std::vect
             msg << "Calculated flux of " << fluxResult.m_flux << " [kg/s] for scan.";
             m_log.Information(fileContext, msg.str());
             calculatedFluxes.push_back(fluxResult);
+        }
+        else
+        {
+            m_log.Information(fileContext, "No flux calculated for scan.");
         }
     }
 
