@@ -102,8 +102,8 @@ RETURN_CODE CEvaluationConfigurationParser::WriteConfigurationFile(
     fprintf(f, "\t<serial>%s</serial>\n", settings.m_serial.c_str());
 
     // ------ loop through each of the fit windows and write them to file --------
-    const int nWindows = settings.NumberOfFitWindows();
-    for (int k = 0; k < nWindows; ++k)
+    const size_t nWindows = settings.NumberOfFitWindows();
+    for (size_t k = 0; k < nWindows; ++k)
     {
         settings.GetFitWindow(k, window, from, to);
 
@@ -171,8 +171,8 @@ RETURN_CODE CEvaluationConfigurationParser::WriteConfigurationFile(
     }
 
     // ------ loop through each of the dark-current settings and write them to file --------
-    unsigned long numberOfDarkSettings = darkSettings.GetSettingsNum();
-    for (unsigned long k = 0; k < numberOfDarkSettings; ++k)
+    const size_t numberOfDarkSettings = darkSettings.GetSettingsNum();
+    for (size_t k = 0; k < numberOfDarkSettings; ++k)
     {
         darkSettings.GetDarkSettings(k, dSettings, from, to);
 
@@ -461,7 +461,7 @@ RETURN_CODE CEvaluationConfigurationParser::Parse_CalibrationSettings(Configurat
 
 RETURN_CODE CEvaluationConfigurationParser::Parse_Reference(novac::CFitWindow& window)
 {
-    int nRef = window.nRef;
+    const size_t nRef = window.nRef;
 
     // parse the file, one line at a time.
     szToken = "start";

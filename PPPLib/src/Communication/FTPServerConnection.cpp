@@ -23,9 +23,10 @@
 
 extern novac::CVolcanoInfo g_volcanoes; // <-- A list of all known volcanoes
 
-using namespace Communication;
 using namespace novac;
 
+namespace Communication
+{
 
 struct ftpLogin
 {
@@ -87,6 +88,10 @@ int CFTPServerConnection::DownloadDataFromFTP(
     const novac::CString& password,
     std::vector<std::string>& pakFileList)
 {
+    if (m_userSettings.m_volcano < 0)
+    {
+        throw std::logic_error("Cannot download data from FTP unless the volcano has been set properly.");
+    }
 
     unsigned int nRounds = 0;
 
@@ -98,7 +103,7 @@ int CFTPServerConnection::DownloadDataFromFTP(
 
     // Extract the name of the server and each of the sub-directories specified
     std::string directory;
-    novac::CFtpUtils ftpUtil{ g_volcanoes, m_userSettings.m_volcano };
+    novac::CFtpUtils ftpUtil{ g_volcanoes, static_cast<unsigned int>(m_userSettings.m_volcano) };
     ftpUtil.SplitPathIntoServerAndDirectory(serverDir, login.server, directory);
 
 
@@ -191,7 +196,7 @@ bool UploadAFile(Poco::Net::FTPClientSession& ftp, const std::string& localFileN
     return true;
 }
 
-bool DownloadFileList(
+static bool DownloadFileList(
     novac::ILogger& log,
     novac::LogContext context,
     const Configuration::CUserConfiguration& userSettings,
@@ -199,7 +204,12 @@ bool DownloadFileList(
     const std::string& directory,
     std::vector<novac::CFileInfo>& filesFound)
 {
-    novac::CFtpUtils ftpHelper{ g_volcanoes, userSettings.m_volcano };
+    if (userSettings.m_volcano < 0)
+    {
+        throw std::logic_error("Cannot download data from FTP unless the volcano has been set properly.");
+    }
+
+    novac::CFtpUtils ftpHelper{ g_volcanoes, static_cast<unsigned int>(userSettings.m_volcano) };
 
     try
     {
@@ -228,7 +238,7 @@ bool DownloadFileList(
     return true;
 }
 
-bool DownloadFileList(
+static bool DownloadFileList(
     novac::ILogger& log,
     novac::LogContext context,
     const Configuration::CUserConfiguration& userSettings,
@@ -236,7 +246,7 @@ bool DownloadFileList(
     const std::string& directory,
     std::vector<std::string>& filesFound)
 {
-    novac::CFtpUtils ftpHelper{ g_volcanoes, userSettings.m_volcano };
+    novac::CFtpUtils ftpHelper{ g_volcanoes, static_cast<unsigned int>(userSettings.m_volcano) };
     context = context.With("dir", directory);
 
     try
@@ -519,9 +529,14 @@ void DownloadDataFromDir(
 
 int CFTPServerConnection::DownloadFileListFromFTP(const novac::CString& serverDir, std::vector<std::string>& fileList, const novac::CString& username, const novac::CString& password)
 {
+    if (m_userSettings.m_volcano < 0)
+    {
+        throw std::logic_error("Cannot download data from FTP unless the volcano has been set properly.");
+    }
+
     // Extract the name of the server and each of the sub-directories specified
     std::string server, directory;
-    novac::CFtpUtils ftpUtil{ g_volcanoes, m_userSettings.m_volcano };
+    novac::CFtpUtils ftpUtil{ g_volcanoes, static_cast<unsigned int>(m_userSettings.m_volcano) };
     ftpUtil.SplitPathIntoServerAndDirectory(serverDir, server, directory);
 
     // create a new connection
@@ -613,7 +628,10 @@ int CFTPServerConnection::UploadResults(
     const novac::CString& password,
     const std::vector<std::string>& fileList)
 {
-    CDateTime now;
+    if (m_userSettings.m_volcano < 0)
+    {
+        throw std::logic_error("Cannot upload results to FTP unless the volcano has been set properly.");
+    }
 
     // Extract the name of the server and the login
     ftpLogin login;
@@ -638,11 +656,11 @@ int CFTPServerConnection::UploadResults(
     }
 
     // Enter the volcano's directory
-    volcanoName.Format("%s", (const char*)g_volcanoes.GetSimpleVolcanoName(m_userSettings.m_volcano));
+    volcanoName.Format("%s", (const char*)g_volcanoes.GetSimpleVolcanoName(static_cast<unsigned int>(m_userSettings.m_volcano)));
     ftp.setWorkingDirectory(volcanoName.std_str());
 
     // Enter the upload-directory
-    now.SetToNow();
+    const CDateTime now = CDateTime::Now();
     directoryName.Format("PostProcessed_BETA_%04d%02d%02d", now.year, now.month, now.day);
     try
     {
@@ -656,7 +674,7 @@ int CFTPServerConnection::UploadResults(
     ftp.setWorkingDirectory(directoryName.std_str());
 
     // Upload the files
-    for(std::string localFile : fileList)
+    for (std::string localFile : fileList)
     {
         // Get the file-name to upload the file to...
         remoteFile.Format(localFile.c_str());
@@ -673,3 +691,5 @@ int CFTPServerConnection::UploadResults(
 
     return 0;
 }
+
+} // namespace Communication

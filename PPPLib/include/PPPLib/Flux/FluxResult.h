@@ -45,7 +45,7 @@ public:
     /** The number of good spectra in this measurement. This is also
         the number of column-values that were used to calculate the
         flux */
-    int m_numGoodSpectra = 0;
+    unsigned int m_numGoodSpectra = 0U;
 
     /** The cone-angle of the scanner that collected this scan */
     double m_coneAngle = 0.0;

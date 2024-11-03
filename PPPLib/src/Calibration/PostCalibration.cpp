@@ -421,7 +421,7 @@ void CPostCalibration::CreateEvaluationSettings(const SpectrometerId& spectromet
     // Get the windows defined for this instrument
     std::vector<Configuration::FitWindowWithTime> originalWindowsForThisChannel;
     std::vector<Configuration::FitWindowWithTime> originalWindowsForOtherChannels;
-    for (int idx = 0; idx < instrument->m_eval.NumberOfFitWindows(); ++idx)
+    for (size_t idx = 0; idx < instrument->m_eval.NumberOfFitWindows(); ++idx)
     {
         Configuration::FitWindowWithTime window;
         if (!instrument->m_eval.GetFitWindow(idx, window.window, window.validFrom, window.validTo))

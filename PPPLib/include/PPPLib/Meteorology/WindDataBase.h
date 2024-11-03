@@ -148,7 +148,8 @@ private:
     // --------------------- PRIVATE METHODS --------------------------------
     // ----------------------------------------------------------------------
 
-    /** Returns the location that belongs to the given location index. */
+    /** Returns the location that belongs to the given location index.
+        index == -1 represents a wind field which is valid everywhere. */
     const novac::CGPSData& GetLocation(int index) const;
 
     /** Retrieves the index of a given location in our list of locations.

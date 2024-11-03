@@ -101,8 +101,8 @@ private:
     /** The calculated values. These will be filled in after a call to 'CalculateDelay'
             Before that they are null and cannot be used. The length of these arrays are 'm_length' */
     double* shift, * corr, * used, * delays;
-    int			m_arrayLength;
-    int			m_length;
+    size_t m_arrayLength = 0U;
+    size_t m_length = 0U;
     int			m_firstDataPoint;
 
     /** This is the start-time and the stop time of the measurement.

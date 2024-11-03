@@ -19,9 +19,6 @@ struct FitWindowWithTime
 class CEvaluationConfiguration
 {
 public:
-    CEvaluationConfiguration();
-    ~CEvaluationConfiguration();
-
     /** The serial-number of the spectrometer for which this setup is valid */
     std::string m_serial;
 
@@ -35,13 +32,13 @@ public:
     void InsertFitWindow(const novac::CFitWindow& window, const novac::CDateTime& validFrom, const novac::CDateTime& validTo);
 
     /** Sets the properties of the fit-window number 'index'
-        @param index - the index of the configuration to set. If this is < 0
-            this function returns 1 and nothing is changed
+        @param index - the index of the configuration to set.
+            If this is larger than MAX_FIT_WINDOWS then std::invalid_argument is thrown
         @param window - the fit-window to set
         @param validFrom - the time from which this fit-window is valid.
         @param validTo - the time to which this fit-window is valid.
         @return 0 if sucessful, otherwise 1 */
-    int SetFitWindow(int index, const novac::CFitWindow& window, novac::CDateTime& validFrom, novac::CDateTime& validTo);
+    int SetFitWindow(size_t index, const novac::CFitWindow& window, novac::CDateTime& validFrom, novac::CDateTime& validTo);
 
     /** Retrieves a fit-window from the configuration for this spectrometer.
         @param index - the index of the configuration to get. If this is < 0 or
@@ -51,10 +48,10 @@ public:
         @param validFrom - the time from which this fit-window is valid
         @param validTo - the time to which this fit-window is valid
         @return 0 if sucessful, otherwise 1 */
-    int GetFitWindow(int index, novac::CFitWindow& window, novac::CDateTime& validFrom, novac::CDateTime& validTo) const;
+    int GetFitWindow(size_t index, novac::CFitWindow& window, novac::CDateTime& validFrom, novac::CDateTime& validTo) const;
 
     /** Gets the number of fit-windows configured for this spectrometer */
-    int NumberOfFitWindows() const { return static_cast<int>(m_windows.size()); }
+    size_t NumberOfFitWindows() const { return m_windows.size(); }
 
     /** This goes through the settings for the fit-windows to test that the settings
         make sense.

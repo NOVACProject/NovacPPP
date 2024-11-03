@@ -45,7 +45,7 @@ CStringTokenizer::CStringTokenizer(const char* text, const char* separators)
 
 const char* CStringTokenizer::NextToken()
 {
-    if ((unsigned int)m_curToken >= m_tokens.size())
+    if (m_curToken >= m_tokens.size())
     {
         return nullptr;
     }

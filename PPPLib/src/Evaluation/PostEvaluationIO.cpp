@@ -129,7 +129,6 @@ RETURN_CODE Evaluation::PostEvaluationIO::WriteEvaluationResult(
     novac::CString* txtFileName)
 {
     novac::CString string, string1, string2, string3, string4;
-    long itSpectrum, itSpecie; // iterators
     novac::CString pakFile, txtFile, evalSummaryLog;
     novac::CString wsSrc, wdSrc, phSrc;
     novac::CDateTime dateTime;
@@ -242,11 +241,11 @@ RETURN_CODE Evaluation::PostEvaluationIO::WriteEvaluationResult(
     }
     string.Append("starttime\tstoptime\tname\tspecsaturation\tfitsaturation\tcounts_ms\tdelta\tchisquare\texposuretime\tnumspec\t");
 
-    for (itSpecie = 0; itSpecie < window->nRef; ++itSpecie)
+    for (size_t specieIdx = 0; specieIdx < window->nRef; ++specieIdx)
     {
-        string.AppendFormat("column(%s)\tcolumnerror(%s)\t", window->ref[itSpecie].m_specieName.c_str(), window->ref[itSpecie].m_specieName.c_str());
-        string.AppendFormat("shift(%s)\tshifterror(%s)\t", window->ref[itSpecie].m_specieName.c_str(), window->ref[itSpecie].m_specieName.c_str());
-        string.AppendFormat("squeeze(%s)\tsqueezeerror(%s)\t", window->ref[itSpecie].m_specieName.c_str(), window->ref[itSpecie].m_specieName.c_str());
+        string.AppendFormat("column(%s)\tcolumnerror(%s)\t", window->ref[specieIdx].m_specieName.c_str(), window->ref[specieIdx].m_specieName.c_str());
+        string.AppendFormat("shift(%s)\tshifterror(%s)\t", window->ref[specieIdx].m_specieName.c_str(), window->ref[specieIdx].m_specieName.c_str());
+        string.AppendFormat("squeeze(%s)\tsqueezeerror(%s)\t", window->ref[specieIdx].m_specieName.c_str(), window->ref[specieIdx].m_specieName.c_str());
     }
     string.Append("isgoodpoint\toffset\tflag");
 
@@ -269,22 +268,30 @@ RETURN_CODE Evaluation::PostEvaluationIO::WriteEvaluationResult(
     {
         sky.m_info.m_fitIntensity = (float)(sky.MaxValue(window->fitLow, window->fitHigh));
         if (sky.NumSpectra() > 0)
+        {
             sky.Div(sky.NumSpectra());
+        }
         FileHandler::CEvaluationLogFileHandler::FormatEvaluationResult(&sky.m_info, nullptr, instrLocation->m_instrumentType, spectrometerModel.maximumIntensityForSingleReadout * sky.NumSpectra(), window->nRef, string1);
     }
     scan->GetDark(dark);
     if (dark.m_info.m_interlaceStep > 1)
+    {
         dark.InterpolateSpectrum();
+    }
     if (dark.m_length > 0)
     {
         dark.m_info.m_fitIntensity = (float)(dark.MaxValue(window->fitLow, window->fitHigh));
         if (dark.NumSpectra() > 0)
+        {
             dark.Div(dark.NumSpectra());
+        }
         FileHandler::CEvaluationLogFileHandler::FormatEvaluationResult(&dark.m_info, nullptr, instrLocation->m_instrumentType, spectrometerModel.maximumIntensityForSingleReadout * dark.NumSpectra(), window->nRef, string2);
     }
     scan->GetOffset(offset);
     if (offset.m_info.m_interlaceStep > 1)
+    {
         offset.InterpolateSpectrum();
+    }
     if (offset.m_length > 0)
     {
         offset.m_info.m_fitIntensity = (float)(offset.MaxValue(window->fitLow, window->fitHigh));
@@ -326,12 +333,12 @@ RETURN_CODE Evaluation::PostEvaluationIO::WriteEvaluationResult(
     // ----------------------------------------------------------------------------------------------
     // 3. ------------------- Then write the parameters for each spectrum ---------------------------
     // ----------------------------------------------------------------------------------------------
-    for (itSpectrum = 0; itSpectrum < result->GetEvaluatedNum(); ++itSpectrum)
+    for (size_t spectrumIdx = 0; spectrumIdx < result->GetEvaluatedNum(); ++spectrumIdx)
     {
-        int nSpectra = result->GetSpectrumInfo(itSpectrum).m_numSpec;
+        int nSpectra = result->GetSpectrumInfo(spectrumIdx).m_numSpec;
 
         // 3a. Pretty print the result and the spectral info into a string
-        FileHandler::CEvaluationLogFileHandler::FormatEvaluationResult(&result->GetSpectrumInfo(itSpectrum), result->GetResult(itSpectrum), instrLocation->m_instrumentType, spectrometerModel.maximumIntensityForSingleReadout * nSpectra, window->nRef, string);
+        FileHandler::CEvaluationLogFileHandler::FormatEvaluationResult(&result->GetSpectrumInfo(spectrumIdx), result->GetResult(spectrumIdx), instrLocation->m_instrumentType, spectrometerModel.maximumIntensityForSingleReadout * nSpectra, window->nRef, string);
 
         // 3b. Write it all to the evaluation log file
         if (f != nullptr)

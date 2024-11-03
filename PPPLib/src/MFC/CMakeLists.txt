@@ -3,7 +3,6 @@
 cmake_minimum_required (VERSION 3.6)
 
 set(NPPLIB_MFC_HEADERS
-    ${PppLib_INCLUDE_DIRS}/PPPLib/MFC/CArray.h
     ${PppLib_INCLUDE_DIRS}/PPPLib/MFC/CCriticalSection.h
     ${PppLib_INCLUDE_DIRS}/PPPLib/MFC/CFileUtils.h
     ${PppLib_INCLUDE_DIRS}/PPPLib/MFC/CFtpUtils.h

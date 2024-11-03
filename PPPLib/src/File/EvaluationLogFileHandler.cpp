@@ -16,10 +16,10 @@ novac::CCriticalSection g_evalLogCritSect; // synchronization access to evaluati
 using namespace FileHandler;
 
 CEvaluationLogFileHandler::CEvaluationLogFileHandler(
-    novac::ILogger &log,
+    novac::ILogger& log,
     std::string evaluationLog,
     novac::Molecule molecule,
-    novac::SpectrometerModel *spectrometerModel)
+    novac::SpectrometerModel* spectrometerModel)
     : m_evaluationLog(evaluationLog), m_molecule(molecule), m_log(log)
 {
     // Defining which column contains which information
@@ -71,7 +71,7 @@ void CEvaluationLogFileHandler::ParseScanHeader(const char szLine[8192])
     else
         strncpy(str, szLine, 8192 * sizeof(char));
 
-    char *szToken = str;
+    char* szToken = str;
     int curCol = -1;
     char elevation[] = "elevation";
     char scanAngle[] = "scanangle";
@@ -193,7 +193,7 @@ void CEvaluationLogFileHandler::ParseScanHeader(const char szLine[8192])
         if (novac::Equals(szToken, column, strlen(column)))
         {
             m_col.column[m_evResult.m_referenceResult.size()] = curCol;
-            char *pt = szToken + strlen(column) + 1;
+            char* pt = szToken + strlen(column) + 1;
             szToken[strlen(szToken) - 1] = 0;
             std::string specieStr(pt);
             std::transform(specieStr.begin(), specieStr.end(), specieStr.begin(), ::toupper);
@@ -316,7 +316,7 @@ RETURN_CODE CEvaluationLogFileHandler::ReadEvaluationLog()
 
     // First count the number of scans in the file.
     //	This to speed up the initialization of the arrays
-    const long nScans = CountScansInFile();
+    const size_t nScans = CountScansInFile();
     if (nScans > 0)
     {
         m_scan.reserve(nScans);
@@ -330,7 +330,7 @@ RETURN_CODE CEvaluationLogFileHandler::ReadEvaluationLog()
     singleLock.Lock();
     if (singleLock.IsLocked())
     {
-        FILE *f = fopen(m_evaluationLog.c_str(), "r");
+        FILE* f = fopen(m_evaluationLog.c_str(), "r");
         if (nullptr == f)
         {
             singleLock.Unlock();
@@ -438,7 +438,7 @@ RETURN_CODE CEvaluationLogFileHandler::ReadEvaluationLog()
                 continue;
 
             // Split the scan information up into tokens and parse them.
-            char *szToken = (char *)szLine;
+            char* szToken = (char*)szLine;
             int curCol = -1;
             while (nullptr != (szToken = strtok(szToken, " \t")))
             {
@@ -548,14 +548,14 @@ RETURN_CODE CEvaluationLogFileHandler::ReadEvaluationLog()
 
                 if (curCol == m_col.delta)
                 {
-                    m_evResult.m_delta = (float)fValue;
+                    m_evResult.m_delta = fValue;
                     szToken = nullptr;
                     continue;
                 }
 
                 if (curCol == m_col.chiSquare)
                 {
-                    m_evResult.m_chiSquare = (float)fValue;
+                    m_evResult.m_chiSquare = fValue;
                     szToken = nullptr;
                     continue;
                 }
@@ -574,36 +574,36 @@ RETURN_CODE CEvaluationLogFileHandler::ReadEvaluationLog()
                     continue;
                 }
 
-                for (int k = 0; k < m_col.nSpecies; ++k)
+                for (size_t k = 0; k < m_col.nSpecies; ++k)
                 {
                     if (curCol == m_col.column[k])
                     {
-                        m_evResult.m_referenceResult[k].m_column = (float)fValue;
+                        m_evResult.m_referenceResult[k].m_column = fValue;
                         break;
                     }
                     if (curCol == m_col.columnError[k])
                     {
-                        m_evResult.m_referenceResult[k].m_columnError = (float)fValue;
+                        m_evResult.m_referenceResult[k].m_columnError = fValue;
                         break;
                     }
                     if (curCol == m_col.shift[k])
                     {
-                        m_evResult.m_referenceResult[k].m_shift = (float)fValue;
+                        m_evResult.m_referenceResult[k].m_shift = fValue;
                         break;
                     }
                     if (curCol == m_col.shiftError[k])
                     {
-                        m_evResult.m_referenceResult[k].m_shiftError = (float)fValue;
+                        m_evResult.m_referenceResult[k].m_shiftError = fValue;
                         break;
                     }
                     if (curCol == m_col.squeeze[k])
                     {
-                        m_evResult.m_referenceResult[k].m_squeeze = (float)fValue;
+                        m_evResult.m_referenceResult[k].m_squeeze = fValue;
                         break;
                     }
                     if (curCol == m_col.squeezeError[k])
                     {
-                        m_evResult.m_referenceResult[k].m_squeezeError = (float)fValue;
+                        m_evResult.m_referenceResult[k].m_squeezeError = fValue;
                         break;
                     }
                 }
@@ -677,17 +677,17 @@ RETURN_CODE CEvaluationLogFileHandler::ReadEvaluationLog()
     return RETURN_CODE::SUCCESS;
 }
 
-/** Makes a quick scan through the evaluation-log
-    to count the number of scans in it */
-long CEvaluationLogFileHandler::CountScansInFile()
+size_t CEvaluationLogFileHandler::CountScansInFile()
 {
     char expTimeStr[] = "exposuretime"; // this string only exists in the header line.
     char szLine[8192];
-    long nScans = 0;
+    size_t nScans = 0;
 
     // If no evaluation log selected, quit
     if (m_evaluationLog.size() <= 1)
+    {
         return 0;
+    }
 
     novac::CSingleLock singleLock(&g_evalLogCritSect);
     singleLock.Lock();
@@ -695,7 +695,7 @@ long CEvaluationLogFileHandler::CountScansInFile()
     {
 
         // Open the evaluation log
-        FILE *f = fopen(m_evaluationLog.c_str(), "r");
+        FILE* f = fopen(m_evaluationLog.c_str(), "r");
         if (nullptr == f)
         {
             singleLock.Unlock();
@@ -727,10 +727,10 @@ long CEvaluationLogFileHandler::CountScansInFile()
 }
 
 /** Reads and parses the 'scanInfo' header before the scan */
-void CEvaluationLogFileHandler::ParseScanInformation(novac::CSpectrumInfo &scanInfo, double &flux, FILE *f)
+void CEvaluationLogFileHandler::ParseScanInformation(novac::CSpectrumInfo& scanInfo, double& flux, FILE* f)
 {
     char szLine[8192];
-    char *pt = nullptr;
+    char* pt = nullptr;
     double tmpDouble;
     char instrumentType[64];
 
@@ -978,10 +978,10 @@ void CEvaluationLogFileHandler::ParseScanInformation(novac::CSpectrumInfo &scanI
     }
 }
 
-void CEvaluationLogFileHandler::ParseFluxInformation(Meteorology::WindField &windField, double &flux, FILE *f)
+void CEvaluationLogFileHandler::ParseFluxInformation(Meteorology::WindField& windField, double& flux, FILE* f)
 {
     char szLine[8192];
-    char *pt = nullptr;
+    char* pt = nullptr;
     double windSpeed = 10, windDirection = 0, plumeHeight = 1000;
     Meteorology::MeteorologySource windSpeedSource = Meteorology::MeteorologySource::User;
     Meteorology::MeteorologySource windDirectionSource = Meteorology::MeteorologySource::User;
@@ -1092,7 +1092,7 @@ void CEvaluationLogFileHandler::SortScans()
     }
 
     // Then sort the array
-    std::sort(begin(m_scan), end(m_scan), [&](const Evaluation::CScanResult &r1, const Evaluation::CScanResult &r2)
+    std::sort(begin(m_scan), end(m_scan), [&](const Evaluation::CScanResult& r1, const Evaluation::CScanResult& r2)
               { return r1.GetSkyStartTime() < r2.GetSkyStartTime(); });
 
     //	CEvaluationLogFileHandler::SortScans(m_scan);
@@ -1127,7 +1127,7 @@ bool CEvaluationLogFileHandler::IsSorted()
     return true; // no un-ordered scans were found
 }
 
-RETURN_CODE CEvaluationLogFileHandler::WriteEvaluationLog(const std::string &fileName, novac::SpectrometerModel spectrometerModel, int softwareMajorNumber, int softwareMinorNumber)
+RETURN_CODE CEvaluationLogFileHandler::WriteEvaluationLog(const std::string& fileName, novac::SpectrometerModel spectrometerModel, int softwareMajorNumber, int softwareMinorNumber)
 {
     novac::CString string;
     novac::CString wsSrc, wdSrc, phSrc;
@@ -1138,12 +1138,12 @@ RETURN_CODE CEvaluationLogFileHandler::WriteEvaluationLog(const std::string &fil
         return RETURN_CODE::FAIL;
 
     // 2. Write the file
-    FILE *f = fopen(fileName.c_str(), "w");
+    FILE* f = fopen(fileName.c_str(), "w");
 
     for (size_t scanIndex = 0; scanIndex < this->m_scan.size(); ++scanIndex)
     {
-        Evaluation::CScanResult &scan = this->m_scan[scanIndex];
-        Meteorology::WindField &wind = this->m_windField[scanIndex];
+        Evaluation::CScanResult& scan = this->m_scan[scanIndex];
+        Meteorology::WindField& wind = this->m_windField[scanIndex];
 
         scan.GetStartTime(0, startTime);
 
@@ -1203,9 +1203,9 @@ RETURN_CODE CEvaluationLogFileHandler::WriteEvaluationLog(const std::string &fil
         string.AppendFormat("\twindspeed=%.4lf\n", wind.GetWindSpeed());
         string.AppendFormat("\twinddirection=%.4lf\n", wind.GetWindDirection());
         //		string.AppendFormat("\tplumeheight=%.2lf\n",			wind.GetPlumeHeight());
-        string.AppendFormat("\twindspeedsource=%s\n", (const char *)wsSrc);
-        string.AppendFormat("\twinddirectionsource=%s\n", (const char *)wdSrc);
-        string.AppendFormat("\tplumeheightsource=%s\n", (const char *)phSrc);
+        string.AppendFormat("\twindspeedsource=%s\n", (const char*)wsSrc);
+        string.AppendFormat("\twinddirectionsource=%s\n", (const char*)wdSrc);
+        string.AppendFormat("\tplumeheightsource=%s\n", (const char*)phSrc);
         // if(fabs(spectrometer.m_scanner.compass) > 360.0)
         //	string.AppendFormat("\tcompasssource=compassreading\n");
         // else
@@ -1224,7 +1224,7 @@ RETURN_CODE CEvaluationLogFileHandler::WriteEvaluationLog(const std::string &fil
         }
         string.Append("starttime\tstoptime\tname\tspecsaturation\tfitsaturation\tdelta\tchisquare\texposuretime\tnumspec\t");
 
-        for (int itSpecie = 0; itSpecie < scan.GetSpecieNum(0); ++itSpecie)
+        for (size_t itSpecie = 0; itSpecie < scan.GetSpecieNum(0); ++itSpecie)
         {
             const std::string specieName = scan.GetSpecieName(0, itSpecie);
             string.AppendFormat("column(%s)\tcolumnerror(%s)\t", specieName.c_str(), specieName.c_str());
@@ -1237,7 +1237,7 @@ RETURN_CODE CEvaluationLogFileHandler::WriteEvaluationLog(const std::string &fil
         fprintf(f, "%s", string.c_str());
 
         // ------------------- Then write the parameters for each spectrum ---------------------------
-        for (int itSpectrum = 0; itSpectrum < scan.GetEvaluatedNum(); ++itSpectrum)
+        for (size_t itSpectrum = 0; itSpectrum < scan.GetEvaluatedNum(); ++itSpectrum)
         {
             // 3a. Pretty print the result and the spectral info into a string
             FormatEvaluationResult(&scan.GetSpectrumInfo(itSpectrum), scan.GetResult(itSpectrum), m_instrumentType, 0.0, scan.GetSpecieNum(itSpectrum), string);
@@ -1255,9 +1255,9 @@ RETURN_CODE CEvaluationLogFileHandler::WriteEvaluationLog(const std::string &fil
     return RETURN_CODE::SUCCESS;
 }
 
-RETURN_CODE CEvaluationLogFileHandler::FormatEvaluationResult(const novac::CSpectrumInfo *info, const novac::CEvaluationResult *result, novac::NovacInstrumentType iType, double maxIntensity, int nSpecies, novac::CString &string)
+RETURN_CODE CEvaluationLogFileHandler::FormatEvaluationResult(const novac::CSpectrumInfo* info, const novac::CEvaluationResult* result, novac::NovacInstrumentType iType, double maxIntensity, size_t nSpecies, novac::CString& string)
 {
-    if (result != nullptr && result->m_referenceResult.size() < static_cast<size_t>(nSpecies))
+    if (result != nullptr && result->m_referenceResult.size() < nSpecies)
     {
         return RETURN_CODE::FAIL; // something's wrong here!
     }
@@ -1280,11 +1280,11 @@ RETURN_CODE CEvaluationLogFileHandler::FormatEvaluationResult(const novac::CSpec
     // 5 The name of the spectrum
     novac::CString simpleName;
     SimplifyString(info->m_name, simpleName);
-    string.AppendFormat("%s\t", (const char *)simpleName);
+    string.AppendFormat("%s\t", (const char*)simpleName);
 
     // 6. The (maximum) saturation ratio of the whole spectrum,
-    //			the (maximum) saturation ratio in the fit-region
-    //			and the normalized maximum intensity of the whole spectrum
+    //      the (maximum) saturation ratio in the fit-region
+    //      and the normalized maximum intensity of the whole spectrum
     if (maxIntensity > 0.0)
     {
         string.AppendFormat("%.2lf\t", info->m_peakIntensity / maxIntensity);
@@ -1313,7 +1313,7 @@ RETURN_CODE CEvaluationLogFileHandler::FormatEvaluationResult(const novac::CSpec
     string.AppendFormat("%ld\t%ld\t", info->m_exposureTime, info->m_numSpec);
 
     // 10. The column/column error for each specie
-    for (int itSpecie = 0; itSpecie < nSpecies; ++itSpecie)
+    for (size_t itSpecie = 0; itSpecie < nSpecies; ++itSpecie)
     {
         if (result != nullptr)
         {
@@ -1340,162 +1340,4 @@ RETURN_CODE CEvaluationLogFileHandler::FormatEvaluationResult(const novac::CSpec
     string.AppendFormat("%d", info->m_flag);
 
     return RETURN_CODE::SUCCESS;
-}
-
-/** Sorts the CDateTime-objects in the given array.
-        Algorithm based on MergeSort (~O(NlogN)) */
-void FileHandler::CEvaluationLogFileHandler::SortScans(novac::CArray<Evaluation::CScanResult, Evaluation::CScanResult &> &array, bool ascending)
-{
-    unsigned long nElements = (unsigned long)array.GetSize(); // number of elements
-    unsigned long it = 0;                                     // <-- iterator
-    unsigned long halfSize = nElements / 2;
-
-    if (nElements <= 1)
-    {
-        return; // <-- We're actually already done
-    }
-    else if (nElements <= 7)
-    {
-        // For small lists, its much faster to do a bubble sorting of the
-        //	list since this does not require so much copying back and forth
-        BubbleSortScans(array, ascending);
-        return;
-    }
-    else
-    {
-        novac::CArray<Evaluation::CScanResult, Evaluation::CScanResult &> left;
-        novac::CArray<Evaluation::CScanResult, Evaluation::CScanResult &> right;
-        left.SetSize(halfSize);
-        right.SetSize(halfSize);
-
-        // Make two copies of the array, one of the first half and one of the second half
-        while (it < halfSize)
-        {
-            left.SetAtGrow(it, array.GetAt(it));
-            ++it;
-        }
-        while (it < nElements)
-        {
-            right.SetAtGrow(it - halfSize, array.GetAt(it));
-            ++it;
-        }
-
-        // Sort each of the two halves
-        SortScans(left, ascending);
-        SortScans(right, ascending);
-
-        // Merge the two...
-        MergeArrays(left, right, array, ascending);
-    }
-}
-
-/** Merges the two arrays in a sorted way and stores the
-        result in the output-array 'result' */
-void FileHandler::CEvaluationLogFileHandler::MergeArrays(novac::CArray<Evaluation::CScanResult, Evaluation::CScanResult &> &array1, novac::CArray<Evaluation::CScanResult, Evaluation::CScanResult &> &array2, novac::CArray<Evaluation::CScanResult, Evaluation::CScanResult &> &result, bool ascending)
-{
-    novac::CDateTime time1, time2;
-    unsigned long it1 = 0; // iterator for array1
-    unsigned long it2 = 0; // iterator for array2
-    unsigned long itr = 0; // iterator for result
-    unsigned long nE1 = (unsigned long)array1.GetSize();
-    unsigned long nE2 = (unsigned long)array2.GetSize();
-
-    // Clear the output-array
-    result.RemoveAll();
-    result.SetSize(nE1 + nE2); // we can just as well set the size of the array from the start
-
-    // 1. As long as there are elements in both arrays, do this
-    while (it1 < nE1 && it2 < nE2)
-    {
-        // Get the times of the first and the second
-        array1.GetAt(it1).GetStartTime(0, time1);
-        array2.GetAt(it2).GetStartTime(0, time2);
-
-        // Compare the two start-times
-        if (time1 == time2)
-        {
-            // if equal
-            result.SetAt(itr++, array1.GetAt(it1++));
-            continue;
-        }
-        else if (time1 < time2)
-        {
-            // time1 < time2
-            if (ascending)
-            {
-                result.SetAt(itr++, array1.GetAt(it1++));
-                continue;
-            }
-            else
-            {
-                result.SetAt(itr++, array2.GetAt(it2++));
-                continue;
-            }
-        }
-        else
-        {
-            // time1 > time2
-            if (ascending)
-            {
-                result.SetAt(itr++, array2.GetAt(it2++));
-                continue;
-            }
-            else
-            {
-                result.SetAt(itr++, array1.GetAt(it1++));
-                continue;
-            }
-        }
-    }
-
-    // 2. If we're out of elements in array2 but not in array1, do this
-    while (it1 < nE1)
-    {
-        result.SetAt(itr++, array1.GetAt(it1++));
-    }
-
-    // 3. If we're out of elements in array1 but not in array2, do this
-    while (it2 < nE2)
-    {
-        result.SetAt(itr++, array2.GetAt(it2++));
-    }
-}
-
-/** Sorts the CScanResult-objects in the given array.
-        Algorithm based on BubbleSort (~O(N2))
-        Quite efficient for small arrays since the elements does not have to be copied
-            and thus uses very little memory */
-void FileHandler::CEvaluationLogFileHandler::BubbleSortScans(novac::CArray<Evaluation::CScanResult, Evaluation::CScanResult &> &array, bool /*ascending*/)
-{
-    novac::CDateTime time1, time2;
-    bool change;
-    unsigned long nElements = (unsigned long)array.GetSize(); // number of elements
-
-    do
-    {
-        change = false;
-        for (unsigned int k = 0; k < nElements - 1; ++k)
-        {
-            // Get the start-times
-            array[k].GetStartTime(0, time1);
-            array[k + 1].GetStartTime(0, time2);
-
-            // If the second scan has started before the first,
-            //	then change the order, otherwise don't do anything
-            if (time2 < time1)
-            {
-                Evaluation::CScanResult tmp;
-                tmp = array[k];
-                array[k] = array[k + 1];
-                array[k + 1] = tmp;
-                change = true;
-            }
-            else
-            {
-                continue;
-            }
-        }
-    } while (change);
-
-    return;
 }

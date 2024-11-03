@@ -14,7 +14,6 @@ add_executable(PPPTests
     ${CMAKE_CURRENT_LIST_DIR}/src/IntegrationTest_PostProcessingUtils.cpp
     ${CMAKE_CURRENT_LIST_DIR}/src/IntegrationTest_ScanEvaluation.cpp
     ${CMAKE_CURRENT_LIST_DIR}/src/UnitTest_CommandLineParser.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/src/UnitTest_CArray.cpp
     ${CMAKE_CURRENT_LIST_DIR}/src/UnitTest_CFileUtils.cpp
     ${CMAKE_CURRENT_LIST_DIR}/src/UnitTest_CFtpUtils.cpp
     ${CMAKE_CURRENT_LIST_DIR}/src/UnitTest_CList.cpp

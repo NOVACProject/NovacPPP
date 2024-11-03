@@ -102,9 +102,9 @@ std::unique_ptr<CScanResult> CScanEvaluation::EvaluateScan(
         }
 
         // Make sure that this spectrum was ok and that the column-value is high enough
-        int specieNum = 0; // TODO: Is this the correct specie to check for?
-        double columnError = result->GetColumnError(m_indexOfMostAbsorbingSpectrum, specieNum); // <-- the column error that corresponds to the highest column-value
-        double highestColumn = result->GetColumn(m_indexOfMostAbsorbingSpectrum, specieNum);
+        size_t specieNum = 0; // TODO: Is this the correct specie to check for?
+        double columnError = result->GetColumnError(static_cast<size_t>(m_indexOfMostAbsorbingSpectrum), specieNum); // <-- the column error that corresponds to the highest column-value
+        double highestColumn = result->GetColumn(static_cast<size_t>(m_indexOfMostAbsorbingSpectrum), specieNum);
         if (highestColumn < 2 * columnError)
         {
             CString message;
@@ -240,7 +240,7 @@ std::unique_ptr<CScanResult> CScanEvaluation::EvaluateOpenedScan(
                 }
                 m_log.Error(logContext, errMsg.std_str());
                 // remember that this spectrum is corrupted
-                result->MarkAsCorrupted(curSpectrumIndex);
+                result->MarkAsCorrupted(static_cast<size_t>(curSpectrumIndex));
                 continue;
             }
         }

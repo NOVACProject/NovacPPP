@@ -38,10 +38,10 @@ public:
         @param validFrom - the time from which this fit-window is valid
         @param validTo - the time to which this fit-window is valid
         @return 0 if sucessful, otherwise 1 */
-    int GetDarkSettings(int index, CDarkSettings& dSettings, novac::CDateTime& validFrom, novac::CDateTime& validTo) const;
+    int GetDarkSettings(size_t index, CDarkSettings& dSettings, novac::CDateTime& validFrom, novac::CDateTime& validTo) const;
 
     /** Gets the number of dark-current settings configured for this spectrometer */
-    int GetSettingsNum() const;
+    size_t GetSettingsNum() const;
 
 
 private:

@@ -1,17 +1,10 @@
 #include <PPPLib/Configuration/EvaluationConfiguration.h>
+#include <PPPLib/Definitions.h>
 #include <SpectralEvaluation/StringUtils.h>
 #include <sstream>
 
-using namespace Configuration;
-
-CEvaluationConfiguration::CEvaluationConfiguration(void)
+namespace Configuration
 {
-}
-
-CEvaluationConfiguration::~CEvaluationConfiguration(void)
-{
-    Clear();
-}
 
 void CEvaluationConfiguration::Clear()
 {
@@ -28,14 +21,14 @@ void CEvaluationConfiguration::InsertFitWindow(const novac::CFitWindow& window, 
     m_windows.push_back(timedWindow);
 }
 
-int CEvaluationConfiguration::SetFitWindow(int index, const novac::CFitWindow& window, novac::CDateTime& validFrom, novac::CDateTime& validTo)
+int CEvaluationConfiguration::SetFitWindow(size_t index, const novac::CFitWindow& window, novac::CDateTime& validFrom, novac::CDateTime& validTo)
 {
-    if (index < 0)
+    if (index > MAX_FIT_WINDOWS)
     {
-        return 1;
+        throw std::invalid_argument("Invalid fit window index, cannot create more than MAX_FIT_WINDOWS windows.");
     }
 
-    if (static_cast<size_t>(index) >= m_windows.size())
+    if (index >= m_windows.size())
     {
         m_windows.resize(1 + index);
     }
@@ -49,9 +42,9 @@ int CEvaluationConfiguration::SetFitWindow(int index, const novac::CFitWindow& w
     return 0;
 }
 
-int CEvaluationConfiguration::GetFitWindow(int index, novac::CFitWindow& window, novac::CDateTime& validFrom, novac::CDateTime& validTo) const
+int CEvaluationConfiguration::GetFitWindow(size_t index, novac::CFitWindow& window, novac::CDateTime& validFrom, novac::CDateTime& validTo) const
 {
-    if (static_cast<size_t>(index) >= m_windows.size())
+    if (index >= m_windows.size())
     {
         return 1;
     }
@@ -73,14 +66,14 @@ void  CEvaluationConfiguration::CheckSettings() const
 {
 
     // make sure that at least one fit-window is defined
-    int nWindows = static_cast<int>(m_windows.size());
+    const size_t nWindows = m_windows.size();
     if (nWindows == 0)
     {
         throw std::invalid_argument("No fit window defined");
     }
 
     // Check the time ranges
-    for (int k = 0; k < nWindows; ++k)
+    for (size_t k = 0; k < nWindows; ++k)
     {
         if (m_windows[k].validFrom >= m_windows[k].validTo)
         {
@@ -90,9 +83,8 @@ void  CEvaluationConfiguration::CheckSettings() const
         }
 
         // check if this time range overlaps some other 
-        for (int j = k + 1; j < nWindows; ++j)
+        for (size_t j = k + 1; j < nWindows; ++j)
         {
-
             if (m_windows[j].window.channel != m_windows[k].window.channel)
             {
                 continue; // no use to compare master and slave...
@@ -121,3 +113,5 @@ void  CEvaluationConfiguration::CheckSettings() const
 
     return;
 }
+
+}  // namespace Configuration

@@ -17,9 +17,9 @@ using namespace novac;
         in the supplied array.
         @param array - the array of which to calculate the average value
         @param nElements - the length of the array. */
-template <class T> double Average(T array[], long nElements)
+template <class T> double Average(T array[], size_t nElements)
 {
-    if (nElements <= 0)
+    if (nElements == 0)
         return 0.0;
 
     double sum = 0;
@@ -34,9 +34,9 @@ template <class T> double Average(T array[], long nElements)
         in the supplied array.
         @param array - the array of which to calculate the average value
         @param nElements - the length of the array. */
-template <class T> double Variance(T array[], long nElements)
+template <class T> double Variance(T array[], size_t nElements)
 {
-    if (nElements <= 0)
+    if (nElements == 0)
         return 0.0;
 
     // First get the mean-value
@@ -55,7 +55,7 @@ template <class T> double Variance(T array[], long nElements)
         in the supplied array.
         @param array - the array of which to calculate the average value
         @param nElements - the length of the array. */
-template <class T> double Std(T array[], long nElements)
+template <class T> double Std(T array[], size_t nElements)
 {
     if (nElements <= 0)
         return 0.0;
@@ -175,19 +175,19 @@ RETURN_CODE CWindSpeedCalculator::CalculateDelay(
 
     // 1b. Get the sample time
     double sampleInterval = modifiedDownWind.SampleInterval();
-    if (fabs(modifiedUpWind.SampleInterval() - sampleInterval) > 0.5)
+    if (std::abs(modifiedUpWind.SampleInterval() - sampleInterval) > 0.5)
     {
         return RETURN_CODE::FAIL; // <-- we cannot have different sample intervals of the two time series
     }
 
     // 1c. Calculate the how many pixels that we should shift maximum
-    int maximumShift = (int)round(settings.shiftMax / sampleInterval);
+    const unsigned int maximumShift = static_cast<unsigned int>(std::round(settings.shiftMax / sampleInterval));
 
     // 1d. Calculate the length of the comparison-interval
     //		in data-points instead of in seconds
     if (m_userSettings.m_fUseMaxTestLength_DualBeam)
     {
-        comparisonLength = static_cast<int>(modifiedDownWind.length) - 2 * maximumShift - 10;
+        comparisonLength = static_cast<int>(modifiedDownWind.length) - 2 * static_cast<int>(maximumShift) - 10;
     }
     else
     {
@@ -200,26 +200,30 @@ RETURN_CODE CWindSpeedCalculator::CalculateDelay(
 
     // 2. Allocate some assistance arrays 
     //		(Note that it is the down wind data series that is shifted)
-    m_length = static_cast<int>(modifiedDownWind.length);
+    m_length = modifiedDownWind.length;
     InitializeArrays();
 
     // The number of datapoints skipped because we cannot see the plume.
     int skipped = 0;
 
+    if (m_length < static_cast<size_t>(maximumShift) + comparisonLength + 1)
+    {
+        return RETURN_CODE::FAIL;
+    }
     m_arrayLength = m_length - maximumShift - comparisonLength - 1;
 
     // 3. Iterate over the set of sub-arrays in the down-wind data series
     //		Offset is the starting-point in this sub-array whos length is 'comparisonLength'
-    for (int offset = 0; offset < m_length - maximumShift - comparisonLength; ++offset)
+    for (int offset = 0; offset < m_length - static_cast<int>(maximumShift) - comparisonLength; ++offset)
     {
         double highestCorr;
         int bestShift;
 
         // 3a. Pick out the sub-vectors
-        double* series1 = modifiedUpWind.column + offset;
-        double* series2 = modifiedDownWind.column + offset;
-        size_t series1Length = modifiedUpWind.length - offset;
-        size_t series2Length = static_cast<size_t>(comparisonLength);
+        const double* series1 = modifiedUpWind.column + offset;
+        const double* series2 = modifiedDownWind.column + offset;
+        const size_t series1Length = modifiedUpWind.length - offset;
+        const size_t series2Length = static_cast<size_t>(comparisonLength);
 
         // 3b. The midpoint in the subvector
         int midPoint = (int)round(offset + comparisonLength / 2);
@@ -260,8 +264,8 @@ RETURN_CODE CWindSpeedCalculator::LowPassFilter(const CMeasurementSeries* series
         return RETURN_CODE::FAIL;
 
     // 2. Calculate the old and the new data series lengths
-    int length = static_cast<int>(series->length);							// <-- the length of the old data series
-    int newLength = length - nIterations - 1;		// <-- the length of the new data series
+    const size_t length = series->length; // <-- the length of the old data series
+    const size_t newLength = length - nIterations - 1;    // <-- the length of the new data series
 
     if (newLength <= 0)
         return RETURN_CODE::FAIL;
@@ -399,7 +403,7 @@ double CWindSpeedCalculator::correlation(const double* x, const double* y, size_
     double nom = (length * s_xy - s_x * s_y);
     double denom = sqrt(((length * s_x2 - s_x * s_x) * (length * s_y2 - s_y * s_y)));
 
-    if ((fabs(nom - denom) < eps) && (fabs(denom) < eps))
+    if ((std::abs(nom - denom) < eps) && (std::abs(denom) < eps))
         c = 1.0;
     else
         c = nom / denom;
@@ -463,7 +467,7 @@ int CWindSpeedCalculator::CalculateWindSpeed(const novac::CString& evalLog1, con
     double scanAngle = 0.0;
     if (location.m_instrumentType == NovacInstrumentType::Gothenburg)
     {
-        if (fabs(location.m_coneangle - 90.0) < 1)
+        if (std::abs(location.m_coneangle - 90.0) < 1)
         {
             // Flat scanner
             distance = relativePlumeHeight.m_plumeAltitude * (1.0 / cos(DEGREETORAD * scanAngle)) * tan(DEGREETORAD * m_settings.angleSeparation);
@@ -471,8 +475,8 @@ int CWindSpeedCalculator::CalculateWindSpeed(const novac::CString& evalLog1, con
         else
         {
             // Cone scanner
-            double angle = DEGREETORAD * (90.0 - (location.m_coneangle - fabs(location.m_tilt)));
-            distance = relativePlumeHeight.m_plumeAltitude * fabs(tan(angle) - tan(angle - DEGREETORAD * m_settings.angleSeparation));
+            double angle = DEGREETORAD * (90.0 - (location.m_coneangle - std::abs(location.m_tilt)));
+            distance = relativePlumeHeight.m_plumeAltitude * std::abs(tan(angle) - tan(angle - DEGREETORAD * m_settings.angleSeparation));
         }
         // If the scanners are not looking straight up then the distance between
         //		the two directions gets decreased with the scanAngle
@@ -497,7 +501,7 @@ int CWindSpeedCalculator::CalculateWindSpeed(const novac::CString& evalLog1, con
 
     // 2. Get the average delay, for all datapoints where the correlation is > 0.9
     double* goodDelays = new double[m_length];
-    int nGoodPoints = 0;
+    size_t nGoodPoints = 0;
     for (int k = m_firstDataPoint; k < m_firstDataPoint + m_arrayLength; ++k)
     {
         if (corr[k] > 0.9)
@@ -518,7 +522,7 @@ int CWindSpeedCalculator::CalculateWindSpeed(const novac::CString& evalLog1, con
     windField.SetWindSpeed(distance / averageDelay, Meteorology::MeteorologySource::DualBeamMeasurement);
 
     // Estimate the error in the wind-speed
-    windField.SetWindSpeedError(fabs(relativePlumeHeight.m_plumeAltitudeError / averageDelay) + fabs(relativePlumeHeight.m_plumeAltitude * stdDelay / (averageDelay * averageDelay)));
+    windField.SetWindSpeedError(std::abs(relativePlumeHeight.m_plumeAltitudeError / averageDelay) + std::abs(relativePlumeHeight.m_plumeAltitude * stdDelay / (averageDelay * averageDelay)));
 
     // Also set the time for which the measurement is valid.
     CDateTime validFrom = m_startTime;
@@ -553,7 +557,7 @@ RETURN_CODE CWindSpeedCalculator::CalculateCorrelation(const novac::CString& eva
     reader.push_back(reader2);
 
     // 2. Find the wind-speed measurement series in the log-files
-    for (int k = 0; k < 2; ++k)
+    for (size_t k = 0; k < 2; ++k)
     {
         for (scanIndex[k] = 0; scanIndex[k] < reader[k].m_scan.size(); ++scanIndex[k])
         {
@@ -583,7 +587,7 @@ RETURN_CODE CWindSpeedCalculator::CalculateCorrelation(const novac::CString& eva
     scan.GetStopTime(scan.GetEvaluatedNum() - 1, m_stopTime);
 
     // 3. Create the wind-speed measurement series
-    for (int k = 0; k < 2; ++k)
+    for (size_t k = 0; k < 2; ++k)
     {
         // 3a. The scan we're looking at
         Evaluation::CScanResult& secondScan = reader[k].m_scan[scanIndex[k]];
@@ -731,9 +735,9 @@ RETURN_CODE CWindSpeedCalculator::CalculateCorrelation_Heidelberg(const novac::C
     }
 
     // 3f. Adjust the settings to have the correct angle
-    int midpoint = (int)(length / 2);
-    double d1 = scan.GetScanAngle(midpoint) - scan.GetScanAngle(midpoint + 1);
-    double d2 = scan.GetScanAngle2(midpoint) - scan.GetScanAngle2(midpoint + 1);
+    const size_t midpoint = length / 2;
+    const double d1 = scan.GetScanAngle(midpoint) - scan.GetScanAngle(midpoint + 1);
+    const double d2 = scan.GetScanAngle2(midpoint) - scan.GetScanAngle2(midpoint + 1);
     m_settings.angleSeparation = sqrt(d1 * d1 + d2 * d2);
 
     // 4. Perform the correlation calculations...

@@ -17,7 +17,7 @@ private:
 
     const std::string m_data;
     std::vector<std::string> m_tokens;
-    int m_curToken = 0;
+    size_t m_curToken = 0;
 };
 }  // namespace novac
 

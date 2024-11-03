@@ -36,32 +36,32 @@ void CFluxStatistics::CMeasurementDay::GetHeaderLine(novac::CString& str, novac:
 
 void CFluxStatistics::CMeasurementDay::GetStatistics(novac::CString& str, novac::CList <novac::CString, novac::CString&>& instruments)
 {
-    double average, median, std;
-    long nMeasurements = (long)this->fluxList.GetCount();
-    std::vector<double> data(nMeasurements, 0.0);
-    std::vector <double> sortedData(nMeasurements, 0.0);
+    const size_t nMeasurements = static_cast<size_t>(this->fluxList.GetCount());
     int nMeasurementsFromThisInstrument = 0;
-    int k = 0;
 
     // Write the day
     str.Format("%04d.%02d.%02d\t", day.year, day.month, day.day);
 
     // copy the data into the array
+    std::vector<double> data;
+    data.reserve(nMeasurements);
     auto p = fluxList.GetHeadPosition();
     while (p != nullptr)
     {
-        data[k++] = fluxList.GetNext(p).m_flux;
+        data.push_back(fluxList.GetNext(p).m_flux);
     }
 
     // get the statistical data
-    average = Average(data);
-    std = Stdev(data);
+    const double average = Average(data);
+    const double std = Stdev(data);
 
     // sort the data to get the median
+    std::vector <double> sortedData(nMeasurements, 0.0);
     FindNLowest(data, nMeasurements, sortedData);
+    double median = 0.0;
     if (nMeasurements % 2 == 0)
     {
-        median = Average(sortedData.begin() + nMeasurements / 2 - 1, sortedData.begin() + nMeasurements / 2 + 1);
+        median = Average(sortedData.begin() + static_cast<int>(nMeasurements) / 2 - 1, sortedData.begin() + static_cast<int>(nMeasurements) / 2 + 1);
     }
     else
     {

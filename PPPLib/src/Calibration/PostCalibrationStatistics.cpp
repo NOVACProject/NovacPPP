@@ -72,15 +72,16 @@ void CPostCalibrationStatistics::GetCalibration(
         return throw std::invalid_argument(message.str());
     }
 
-    if (index == 0)
+    const size_t idx = static_cast<size_t>(index);
+    if (idx == 0)
     {
         validFrom = novac::CDateTime(0, 0, 0, 0, 0, 0);
     }
     else
     {
         // Calculate the midpoint between previous and current
-        validFrom = pos->second.calibrationsPerformed[index - 1].calibrationTimeStamp;
-        const auto& current = pos->second.calibrationsPerformed[index].calibrationTimeStamp;
+        validFrom = pos->second.calibrationsPerformed[idx - 1].calibrationTimeStamp;
+        const auto& current = pos->second.calibrationsPerformed[idx].calibrationTimeStamp;
         const double secondsDifference = novac::CDateTime::Difference(current, validFrom);
         if (secondsDifference < 0.0)
         {
@@ -90,11 +91,11 @@ void CPostCalibrationStatistics::GetCalibration(
         validFrom.Increment(static_cast<int>(std::round(0.5 * secondsDifference)));
     }
 
-    if (index < static_cast<int>(pos->second.calibrationsPerformed.size() - 1))
+    if (idx < pos->second.calibrationsPerformed.size() - 1)
     {
         // Calculate the midpoint between current and next
-        validTo = pos->second.calibrationsPerformed[index].calibrationTimeStamp;
-        const auto& next = pos->second.calibrationsPerformed[index + 1].calibrationTimeStamp;
+        validTo = pos->second.calibrationsPerformed[idx].calibrationTimeStamp;
+        const auto& next = pos->second.calibrationsPerformed[idx + 1].calibrationTimeStamp;
         const double secondsDifference = novac::CDateTime::Difference(next, validTo);
         if (secondsDifference < 0.0)
         {
@@ -108,5 +109,5 @@ void CPostCalibrationStatistics::GetCalibration(
         validTo = novac::CDateTime(9999, 12, 31, 23, 59, 59);
     }
 
-    referencesCreated = pos->second.calibrationsPerformed[index].referenceFiles;
+    referencesCreated = pos->second.calibrationsPerformed[idx].referenceFiles;
 }

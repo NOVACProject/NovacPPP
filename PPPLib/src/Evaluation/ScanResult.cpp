@@ -93,10 +93,10 @@ int CScanResult::RemoveResult(size_t specIndex)
         return 1; // not a valid index
 
     // Remove the desired value
-    auto it = m_specInfo.begin() + specIndex;
+    auto it = m_specInfo.begin() + static_cast<std::int64_t>(specIndex);
     m_specInfo.erase(it);
 
-    auto it2 = m_spec.begin() + specIndex;
+    auto it2 = m_spec.begin() + static_cast<std::int64_t>(specIndex);
     m_spec.erase(it2);
 
     // Decrease the number of values in the list
@@ -154,11 +154,13 @@ double CScanResult::GetColumn(size_t spectrumNum, size_t specieNum) const
 
 double CScanResult::GetColumn(size_t spectrumNum, Molecule& molec) const
 {
-    int index = this->GetSpecieIndex(molec.name);
+    const int index = this->GetSpecieIndex(molec.name);
     if (index == -1)
+    {
         return NOT_A_NUMBER;
-    else
-        return GetFitParameter(spectrumNum, static_cast<int>(index), COLUMN);
+    }
+
+    return GetFitParameter(spectrumNum, static_cast<size_t>(index), COLUMN);
 }
 
 double CScanResult::GetColumnError(size_t spectrumNum, size_t specieNum) const

@@ -225,7 +225,7 @@ int CFluxCalculator::GetLocation(
     // Next find the instrument location that is valid for this date
     const Configuration::CLocationConfiguration& locationconf = instrumentConf->m_location;
     bool foundValidLocation = false;
-    for (int k = 0; k < (int)locationconf.GetLocationNum(); ++k)
+    for (size_t k = 0; k < locationconf.GetLocationNum(); ++k)
     {
         locationconf.GetLocation(k, singleLocation);
 
@@ -408,7 +408,7 @@ bool CFluxCalculator::CalculateFlux(
     }
 
     // get the specie index
-    int specieIndex = result.GetSpecieIndex(specie.name);
+    const int specieIndex = result.GetSpecieIndex(specie.name);
     if (specieIndex == -1)
     {
         novac::CString message;
@@ -426,7 +426,7 @@ bool CFluxCalculator::CalculateFlux(
     scanAngle2.reserve(result.GetEvaluatedNum());
     column.reserve(result.GetEvaluatedNum());
     unsigned int numberOfGoodDataPoints = 0;
-    for (long i = 0; i < result.GetEvaluatedNum(); ++i)
+    for (size_t i = 0; i < result.GetEvaluatedNum(); ++i)
     {
         if (result.IsBad(i) || result.IsDeleted(i))
         {
@@ -439,7 +439,7 @@ bool CFluxCalculator::CalculateFlux(
 
         scanAngle.push_back(result.m_specInfo[i].m_scanAngle);
         scanAngle2.push_back(result.m_specInfo[i].m_scanAngle2);
-        column.push_back(specie.Convert_MolecCm2_to_kgM2(result.m_spec[i].m_referenceResult[specieIndex].m_column));
+        column.push_back(specie.Convert_MolecCm2_to_kgM2(result.m_spec[i].m_referenceResult[static_cast<size_t>(specieIndex)].m_column));
 
         ++numberOfGoodDataPoints;
     }
@@ -531,7 +531,7 @@ double CFluxCalculator::CalculateFlux(
     const double* scanAngle2,
     const double* column,
     double offset,
-    int nDataPoints,
+    size_t nDataPoints,
     const Meteorology::WindField& wind,
     const Geometry::PlumeHeight& relativePlumeHeight,
     double compass,

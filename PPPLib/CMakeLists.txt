@@ -65,7 +65,7 @@ target_link_libraries(PPPLib PUBLIC ${Poco_LIBRARIES} NovacSpectralEvaluation)
 
 
 IF(WIN32)
-    target_compile_options(PPPLib PRIVATE /W4 /WX /sdl)
+    target_compile_options(PPPLib PRIVATE /W4 /WX /w44365 /sdl)
     target_compile_definitions(PPPLib PRIVATE _CRT_SECURE_NO_WARNINGS)
 ELSE()
     target_compile_options(PPPLib PRIVATE -Wall -std=c++14)

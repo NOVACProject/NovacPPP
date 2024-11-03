@@ -226,15 +226,15 @@ int CWindDataBase::WriteToFile(const novac::CString& fileName) const
     return 0;
 }
 
-
-/** Returns the location that belongs to the given location index. */
 const novac::CGPSData& CWindDataBase::GetLocation(int index) const
 {
     static const novac::CGPSData nullPos = novac::CGPSData(-1, -1, -1);
-    if ((index < 0) || (index >= (int)m_locations.size()))
+    if (index < 0 || index >= m_locations.size())
+    {
         return nullPos;
-    else
-        return m_locations.at(index);
+    }
+    
+    return m_locations.at(static_cast<size_t>(index));
 }
 
 /** Retrieves the index of a given location in our list of locations.
@@ -246,13 +246,12 @@ int CWindDataBase::GetLocationIndex(double lat, double lon, double alt) const
 
 int CWindDataBase::GetLocationIndex(const novac::CGPSData& gps) const
 {
-    int N = (int)m_locations.size();
-    for (int k = 0; k < N; ++k)
+    for (size_t k = 0; k < m_locations.size(); ++k)
     {
         const novac::CGPSData& gps2 = m_locations.at(k);
         if (gps == gps2)
         {
-            return k;
+            return static_cast<int>(k);
         }
     }
     // not found in the list
@@ -420,7 +419,7 @@ bool CWindDataBase::GetWindField_Nearest(const novac::CDateTime& time, const nov
     int closestPoint = -1; // the index of the closest location
 
     // loop through all locations to see which one is the closest
-    for (unsigned int k = 0; k < m_locations.size(); ++k)
+    for (int k = 0; k < m_locations.size(); ++k)
     {
         const novac::CGPSData& pos = GetLocation(k);
 

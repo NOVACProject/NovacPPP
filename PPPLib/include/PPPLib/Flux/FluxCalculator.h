@@ -102,7 +102,7 @@ public:
         const double* scanAngle2,
         const double* column,
         double offset,
-        int nDataPoints,
+        size_t nDataPoints,
         const Meteorology::WindField& wind,
         const Geometry::PlumeHeight& relativePlumeHeight,
         double compass,

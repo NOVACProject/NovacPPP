@@ -90,18 +90,9 @@ void CommandLineParser::ParseCommandLineOptions(
         {
             parameter.Format(token + strlen(FLAG(str_volcano)) + 1);
 
-            int volcano = volcanoes.GetVolcanoIndex(parameter);
-            if (volcano >= 0)
-            {
-                log.Information(context.With("cmd", str_volcano), "Set volcano: " + parameter.std_str());
-                userSettings.m_volcano = volcano;
-            }
-            else
-            {
-                std::stringstream msg;
-                msg << "Could not find volcano: " << parameter.std_str();
-                throw std::invalid_argument(msg.str());
-            }
+            const unsigned int volcano = volcanoes.GetVolcanoIndex(parameter);
+            log.Information(context.With("cmd", str_volcano), "Set volcano: " + parameter.std_str());
+            userSettings.m_volcano = static_cast<int>(volcano);
             token = tokenizer.NextToken();
             continue;
         }
@@ -247,7 +238,7 @@ void CommandLineParser::ParseCommandLineOptions(
         }
 
         // The windField file
-        int N = (int)strlen(FLAG(str_windFieldFile));
+        const size_t N = strlen(FLAG(str_windFieldFile));
         if (novac::Equals(currentToken, FLAG(str_windFieldFile), N))
         {
             if (sscanf(currentToken.c_str() + N, "%s", buffer.data()))

@@ -269,7 +269,7 @@ public:
 
     /** returns the number of species that were used in the evaluation of a
         given spectrum */
-    int GetSpecieNum(size_t spectrumNum) const { return (IsValidSpectrumIndex(spectrumNum)) ? (int)m_spec[spectrumNum].m_referenceResult.size() : 0; }
+    size_t GetSpecieNum(size_t spectrumNum) const { return (IsValidSpectrumIndex(spectrumNum)) ? m_spec[spectrumNum].m_referenceResult.size() : 0; }
 
     /** returns the specie name */
     const std::string GetSpecieName(size_t spectrumNum, size_t specieNum) const { return (IsValidSpectrumIndex(spectrumNum)) ? m_spec[spectrumNum].m_referenceResult[specieNum].m_specieName : "NA"; }

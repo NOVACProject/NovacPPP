@@ -27,7 +27,7 @@ class CFtpUtils
 public:
     CFtpUtils();
 
-    CFtpUtils(const CVolcanoInfo& volcanoes, int currentVolcano)
+    CFtpUtils(const CVolcanoInfo& volcanoes, unsigned int currentVolcano)
         : m_volcanoes(volcanoes), m_currentVolcano(currentVolcano)
     {
     }
@@ -45,7 +45,7 @@ public:
 
 private:
     const CVolcanoInfo m_volcanoes;
-    const int m_currentVolcano;
+    const unsigned int m_currentVolcano;
 };
 }  // namespace novac
 

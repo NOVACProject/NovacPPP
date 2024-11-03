@@ -6,7 +6,6 @@
 
 #include <PPPLib/PPPLib.h>
 #include <PPPLib/Evaluation/ScanResult.h>
-#include <PPPLib/MFC/CArray.h>
 #include <PPPLib/Configuration/UserConfiguration.h>
 
 namespace FileHandler
@@ -43,7 +42,7 @@ public:
             @param result - the evaluation result, can be NULL
             @param string - will on return be filled with the output line to be written to the evaluation-log.
             @return SUCCESS - always */
-    static RETURN_CODE FormatEvaluationResult(const novac::CSpectrumInfo* info, const novac::CEvaluationResult* result, novac::NovacInstrumentType iType, double maxIntensity, int nSpecies, novac::CString& string);
+    static RETURN_CODE FormatEvaluationResult(const novac::CSpectrumInfo* info, const novac::CEvaluationResult* result, novac::NovacInstrumentType iType, double maxIntensity, size_t nSpecies, novac::CString& string);
 
     // ------------------- PUBLIC DATA -------------------------
 
@@ -117,27 +116,13 @@ private:
 
     /** Makes a quick scan through the evaluation-log
         to count the number of scans in it */
-    long CountScansInFile();
+    size_t CountScansInFile();
 
     /** Sorts the scans in order of collection */
     void SortScans();
 
     /** Returns true if the scans are already ordered */
     bool IsSorted();
-
-    /** Sorts the CScanResult-objects in the given array.
-            Algorithm based on MergeSort (~O(NlogN)) */
-    static void SortScans(novac::CArray<Evaluation::CScanResult, Evaluation::CScanResult&>& array, bool ascending = true);
-
-    /** Sorts the CScanResult-objects in the given array.
-            Algorithm based on BubbleSort (~O(N2))
-            Quite efficient for small arrays since the elements does not have to be copied
-                and thus uses very little memory */
-    static void BubbleSortScans(novac::CArray<Evaluation::CScanResult, Evaluation::CScanResult&>& array, bool ascending = true);
-
-    /** Merges the two arrays in a sorted way and stores the
-            result in the output-array 'result' */
-    static void MergeArrays(novac::CArray<Evaluation::CScanResult, Evaluation::CScanResult&>& array1, novac::CArray<Evaluation::CScanResult, Evaluation::CScanResult&>& array2, novac::CArray<Evaluation::CScanResult, Evaluation::CScanResult&>& result, bool ascending = true);
 };
 
 }

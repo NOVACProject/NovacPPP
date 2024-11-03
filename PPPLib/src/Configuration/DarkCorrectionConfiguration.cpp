@@ -46,17 +46,19 @@ int CDarkCorrectionConfiguration::GetDarkSettings(CDarkSettings& dSettings, cons
     return 0;
 }
 
-int CDarkCorrectionConfiguration::GetDarkSettings(int index, CDarkSettings& dSettings, novac::CDateTime& validFrom, novac::CDateTime& validTo) const
+int CDarkCorrectionConfiguration::GetDarkSettings(size_t index, CDarkSettings& dSettings, novac::CDateTime& validFrom, novac::CDateTime& validTo) const
 {
-    if (index < 0 || index >= GetSettingsNum())
+    if (index >= GetSettingsNum())
+    {
         return 1;
+    }
 
     if (m_darkSettings.size() == 0)
     {
         DarkSettingWithTime defaultSetting;
         dSettings = defaultSetting.setting;
-        validFrom = novac::CDateTime(0000, 00, 00, 00, 00, 00);
-        validTo = novac::CDateTime(9999, 12, 31, 23, 59, 59);
+        validFrom = novac::CDateTime::MinValue();
+        validTo = novac::CDateTime::MaxValue();
         return 0;
     }
 
@@ -67,10 +69,10 @@ int CDarkCorrectionConfiguration::GetDarkSettings(int index, CDarkSettings& dSet
     return 0;
 }
 
-int CDarkCorrectionConfiguration::GetSettingsNum() const
+size_t CDarkCorrectionConfiguration::GetSettingsNum() const
 {
     // There's always the default setting..
-    return std::max(1, static_cast<int>(m_darkSettings.size()));
+    return std::max(static_cast<size_t>(1), m_darkSettings.size());
 }
 
 }

@@ -14,8 +14,7 @@ using namespace novac;
 
 CProcessingFileReader::CProcessingFileReader(ILogger& logger)
     : CXMLFileReader(logger)
-{
-}
+{}
 
 void CProcessingFileReader::ReadProcessingFile(const novac::CString& filename, Configuration::CUserConfiguration& settings)
 {
@@ -80,7 +79,7 @@ void CProcessingFileReader::ReadProcessingFile(const novac::CString& filename, C
         {
             novac::CString code;
             Parse_StringItem(ENDTAG(str_volcano), code);
-            settings.m_volcano = g_volcanoes.GetVolcanoIndex(code);
+            settings.m_volcano = static_cast<int>(g_volcanoes.GetVolcanoIndex(code));
         }
 
         //* Look for the xml tag 'instrument' and use Parse_Instrument and Parse_Location to read serial number and location to object 'settings' */
@@ -246,7 +245,7 @@ void CProcessingFileReader::ReadProcessingFile(const novac::CString& filename, C
 void CProcessingFileReader::Parse_FitWindow(Configuration::CUserConfiguration& settings)
 {
     novac::CString fitWindowName, mainFitWindowName;
-    int nFitWindowsFound = 0;
+    size_t nFitWindowsFound = 0;
 
     // parse the file, one line at a time.
     szToken = "start";
@@ -639,18 +638,10 @@ RETURN_CODE CProcessingFileReader::WriteProcessingFile(const novac::CString& fil
     }
 
     // the most important molecule
-    switch (settings.m_molecule)
-    {
-    case StandardMolecule::SO2:		fprintf(f, "\t<molecule>SO2</molecule>\n"); break;
-    case StandardMolecule::O3:		fprintf(f, "\t<molecule>O3</molecule>\n"); break;
-    case StandardMolecule::BrO:		fprintf(f, "\t<molecule>BRO</molecule>\n"); break;
-    case StandardMolecule::NO2:		fprintf(f, "\t<molecule>NO2</molecule>\n"); break;
-    case StandardMolecule::HCHO:	fprintf(f, "\t<molecule>HCHO</molecule>\n"); break;
-    default: fprintf(f, "\t<molecule>Unknown</molecule>\n"); break;
-    }
+    fprintf(f, "\t<molecule>%s</molecule>\n", novac::ToString(settings.m_molecule).c_str());
 
     // the volcano
-    PrintParameter(f, 1, str_volcano, g_volcanoes.GetVolcanoCode(settings.m_volcano));
+    PrintParameter(f, 1, str_volcano, g_volcanoes.GetVolcanoCode(static_cast<unsigned int>(settings.m_volcano)));
 
     // the time frame that we are looking for scans
     PrintParameter(f, 1, str_fromDate, settings.m_fromDate);

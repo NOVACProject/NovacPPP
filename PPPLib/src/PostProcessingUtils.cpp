@@ -97,8 +97,8 @@ void PrepareEvaluation(novac::ILogger& logger, std::string tempDirectory, Config
         auto instrumentContext = context.With(novac::LogContext::Device, setup.m_instrument[instrumentIndex].m_serial.std_str());
 
         // For each instrument, loop through the fit-windows that are defined
-        const int numberOfFitWindows = setup.m_instrument[instrumentIndex].m_eval.NumberOfFitWindows();
-        for (int fitWindowIndex = 0; fitWindowIndex < numberOfFitWindows; ++fitWindowIndex)
+        const size_t numberOfFitWindows = setup.m_instrument[instrumentIndex].m_eval.NumberOfFitWindows();
+        for (size_t fitWindowIndex = 0; fitWindowIndex < numberOfFitWindows; ++fitWindowIndex)
         {
             novac::CFitWindow window;
             CDateTime fromTime, toTime; //  these are not used but must be passed onto GetFitWindow...
@@ -112,7 +112,7 @@ void PrepareEvaluation(novac::ILogger& logger, std::string tempDirectory, Config
             auto windowContext = instrumentContext.With(novac::LogContext::FitWindow, window.name);
 
             // For each reference in the fit-window, read it in and make sure that it exists...
-            for (int referenceIndex = 0; referenceIndex < window.nRef; ++referenceIndex)
+            for (size_t referenceIndex = 0; referenceIndex < window.nRef; ++referenceIndex)
             {
                 auto referenceContext = instrumentContext.With(novac::LogContext::FileName, window.ref[referenceIndex].m_path);
 

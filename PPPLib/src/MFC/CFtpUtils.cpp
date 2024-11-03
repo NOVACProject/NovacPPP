@@ -78,7 +78,8 @@ bool CFtpUtils::ReadFtpDirectoryListing(const std::string& item, CFileInfo& resu
 
     result.isDirectory = (parts[0].at(0) == 'd');
 
-    result.fileSize = std::atol(parts[4].c_str());
+    const long size = std::atol(parts[4].c_str());
+    result.fileSize = (size >= 0) ? static_cast<size_t>(size) : 0U;
 
     return true;
 }

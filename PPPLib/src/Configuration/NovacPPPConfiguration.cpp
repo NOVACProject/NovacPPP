@@ -82,7 +82,7 @@ novac::CFitWindow CNovacPPPConfiguration::GetFitWindow(
 
     // Then find the evaluation fit-window that is valid for this date
     const Configuration::CEvaluationConfiguration& evalConf = instrumentConf->m_eval;
-    for (int k = 0; k < evalConf.NumberOfFitWindows(); ++k)
+    for (size_t k = 0; k < evalConf.NumberOfFitWindows(); ++k)
     {
         novac::CFitWindow window;
         CDateTime evalValidFrom, evalValidTo;
