@@ -440,7 +440,7 @@ RETURN_CODE Evaluation::PostEvaluationIO::AppendToEvaluationSummaryFile(
     fprintf(f, "%.2lf\t", result->m_plumeProperties.completeness.ValueOrDefault(NOT_A_NUMBER));
 
     // the number of evaluated spectra
-    fprintf(f, "%ld\t", result->GetEvaluatedNum());
+    fprintf(f, "%zd\t", result->GetEvaluatedNum());
 
     // make a new line
     fprintf(f, "\n");

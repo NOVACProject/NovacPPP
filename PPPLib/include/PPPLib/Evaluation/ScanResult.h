@@ -8,7 +8,6 @@
 #include <PPPLib/PPPLib.h>
 #include <PPPLib/Flux/FluxResult.h>
 #include <PPPLib/MFC/CString.h>
-#include <PPPLib/MFC/CArray.h>
 
 namespace novac
 {
@@ -47,26 +46,22 @@ public:
     // ----------------------------------------------------------------------
 
     /** Appends the result to the list of calculated results */
-    int AppendResult(const novac::CEvaluationResult& evalRes, const novac::CSpectrumInfo& specInfo);
+    void AppendResult(const novac::CEvaluationResult& evalRes, const novac::CSpectrumInfo& specInfo);
 
-    /** Removes the spectrum number 'specIndex' from the list of calcualted results */
-    int RemoveResult(unsigned int specIndex);
+    /** Removes the spectrum number 'specIndex' from the list of calculated results */
+    int RemoveResult(size_t specIndex);
 
-    /** Intializes the memory arrays to have, initially, space for
-        'specNum' spectra. */
-    void InitializeArrays(long specNum);
+    /** Intializes the memory arrays to have, initially, space for 'specNum' spectra. */
+    void InitializeArrays(size_t specNum);
 
     /** Retrieves the evaluation result for spectrum number
         'specIndex' from the list of calculated results.
             @return - NULL if specIndex is out of bounds... */
-    const novac::CEvaluationResult* GetResult(unsigned int specIndex) const;
+    const novac::CEvaluationResult* GetResult(size_t specIndex) const;
 
     /** Adds spectrum number 'specIndex' into the list of spectra in the .pak -file
             which are corrupted and could not be evaluated */
-    void MarkAsCorrupted(unsigned int specIndex);
-
-    /** Retrieves how many spectra are corrupted in the scan */
-    int GetCorruptedNum() const;
+    void MarkAsCorrupted(size_t specIndex);
 
     /** Stores the information about the sky-spectrum used */
     void SetSkySpecInfo(const novac::CSpectrumInfo& skySpecInfo);
@@ -88,7 +83,7 @@ public:
     /** Check spectrum number 'index' for goodness of fit.
         The parameters 'deltaLimit', 'upperLimit' and 'lowerLimit' are for
         development purposes only. */
-    bool CheckGoodnessOfFit(const novac::CSpectrumInfo& info, int index, const novac::SpectrometerModel* spectrometer, float chi2Limit = -1, float upperLimit = -1, float lowerLimit = -1);
+    bool CheckGoodnessOfFit(const novac::CSpectrumInfo& info, size_t index, const novac::SpectrometerModel* spectrometer, float chi2Limit = -1, float upperLimit = -1, float lowerLimit = -1);
 
     /** Returns the calculated flux */
     double GetFlux() const { return m_flux.m_flux; }
@@ -106,7 +101,7 @@ public:
     double GetTemperature() const { return m_skySpecInfo.m_temperature; }
 
     /** returns the number of spectra evaluated */
-    long  GetEvaluatedNum() const { return m_specNum; }
+    size_t GetEvaluatedNum() const { return m_specNum; }
 
     /** Returns the latitude of the system */
     double GetLatitude() const;
@@ -132,38 +127,35 @@ public:
     /** Returns the battery-voltage of the sky spectrum */
     float GetBatteryVoltage() const;
 
-    /** Returns the name of the requested spectrum */
-    novac::CString GetName(int index) const;
-
     /** Returns the serial-number of the spectrometer that collected this scan */
     std::string GetSerial() const;
 
     /** returns the goodness of fit for the fitting of the evaluated
             spectrum number 'index'.
-        This function is the complementary of IsBad(unsigned long index)*/
-    int  IsOk(unsigned long index) const { return m_spec[index].IsOK(); }
+        This function is the complementary of IsBad(size_t index)*/
+    int  IsOk(size_t index) const { return m_spec[index].IsOK(); }
 
     /** returns the goodness of fit for the fitting of the evaluated
             spectrum number 'index'.
-        This function is the complementary of IsOK(unsigned long index). */
-    int  IsBad(unsigned long index) const { return m_spec[index].IsBad(); }
+        This function is the complementary of IsOK(size_t index). */
+    int  IsBad(size_t index) const { return m_spec[index].IsBad(); }
 
     /** returns true if the evaluated spectrum number 'index' is marked
             as deleted */
-    int  IsDeleted(unsigned long index) const { return m_spec[index].IsDeleted(); }
+    int  IsDeleted(size_t index) const { return m_spec[index].IsDeleted(); }
 
     /** Marks the desired spectrum with the supplied mark_flag.
         Mark flag must be MARK_BAD_EVALUATION, or MARK_DELETED
         @return true on success. */
-    bool MarkAs(unsigned long index, int MARK_FLAG);
+    bool MarkAs(size_t index, int MARK_FLAG);
 
     /** Removes the desired mark from the desired spectrum
         Mark flag must be MARK_BAD_EVALUATION, or MARK_DELETED
         @return true on success. */
-    bool RemoveMark(unsigned long index, int MARK_FLAG);
+    bool RemoveMark(size_t index, int MARK_FLAG);
 
     /** Returns a reference to the desired spectrum info-structure */
-    const novac::CSpectrumInfo& GetSpectrumInfo(unsigned long index) const;
+    const novac::CSpectrumInfo& GetSpectrumInfo(size_t index) const;
 
     /** Returns a reference to the spectrum info-structure of the sky-spectrum used */
     const novac::CSpectrumInfo& GetSkySpectrumInfo() const;
@@ -173,18 +165,18 @@ public:
 
     /** returns the scan angle of evaluated spectrum number 'index'.
         @param index - the zero based index into the list of  evaluated spectra */
-    float GetScanAngle(unsigned long index) const { return (IsValidSpectrumIndex(index)) ? m_specInfo[index].m_scanAngle : 0; }
+    float GetScanAngle(size_t index) const { return (IsValidSpectrumIndex(index)) ? m_specInfo[index].m_scanAngle : 0; }
 
     /** returns the azimuth angle (the angle of the second motor) of
             evaluated spectrum number 'index'.
         @param index - the zero based index into the list of  evaluated spectra */
-    float GetScanAngle2(unsigned long index) const { return (IsValidSpectrumIndex(index)) ? m_specInfo[index].m_scanAngle2 : 0; }
+    float GetScanAngle2(size_t index) const { return (IsValidSpectrumIndex(index)) ? m_specInfo[index].m_scanAngle2 : 0; }
 
     /** returns the time and date (UMT) when evaluated spectrum number
             'index' was started.
         @param index - the zero based index into the list of evaluated spectra.
         @return SUCCESS if the index is valid */
-    RETURN_CODE GetStartTime(unsigned long index, novac::CDateTime& time) const;
+    RETURN_CODE GetStartTime(size_t index, novac::CDateTime& time) const;
 
     /** returns the time and date (UMT) when the sky-spectrum was started. */
     void GetSkyStartTime(novac::CDateTime& t) const;
@@ -194,7 +186,7 @@ public:
             was stopped.
         @param index - the zero based index into the list of evaluated spectra.
         @return SUCCESS if the index is valid */
-    RETURN_CODE GetStopTime(unsigned long index, novac::CDateTime& time) const;
+    RETURN_CODE GetStopTime(size_t index, novac::CDateTime& time) const;
 
     /** returns the evaluated column for specie number 'specieNum' and
             spectrum number 'specNum'
@@ -202,8 +194,8 @@ public:
             to evaluate for
         @param spectrumNum - the zero based index into the list of evaluated
             spectra.*/
-    double GetColumn(unsigned long spectrumNum, unsigned long specieNum) const;
-    double GetColumn(unsigned long spectrumNum, novac::Molecule& mol) const;
+    double GetColumn(size_t spectrumNum, size_t specieNum) const;
+    double GetColumn(size_t spectrumNum, novac::Molecule& mol) const;
 
     /** returns the error for the evaluated column for specie number
             'specieNum' and spectrum number 'specNum'
@@ -211,7 +203,7 @@ public:
             to evaluate for
         @param spectrumNum - the zero based index into the list of evaluated
             spectra.*/
-    double GetColumnError(unsigned long spectrumNum, unsigned long specieNum) const;
+    double GetColumnError(size_t spectrumNum, size_t specieNum) const;
 
     /** returns the SHIFT parameter for specie number 'specieNum' and
             spectrum number 'specNum'
@@ -219,7 +211,7 @@ public:
             to evaluate for
         @param spectrumNum - the zero based index into the list of
             evaluated spectra.*/
-    double GetShift(unsigned long spectrumNum, unsigned long specieNum) const;
+    double GetShift(size_t spectrumNum, size_t specieNum) const;
 
     /** returns the error for the SHIFT parameter for specie number
             'specieNum' and spectrum number 'specNum'
@@ -227,7 +219,7 @@ public:
             to evaluate for
         @param spectrumNum - the zero based index into the list of
             evaluated spectra.*/
-    double GetShiftError(unsigned long spectrumNum, unsigned long specieNum) const;
+    double GetShiftError(size_t spectrumNum, size_t specieNum) const;
 
     /** returns the SQUEEZE parameter for specie number 'specieNum' and
             spectrum number 'specNum'
@@ -235,7 +227,7 @@ public:
             to evaluate for
         @param spectrumNum - the zero based index into the list of
             evaluated spectra.*/
-    double GetSqueeze(unsigned long spectrumNum, unsigned long specieNum) const;
+    double GetSqueeze(size_t spectrumNum, size_t specieNum) const;
 
     /** returns the error for the SQUEEZE parameter for specie number
             'specieNum' and spectrum number 'specNum'
@@ -243,44 +235,44 @@ public:
             to evaluate for
         @param spectrumNum - the zero based index into the list of
             evaluated spectra.*/
-    double GetSqueezeError(unsigned long spectrumNum, unsigned long specieNum) const;
+    double GetSqueezeError(size_t spectrumNum, size_t specieNum) const;
 
     /** @return the delta of the fit for spectrum number 'spectrumNum'
         @param spectrumNum - the spectrum number (zero-based) for
             which the delta value is desired */
-    double GetDelta(unsigned long spectrumNum) const;
+    double GetDelta(size_t spectrumNum) const;
 
     /** @return the chi-square of the fit for spectrum number 'spectrumNum'
         @param spectrumNum - the spectrum number (zero-based) for
             which the delta value is desired */
-    double GetChiSquare(unsigned long spectrumNum) const;
+    double GetChiSquare(size_t spectrumNum) const;
 
     /** returns the number of spectra averaged to get evaluated
             spectrum number 'spectrumNum'
         @return the number of spectra averaged. */
-    long GetSpecNum(unsigned long spectrumNum) const { return (IsValidSpectrumIndex(spectrumNum)) ? m_specInfo[spectrumNum].m_numSpec : 0; }
+    long GetSpecNum(size_t spectrumNum) const { return (IsValidSpectrumIndex(spectrumNum)) ? m_specInfo[spectrumNum].m_numSpec : 0; }
 
     /** returns the expsure time of evaluated spectrum number 'spectrumNum'
             in ms  */
-    long GetExposureTime(unsigned long spectrumNum) const { return (IsValidSpectrumIndex(spectrumNum)) ? m_specInfo[spectrumNum].m_exposureTime : 0; }
+    long GetExposureTime(size_t spectrumNum) const { return (IsValidSpectrumIndex(spectrumNum)) ? m_specInfo[spectrumNum].m_exposureTime : 0; }
 
     /** returns the peak intensity of evaluated spectrum number 'spectrumNum'
         (the maximum intensity of the whole spectrum). */
-    float GetPeakIntensity(unsigned long spectrumNum) const { return (IsValidSpectrumIndex(spectrumNum)) ? m_specInfo[spectrumNum].m_peakIntensity : 0; }
+    float GetPeakIntensity(size_t spectrumNum) const { return (IsValidSpectrumIndex(spectrumNum)) ? m_specInfo[spectrumNum].m_peakIntensity : 0; }
 
     /** returns the fit intensity of evaluated spectrum number 'spectrumNum'
         (the maximum intensity int the fit region of the spectrum). */
-    float GetFitIntensity(unsigned long spectrumNum) const { return (IsValidSpectrumIndex(spectrumNum)) ? m_specInfo[spectrumNum].m_fitIntensity : 0; }
+    float GetFitIntensity(size_t spectrumNum) const { return (IsValidSpectrumIndex(spectrumNum)) ? m_specInfo[spectrumNum].m_fitIntensity : 0; }
 
     /** returns the electronic offset in spectrum number 'spectrumNum' */
-    float GetElectronicOffset(unsigned long spectrumNum) const { return (IsValidSpectrumIndex(spectrumNum)) ? m_specInfo[spectrumNum].m_offset : 0; }
+    float GetElectronicOffset(size_t spectrumNum) const { return (IsValidSpectrumIndex(spectrumNum)) ? m_specInfo[spectrumNum].m_offset : 0; }
 
     /** returns the number of species that were used in the evaluation of a
         given spectrum */
-    int GetSpecieNum(unsigned long spectrumNum) const { return (IsValidSpectrumIndex(spectrumNum)) ? (int)m_spec[spectrumNum].m_referenceResult.size() : 0; }
+    int GetSpecieNum(size_t spectrumNum) const { return (IsValidSpectrumIndex(spectrumNum)) ? (int)m_spec[spectrumNum].m_referenceResult.size() : 0; }
 
     /** returns the specie name */
-    const novac::CString GetSpecieName(unsigned long spectrumNum, unsigned long specieNum) const { return (IsValidSpectrumIndex(spectrumNum)) ? m_spec[spectrumNum].m_referenceResult[specieNum].m_specieName : 0; }
+    const std::string GetSpecieName(size_t spectrumNum, size_t specieNum) const { return (IsValidSpectrumIndex(spectrumNum)) ? m_spec[spectrumNum].m_referenceResult[specieNum].m_specieName : "NA"; }
 
     /** Sets the type of the instrument used */
     void SetInstrumentType(novac::NovacInstrumentType type);
@@ -299,9 +291,9 @@ private:
         @param specieIndex - the zero based into the list of species to evaluate for.
         @param fitParameter - a parameter to return.
         @return NaN if any parameter is wrong */
-    double GetFitParameter(unsigned long spectrumNum, unsigned long specieIndex, FIT_PARAMETER parameter) const;
+    double GetFitParameter(size_t spectrumNum, size_t specieIndex, FIT_PARAMETER parameter) const;
 
     /** returns true if the given index is a valid spectrum index */
-    inline bool IsValidSpectrumIndex(unsigned long spectrumNum) const { return (spectrumNum >= 0 && spectrumNum < m_specNum); }
+    inline bool IsValidSpectrumIndex(size_t spectrumIndex) const { return spectrumIndex < m_specNum; }
 };
 }

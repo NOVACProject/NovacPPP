@@ -179,7 +179,7 @@ void LoadConfigurations(
 
     // Check if there is a configuration file for every spectrometer serial number
     FileHandler::CEvaluationConfigurationParser eval_reader{ g_logger };
-    for (int k = 0; k < configuration.NumberOfInstruments(); ++k)
+    for (size_t k = 0; k < configuration.NumberOfInstruments(); ++k)
     {
         ReadEvaluationXmlFile(workDir, eval_reader, configuration.m_instrument[k]);
     }
@@ -283,7 +283,7 @@ void ArchiveSettingsFiles(const Configuration::CUserConfiguration& userSettings)
 
     Common common;
     Common::CopyFile(common.m_exePath + "configuration/setup.xml", setupOutputFile);
-    for (int k = 0; k < s_setup.NumberOfInstruments(); ++k)
+    for (size_t k = 0; k < s_setup.NumberOfInstruments(); ++k)
     {
         novac::CString serial(s_setup.m_instrument[k].m_serial);
 

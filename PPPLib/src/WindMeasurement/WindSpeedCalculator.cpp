@@ -589,13 +589,13 @@ RETURN_CODE CWindSpeedCalculator::CalculateCorrelation(const novac::CString& eva
         Evaluation::CScanResult& secondScan = reader[k].m_scan[scanIndex[k]];
 
         // 3c. The length of the measurement
-        int	length = secondScan.GetEvaluatedNum();
+        const size_t length = secondScan.GetEvaluatedNum();
 
         // 3d. Allocate the memory for the series
         series[k] = new CMeasurementSeries(length);
 
         // 3e. Copy the relevant data in the scan
-        for (int i = 0; i < length; ++i)
+        for (size_t i = 0; i < length; ++i)
         {
             secondScan.GetStartTime(i, time);
 
@@ -710,14 +710,14 @@ RETURN_CODE CWindSpeedCalculator::CalculateCorrelation_Heidelberg(const novac::C
     scan.GetStopTime(scan.GetEvaluatedNum() - 1, m_stopTime);
 
     // 3c. The length of the measurement
-    int	length = scan.GetEvaluatedNum();
+    const size_t length = scan.GetEvaluatedNum();
 
     // 3d. Allocate the memory for the series
     series[0] = new CWindSpeedCalculator::CMeasurementSeries(length / 2);
     series[1] = new CWindSpeedCalculator::CMeasurementSeries(length / 2);
 
     // 3e. Copy the relevant data in the scan
-    for (int k = 0; k < length; ++k)
+    for (size_t k = 0; k < length; ++k)
     {
         scan.GetStartTime(k, time);
 

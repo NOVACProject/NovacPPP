@@ -36,7 +36,7 @@ public:
     // ----------------------------------------------------------------------
 
     /** Returns the number of configured instruments */
-    int NumberOfInstruments() const { return static_cast<int>(m_instrument.size()); }
+    size_t NumberOfInstruments() const { return m_instrument.size(); }
 
     /** Retrieves the CInstrumentConfiguration that is connected with a given serial-number.
         @return a pointer to the found CInstrumentConfiguration.

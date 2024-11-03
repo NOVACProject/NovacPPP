@@ -123,22 +123,25 @@ void CStratosphereCalculator::BuildMeasurementList(const std::list <Evaluation::
         const Evaluation::CExtendedScanResult& result = (Evaluation::CExtendedScanResult&)*(p++);
 
         std::string evalLogfileToRead;
-        for (int k = 0; k < m_userSettings.m_nFitWindowsToUse; ++k)
+        for (size_t k = 0; k < m_userSettings.m_nFitWindowsToUse; ++k)
         {
             if (Equals(result.m_fitWindowName[k], mainFitWindowName))
             {
                 evalLogfileToRead = result.m_evalLogFile[k];
-                k = 1000;
-                continue;
+                break;
             }
         }
         if (evalLogfileToRead.size() < 3)
+        {
             continue; // file not found...
+        }
 
-        // REad the evaluation-log file
+        // Read the evaluation-log file
         FileHandler::CEvaluationLogFileHandler reader(m_log, evalLogfileToRead, m_userSettings.m_molecule);
         if (RETURN_CODE::SUCCESS != reader.ReadEvaluationLog())
+        {
             continue;
+        }
 
         // Get a handle to the result
         Evaluation::CScanResult& scanResult = reader.m_scan[0];
@@ -147,7 +150,7 @@ void CStratosphereCalculator::BuildMeasurementList(const std::list <Evaluation::
         CMeasurementDay measurementDay;
         scanResult.GetSkyStartTime(measurementDay.day);
 
-        for (int k = 0; k < scanResult.GetEvaluatedNum(); ++k)
+        for (size_t k = 0; k < scanResult.GetEvaluatedNum(); ++k)
         {
             try
             {

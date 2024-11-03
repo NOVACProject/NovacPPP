@@ -54,10 +54,9 @@ CScanResult& CScanResult::operator=(const CScanResult& s2)
     return *this;
 }
 
-
-void CScanResult::InitializeArrays(long specNum)
+void CScanResult::InitializeArrays(size_t specNum)
 {
-    if (specNum < 0 || specNum > 1024)
+    if (specNum > 1024)
     {
         return;
     }
@@ -66,40 +65,29 @@ void CScanResult::InitializeArrays(long specNum)
     m_specInfo.reserve(specNum);
 }
 
-/** Appends the result to the list of calculated results */
-int CScanResult::AppendResult(const CEvaluationResult& evalRes, const CSpectrumInfo& specInfo)
+void CScanResult::AppendResult(const CEvaluationResult& evalRes, const CSpectrumInfo& specInfo)
 {
-
-    // Append the evaluationresult to the end of the 'm_spec'-vector
     m_spec.push_back(CEvaluationResult(evalRes));
-
-    // Append the spectral information to the end of the 'm_specInfo'-vector
     m_specInfo.push_back(CSpectrumInfo(specInfo));
 
-    // Increase the numbers of spectra in this result-set.
+    // Increase the number of spectra in this result-set.
     ++m_specNum;
-    return 0;
 }
 
-const CEvaluationResult* CScanResult::GetResult(unsigned int specIndex) const
-{
-    if (specIndex >= m_specNum)
-        return NULL; // not a valid index
-
-    return &m_spec.at(specIndex);
-}
-
-void CScanResult::MarkAsCorrupted(unsigned int specIndex)
+void CScanResult::MarkAsCorrupted(size_t specIndex)
 {
     m_corruptedSpectra.push_back(specIndex);
 }
 
-int CScanResult::GetCorruptedNum() const
+const CEvaluationResult* CScanResult::GetResult(size_t specIndex) const
 {
-    return (int)m_corruptedSpectra.size();
+    if (specIndex >= m_specNum)
+        return nullptr; // not a valid index
+
+    return &m_spec.at(specIndex);
 }
 
-int CScanResult::RemoveResult(unsigned int specIndex)
+int CScanResult::RemoveResult(size_t specIndex)
 {
     if (specIndex >= m_specNum)
         return 1; // not a valid index
@@ -107,7 +95,9 @@ int CScanResult::RemoveResult(unsigned int specIndex)
     // Remove the desired value
     auto it = m_specInfo.begin() + specIndex;
     m_specInfo.erase(it);
-    // m_specInfo.RemoveAt(specIndex, 1);
+
+    auto it2 = m_spec.begin() + specIndex;
+    m_spec.erase(it2);
 
     // Decrease the number of values in the list
     m_specNum -= 1;
@@ -144,9 +134,9 @@ bool CScanResult::CheckGoodnessOfFit(const CSpectrumInfo& info, const Spectromet
     return CheckGoodnessOfFit(info, m_specNum - 1, spectrometer, chi2Limit, upperLimit, lowerLimit);
 }
 
-bool CScanResult::CheckGoodnessOfFit(const CSpectrumInfo& info, int index, const SpectrometerModel* spectrometer, float chi2Limit, float upperLimit, float lowerLimit)
+bool CScanResult::CheckGoodnessOfFit(const CSpectrumInfo& info, size_t index, const SpectrometerModel* spectrometer, float chi2Limit, float upperLimit, float lowerLimit)
 {
-    if (index < 0 || (unsigned int)index >= m_specNum)
+    if (index >= m_specNum)
     {
         return false;
     }
@@ -157,66 +147,62 @@ bool CScanResult::CheckGoodnessOfFit(const CSpectrumInfo& info, int index, const
     return m_spec[index].CheckGoodnessOfFit(info, spectrometer, chi2Limit, upperLimit, lowerLimit);
 }
 
-double CScanResult::GetColumn(unsigned long spectrumNum, unsigned long specieNum) const
+double CScanResult::GetColumn(size_t spectrumNum, size_t specieNum) const
 {
     return this->GetFitParameter(spectrumNum, specieNum, COLUMN);
 }
 
-double CScanResult::GetColumn(unsigned long spectrumNum, Molecule& molec) const
+double CScanResult::GetColumn(size_t spectrumNum, Molecule& molec) const
 {
     int index = this->GetSpecieIndex(molec.name);
     if (index == -1)
         return NOT_A_NUMBER;
     else
-        return GetFitParameter(spectrumNum, index, COLUMN);
+        return GetFitParameter(spectrumNum, static_cast<int>(index), COLUMN);
 }
 
-double CScanResult::GetColumnError(unsigned long spectrumNum, unsigned long specieNum) const
+double CScanResult::GetColumnError(size_t spectrumNum, size_t specieNum) const
 {
     return this->GetFitParameter(spectrumNum, specieNum, COLUMN_ERROR);
 }
 
-double CScanResult::GetShift(unsigned long spectrumNum, unsigned long specieNum) const
+double CScanResult::GetShift(size_t spectrumNum, size_t specieNum) const
 {
     return this->GetFitParameter(spectrumNum, specieNum, SHIFT);
 }
 
-double CScanResult::GetShiftError(unsigned long spectrumNum, unsigned long specieNum) const
+double CScanResult::GetShiftError(size_t spectrumNum, size_t specieNum) const
 {
     return this->GetFitParameter(spectrumNum, specieNum, SHIFT_ERROR);
 }
 
-double CScanResult::GetSqueeze(unsigned long spectrumNum, unsigned long specieNum) const
+double CScanResult::GetSqueeze(size_t spectrumNum, size_t specieNum) const
 {
     return this->GetFitParameter(spectrumNum, specieNum, SQUEEZE);
 }
 
-double CScanResult::GetSqueezeError(unsigned long spectrumNum, unsigned long specieNum) const
+double CScanResult::GetSqueezeError(size_t spectrumNum, size_t specieNum) const
 {
     return this->GetFitParameter(spectrumNum, specieNum, SQUEEZE_ERROR);
 }
 
-/** @return the delta of the fit for spectrum number 'spectrumNum'
-      @param spectrumNum - the spectrum number (zero-based) for which the delta value is desired         */
-double CScanResult::GetDelta(unsigned long spectrumNum) const
+double CScanResult::GetDelta(size_t spectrumNum) const
 {
     return this->m_spec[spectrumNum].m_delta;
 }
 
-/** @return the chi-square of the fit for spectrum number 'spectrumNum'
-      @param spectrumNum - the spectrum number (zero-based) for which the delta value is desired         */
-double CScanResult::GetChiSquare(unsigned long spectrumNum) const
+double CScanResult::GetChiSquare(size_t spectrumNum) const
 {
     return this->m_spec[spectrumNum].m_chiSquare;
 }
 
 /** Returns the desired fit parameter */
-double CScanResult::GetFitParameter(unsigned long specIndex, unsigned long specieIndex, FIT_PARAMETER parameter) const
+double CScanResult::GetFitParameter(size_t specIndex, size_t specieIndex, FIT_PARAMETER parameter) const
 {
-    if (specIndex < 0 || specIndex > m_specNum)
+    if (specIndex >= m_specNum)
         return 0.0f;
 
-    if (specieIndex < 0 || specieIndex > this->m_spec[specIndex].m_referenceResult.size())
+    if (specieIndex >= this->m_spec[specIndex].m_referenceResult.size())
         return 0.0f;
 
     switch (parameter)
@@ -232,7 +218,7 @@ double CScanResult::GetFitParameter(unsigned long specIndex, unsigned long speci
     }
 }
 
-const CSpectrumInfo& CScanResult::GetSpectrumInfo(unsigned long index) const
+const CSpectrumInfo& CScanResult::GetSpectrumInfo(size_t index) const
 {
     return m_specInfo[index];
 }
@@ -249,7 +235,7 @@ const CSpectrumInfo& CScanResult::GetDarkSpectrumInfo() const
     return m_darkSpecInfo;
 }
 
-bool CScanResult::MarkAs(unsigned long index, int MARK_FLAG)
+bool CScanResult::MarkAs(size_t index, int MARK_FLAG)
 {
     if (!IsValidSpectrumIndex(index))
         return false;
@@ -257,7 +243,7 @@ bool CScanResult::MarkAs(unsigned long index, int MARK_FLAG)
     return m_spec[index].MarkAs(MARK_FLAG);
 }
 
-bool CScanResult::RemoveMark(unsigned long index, int MARK_FLAG)
+bool CScanResult::RemoveMark(size_t index, int MARK_FLAG)
 {
     if (!IsValidSpectrumIndex(index))
         return false;
@@ -350,16 +336,6 @@ double CScanResult::GetRoll() const
     return info.m_roll;
 }
 
-/** Returns the name of the requested spectrum */
-novac::CString CScanResult::GetName(int index) const
-{
-    if (!IsValidSpectrumIndex(index))
-        return novac::CString("");
-
-    const CSpectrumInfo& info = m_specInfo[index];
-    return info.m_name;
-}
-
 std::string CScanResult::GetSerial() const
 {
     for (unsigned int k = 0; k < m_specNum; ++k)
@@ -376,7 +352,7 @@ std::string CScanResult::GetSerial() const
 
 /** returns the time and date (UMT) when evaluated spectrum number 'index' was started.
     @param index - the zero based index into the list of evaluated spectra */
-RETURN_CODE CScanResult::GetStartTime(unsigned long index, CDateTime& t) const
+RETURN_CODE CScanResult::GetStartTime(size_t index, CDateTime& t) const
 {
     if (!IsValidSpectrumIndex(index))
         return RETURN_CODE::FAIL;
@@ -397,10 +373,7 @@ CDateTime CScanResult::GetSkyStartTime() const
     return m_skySpecInfo.m_startTime;
 }
 
-/** returns the time and date (UMT) when evaluated spectrum number 'index' was stopped.
-    @param index - the zero based index into the list of evaluated spectra.
-        @return SUCCESS if the index is valid */
-RETURN_CODE CScanResult::GetStopTime(unsigned long index, CDateTime& t) const
+RETURN_CODE CScanResult::GetStopTime(size_t index, CDateTime& t) const
 {
     if (!IsValidSpectrumIndex(index))
         return RETURN_CODE::FAIL;
@@ -409,6 +382,7 @@ RETURN_CODE CScanResult::GetStopTime(unsigned long index, CDateTime& t) const
 
     return RETURN_CODE::SUCCESS;
 }
+
 
 /** Sets the type of the instrument used */
 void CScanResult::SetInstrumentType(NovacInstrumentType type)

@@ -186,7 +186,7 @@ RETURN_CODE CSetupFileReader::WriteSetupFile(const novac::CString& fileName, con
     fprintf(f, "<NovacPPPConfiguration>\n");
 
     // loop through each instrument
-    for (int k = 0; k < setup.NumberOfInstruments(); ++k)
+    for (size_t k = 0; k < setup.NumberOfInstruments(); ++k)
     {
         const Configuration::CInstrumentConfiguration& instr = setup.m_instrument[k];
 

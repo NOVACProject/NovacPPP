@@ -34,9 +34,9 @@ void CLocationConfiguration::InsertLocation(const CInstrumentLocation& loc)
     return;
 }
 
-int CLocationConfiguration::GetLocation(int index, CInstrumentLocation& loc) const
+int CLocationConfiguration::GetLocation(size_t index, CInstrumentLocation& loc) const
 {
-    if (index < 0 || index >= m_locationNum)
+    if (index >= m_locationNum)
         return 1;
 
     // copy the data to the requested parameter
@@ -45,7 +45,7 @@ int CLocationConfiguration::GetLocation(int index, CInstrumentLocation& loc) con
     return 0;
 }
 
-unsigned long CLocationConfiguration::GetLocationNum() const
+size_t CLocationConfiguration::GetLocationNum() const
 {
     return m_locationNum;
 }
@@ -58,7 +58,7 @@ void CLocationConfiguration::CheckSettings() const
     }
 
     // Check the time ranges
-    for (int k = 0; k < m_locationNum; ++k)
+    for (size_t k = 0; k < m_locationNum; ++k)
     {
         // check that the time range is valid
         if (m_location[k].m_validFrom >= m_location[k].m_validTo)
@@ -69,7 +69,7 @@ void CLocationConfiguration::CheckSettings() const
         }
 
         // check if this time range overlaps some other 
-        for (int j = k + 1; j < m_locationNum; ++j)
+        for (size_t j = k + 1; j < m_locationNum; ++j)
         {
             if ((m_location[k].m_validFrom < m_location[j].m_validFrom) && (m_location[k].m_validTo > m_location[j].m_validFrom))
             {

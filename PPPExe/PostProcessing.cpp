@@ -350,13 +350,13 @@ void CPostProcessing::CheckForSpectraOnFTPServer(novac::LogContext context, std:
 novac::GuardedList<std::string> s_pakFilesRemaining;
 novac::GuardedList<Evaluation::CExtendedScanResult> s_evalLogs;
 
-volatile unsigned long s_nFilesToProcess;
+volatile size_t s_nFilesToProcess;
 
 void CPostProcessing::EvaluateScans(
     const std::vector<std::string>& pakFileList,
     std::vector<Evaluation::CExtendedScanResult>& evalLogFiles)
 {
-    s_nFilesToProcess = (long)pakFileList.size();
+    s_nFilesToProcess = pakFileList.size();
     novac::CString messageToUser;
 
     // share the list of pak-files with the other functions around here
@@ -413,7 +413,7 @@ void EvaluateScansThread(
         Evaluation::CExtendedScanResult combinedResult;
         try
         {
-            for (int fitWindowIndex = 0; fitWindowIndex < userSettings.m_nFitWindowsToUse; ++fitWindowIndex)
+            for (size_t fitWindowIndex = 0; fitWindowIndex < userSettings.m_nFitWindowsToUse; ++fitWindowIndex)
             {
                 auto result = eval.EvaluateScan(fileName, userSettings.m_fitWindowsToUse[fitWindowIndex]);
 
@@ -480,7 +480,7 @@ int CPostProcessing::CheckInstrumentCalibrationSettings() const
     }
 
     // Verify that each instrument has an initial instrument line shape file.
-    for (int instrumentIdx = 0; instrumentIdx < m_setup.NumberOfInstruments(); ++instrumentIdx)
+    for (size_t instrumentIdx = 0; instrumentIdx < m_setup.NumberOfInstruments(); ++instrumentIdx)
     {
         if (m_setup.m_instrument[instrumentIdx].m_instrumentCalibration.m_initialCalibrationFile.size() == 0)
         {
@@ -524,21 +524,18 @@ void CPostProcessing::CheckProcessingSettings() const
     }
     {
         novac::CString volcanoName;
-        g_volcanoes.GetVolcanoName(m_userSettings.m_volcano, volcanoName);
+        g_volcanoes.GetVolcanoName(static_cast<unsigned int>(m_userSettings.m_volcano), volcanoName);
+        const auto location = g_volcanoes.GetPeak(static_cast<unsigned int>(m_userSettings.m_volcano));
 
-        novac::CString messageToUser;
-        messageToUser.Format("Monitoring volcano '%s', located at (lat: %lf, lon: %lf, alt: %lf)",
-            volcanoName.c_str(),
-            g_volcanoes.GetPeakLatitude(m_userSettings.m_volcano),
-            g_volcanoes.GetPeakLongitude(m_userSettings.m_volcano),
-            g_volcanoes.GetPeakAltitude(m_userSettings.m_volcano));
-        m_log.Information(messageToUser.std_str());
+        std::stringstream msg;
+        msg << "Monitoring volcano '" << volcanoName << " located at " << location;
+        m_log.Information(msg.str());
     }
 
     // Check that no instrument is duplicated in the list of instruments...
-    for (int j = 0; j < m_setup.NumberOfInstruments(); ++j)
+    for (size_t j = 0; j < m_setup.NumberOfInstruments(); ++j)
     {
-        for (int k = j + 1; k < m_setup.NumberOfInstruments(); ++k)
+        for (size_t k = j + 1; k < m_setup.NumberOfInstruments(); ++k)
         {
             if (Equals(m_setup.m_instrument[j].m_serial, m_setup.m_instrument[k].m_serial))
             {
@@ -550,7 +547,7 @@ void CPostProcessing::CheckProcessingSettings() const
 
     // Check that, for each spectrometer, there's only one fit-window defined
     // at each instant
-    for (int j = 0; j < m_setup.NumberOfInstruments(); ++j)
+    for (size_t j = 0; j < m_setup.NumberOfInstruments(); ++j)
     {
         if (m_setup.m_instrument[j].m_eval.NumberOfFitWindows() == 1)
         {
@@ -560,7 +557,7 @@ void CPostProcessing::CheckProcessingSettings() const
     }
 
     // Check that, for each spectrometer, there's only one location defined at each instant
-    for (int j = 0; j < m_setup.NumberOfInstruments(); ++j)
+    for (size_t j = 0; j < m_setup.NumberOfInstruments(); ++j)
     {
         if (m_setup.m_instrument[j].m_location.GetLocationNum() == 1)
         {
@@ -572,6 +569,11 @@ void CPostProcessing::CheckProcessingSettings() const
 
 void CPostProcessing::ReadWindField(novac::LogContext context)
 {
+    if (m_userSettings.m_volcano < 0)
+    {
+        throw std::invalid_argument("Volcano index has not been set when attempting to read wid field.");
+    }
+
     m_log.Information("--- Reading Wind information --- ");
 
     novac::CString name1, name2, name3, path1, path2, path3, messageToUser;
@@ -600,9 +602,10 @@ void CPostProcessing::ReadWindField(novac::LogContext context)
 
         // Get the name of the volcano that we are about to process...
         //  there are two options, either the full name or the simple name
-        g_volcanoes.GetVolcanoName(m_userSettings.m_volcano, name1);
-        g_volcanoes.GetSimpleVolcanoName(m_userSettings.m_volcano, name2);
-        g_volcanoes.GetVolcanoCode(m_userSettings.m_volcano, name3);
+        const unsigned int volcanoIndex = static_cast<unsigned int>(m_userSettings.m_volcano);
+        g_volcanoes.GetVolcanoName(volcanoIndex, name1);
+        g_volcanoes.GetSimpleVolcanoName(volcanoIndex, name2);
+        g_volcanoes.GetVolcanoCode(volcanoIndex, name3);
 
         // Get the path to the executable, so that we know where to start looking
         path1.Format("%sconfiguration%c%s.wxml", (const char*)common.m_exePath, Poco::Path::separator(), (const char*)name1);
@@ -657,9 +660,11 @@ void CPostProcessing::ReadWindField(novac::LogContext context)
 
 void CPostProcessing::PreparePlumeHeights(novac::LogContext context)
 {
+    const unsigned int volcanoIndex = static_cast<unsigned int>(m_userSettings.m_volcano);
+
     // we need to construct a default plume height to use, if there's nothing else...
     Geometry::PlumeHeight plumeHeight;
-    plumeHeight.m_plumeAltitude = g_volcanoes.GetPeakAltitude(m_userSettings.m_volcano);
+    plumeHeight.m_plumeAltitude = g_volcanoes.GetPeakAltitude(volcanoIndex);
     plumeHeight.m_plumeAltitudeSource = Meteorology::MeteorologySource::Default;
     plumeHeight.m_validFrom = CDateTime(0, 0, 0, 0, 0, 0);
     plumeHeight.m_validTo = CDateTime(9999, 12, 31, 23, 59, 59);
@@ -669,11 +674,10 @@ void CPostProcessing::PreparePlumeHeights(novac::LogContext context)
     double maxInstrumentAltitude = -1e6;
     Configuration::CInstrumentLocation location;
     novac::CString volcanoName;
-    g_volcanoes.GetVolcanoName(m_userSettings.m_volcano, volcanoName);
+    g_volcanoes.GetVolcanoName(volcanoIndex, volcanoName);
     for (const auto& instrument : m_setup.m_instrument)
     {
-        unsigned long N = instrument.m_location.GetLocationNum();
-        for (unsigned int j = 0; j < N; ++j)
+        for (size_t j = 0; j < instrument.m_location.GetLocationNum(); ++j)
         {
             instrument.m_location.GetLocation(j, location);
             if (Equals(volcanoName, location.m_volcano))
@@ -684,11 +688,11 @@ void CPostProcessing::PreparePlumeHeights(novac::LogContext context)
     }
     if (maxInstrumentAltitude > 0)
     {
-        plumeHeight.m_plumeAltitudeError = std::abs(g_volcanoes.GetPeakAltitude(m_userSettings.m_volcano) - maxInstrumentAltitude) / 2.0;
+        plumeHeight.m_plumeAltitudeError = std::abs(g_volcanoes.GetPeakAltitude(volcanoIndex) - maxInstrumentAltitude) / 2.0;
     }
     else
     {
-        plumeHeight.m_plumeAltitudeError = g_volcanoes.GetPeakAltitude(m_userSettings.m_volcano) / 2.0;
+        plumeHeight.m_plumeAltitudeError = g_volcanoes.GetPeakAltitude(volcanoIndex) / 2.0;
     }
 
     std::stringstream msg;

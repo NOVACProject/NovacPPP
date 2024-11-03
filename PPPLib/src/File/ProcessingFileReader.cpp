@@ -265,7 +265,7 @@ void CProcessingFileReader::Parse_FitWindow(Configuration::CUserConfiguration& s
             settings.m_mainFitWindow = 0;
             if (mainFitWindowName.GetLength() > 0)
             {
-                for (int k = 0; k < settings.m_nFitWindowsToUse; ++k)
+                for (size_t k = 0; k < settings.m_nFitWindowsToUse; ++k)
                 {
                     if (Equals(settings.m_fitWindowsToUse[k], mainFitWindowName))
                     {
@@ -691,7 +691,7 @@ RETURN_CODE CProcessingFileReader::WriteProcessingFile(const novac::CString& fil
 
     // the fit fit windows to use
     fprintf(f, "\t<FitWindows>\n");
-    for (int k = 0; k < settings.m_nFitWindowsToUse; ++k)
+    for (size_t k = 0; k < settings.m_nFitWindowsToUse; ++k)
     {
         fprintf(f, "\t\t<item>%s</item>\n", (const char*)settings.m_fitWindowsToUse[k]);
     }

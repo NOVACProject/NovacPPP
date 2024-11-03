@@ -234,14 +234,13 @@ public:
 
     /** The names of the fit-windows that we should evaluate for */
     novac::CString   m_fitWindowsToUse[MAX_FIT_WINDOWS];
-    long   m_nFitWindowsToUse;
+    size_t m_nFitWindowsToUse = 1U;
 #define   m_str_fitWindowToUse "FitWindow_Item"
 
     /** The name of the most important fit-window
         In processing for fluxes, this is the window that will be used
-            to calculate the flux.
-    */
-    int m_mainFitWindow;
+            to calculate the flux. */
+    size_t m_mainFitWindow = 0U;
 #define   str_mainFitWindow "main"
 
     /** The settings for the sky spectrum to use */

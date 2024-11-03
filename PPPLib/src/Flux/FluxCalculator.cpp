@@ -208,7 +208,7 @@ int CFluxCalculator::GetLocation(
     novac::CString errorMessage;
 
     // First of all find the instrument 
-    for (int k = 0; k < m_setup.NumberOfInstruments(); ++k)
+    for (size_t k = 0; k < m_setup.NumberOfInstruments(); ++k)
     {
         if (Equals(m_setup.m_instrument[k].m_serial, serial))
         {

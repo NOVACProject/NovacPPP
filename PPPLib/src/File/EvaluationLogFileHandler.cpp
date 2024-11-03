@@ -1129,7 +1129,7 @@ bool CEvaluationLogFileHandler::IsSorted()
 
 RETURN_CODE CEvaluationLogFileHandler::WriteEvaluationLog(const std::string &fileName, novac::SpectrometerModel spectrometerModel, int softwareMajorNumber, int softwareMinorNumber)
 {
-    novac::CString string, specieName;
+    novac::CString string;
     novac::CString wsSrc, wdSrc, phSrc;
     novac::CDateTime startTime;
 
@@ -1226,10 +1226,10 @@ RETURN_CODE CEvaluationLogFileHandler::WriteEvaluationLog(const std::string &fil
 
         for (int itSpecie = 0; itSpecie < scan.GetSpecieNum(0); ++itSpecie)
         {
-            specieName.Format("%s", (const char *)scan.GetSpecieName(0, itSpecie));
-            string.AppendFormat("column(%s)\tcolumnerror(%s)\t", (const char *)specieName, (const char *)specieName);
-            string.AppendFormat("shift(%s)\tshifterror(%s)\t", (const char *)specieName, (const char *)specieName);
-            string.AppendFormat("squeeze(%s)\tsqueezeerror(%s)\t", (const char *)specieName, (const char *)specieName);
+            const std::string specieName = scan.GetSpecieName(0, itSpecie);
+            string.AppendFormat("column(%s)\tcolumnerror(%s)\t", specieName.c_str(), specieName.c_str());
+            string.AppendFormat("shift(%s)\tshifterror(%s)\t", specieName.c_str(), specieName.c_str());
+            string.AppendFormat("squeeze(%s)\tsqueezeerror(%s)\t", specieName.c_str(), specieName.c_str());
         }
         string.Append("isgoodpoint\toffset\tflag");
         string.Append("\n<spectraldata>\n");

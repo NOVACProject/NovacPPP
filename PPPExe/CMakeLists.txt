@@ -37,8 +37,7 @@ target_include_directories(NovacPPP PRIVATE
 target_link_libraries(NovacPPP PRIVATE PPPLib ${Poco_LIBRARIES})
 
 IF(WIN32)
-    # TODO: Enable /w44365 (conversion signed/unsigned) as well here
-    target_compile_options(NovacPPP PUBLIC /W4 /WX /sdl)
+    target_compile_options(NovacPPP PUBLIC /W4 /WX /w44365 /sdl)
     target_compile_definitions(NovacPPP PUBLIC _CRT_SECURE_NO_WARNINGS)
 ELSE()
     target_compile_options(NovacPPP PUBLIC -Wall -std=c++14)

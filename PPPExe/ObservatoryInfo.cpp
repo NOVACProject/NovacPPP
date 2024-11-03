@@ -7,7 +7,7 @@ CObservatoryInfo g_observatories;
 CObservatoryInfo::CObservatoryInfo(void)
 {
     // Setting up the information about the observatories
-    int index = 0;
+    unsigned int index = 0;
 
     m_name[index].Format("bira_iasb"); // 0
 

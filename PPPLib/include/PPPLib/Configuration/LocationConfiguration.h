@@ -24,10 +24,10 @@ public:
             @param index - the index of the location to get. If this is < 0 this function returns 1 and nothing is changed
             @param loc - the location to get
             @return 0 if successful, otherwise 1 */
-    int GetLocation(int index, CInstrumentLocation& loc) const;
+    int GetLocation(size_t index, CInstrumentLocation& loc) const;
 
     /** Gets the number of locations configured for this spectrometer */
-    unsigned long GetLocationNum() const;
+    size_t GetLocationNum() const;
 
     /** This goes through the settings for the locations to test that the settings
         make sense.
@@ -37,10 +37,10 @@ public:
 private:
 
     /** Max number of locations for one instrument */
-    static const int MAX_N_LOCATIONS = 32;
+    static const size_t MAX_N_LOCATIONS = 32;
 
     /** The number of locations that are defined for this instrument */
-    int m_locationNum = 0;
+    size_t m_locationNum = 0;
 
     /** Array holding the locations that are configured for this
         instrument. Each of these also contains the time-frame
