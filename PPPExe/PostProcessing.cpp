@@ -972,9 +972,9 @@ void CPostProcessing::CalculateFluxes(novac::LogContext context, const std::vect
         // if the completeness is too low then ignore this scan.
         if (plume.completeness.Value() < (m_userSettings.m_completenessLimitFlux + 0.01))
         {
-            novac::CString messageToUser;
-            messageToUser.Format("Scan has completeness = %.2lf which is less than limit of %.2lf. Will not calculate any flux.", plume.completeness.Value(), m_userSettings.m_completenessLimitFlux);
-            m_log.Information(fileContext, messageToUser.std_str());
+            std::stringstream msg;
+            msg << "Scan has completeness = " << plume.completeness.Value() << " which is less than limit of " << m_userSettings.m_completenessLimitFlux << ". Will not calculate any flux.";
+            m_log.Information(fileContext, msg.str());
             continue;
         }
 
@@ -995,9 +995,9 @@ void CPostProcessing::CalculateFluxes(novac::LogContext context, const std::vect
         Flux::FluxResult fluxResult;
         if (fluxCalc.CalculateFlux(fileContext, scanResult, m_windDataBase, plumeHeight, fluxResult))
         {
-            novac::CString messageToUser;
-            messageToUser.Format("Calculated flux of %lf [kg/s] for scan.");
-            m_log.Information(fileContext, messageToUser.std_str());
+            std::stringstream msg;
+            msg << "Calculated flux of " << fluxResult.m_flux << " [kg/s] for scan.";
+            m_log.Information(fileContext, msg.str());
             calculatedFluxes.push_back(fluxResult);
         }
     }
