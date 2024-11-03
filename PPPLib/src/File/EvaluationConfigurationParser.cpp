@@ -9,6 +9,7 @@
 using namespace FileHandler;
 using namespace novac;
 
+static char start = 's';
 
 RETURN_CODE CEvaluationConfigurationParser::ReadConfigurationFile(const novac::CString& fileName,
     Configuration::CEvaluationConfiguration& settings,
@@ -22,7 +23,7 @@ RETURN_CODE CEvaluationConfigurationParser::ReadConfigurationFile(const novac::C
     }
 
     // parse the file, one line at a time.
-    szToken = "start";
+    szToken = &start;
     while (szToken != nullptr)
     {
         szToken = NextToken();
@@ -143,7 +144,7 @@ RETURN_CODE CEvaluationConfigurationParser::WriteConfigurationFile(
         }
 
         // Each of the references...
-        for (int j = 0; j < window.nRef; ++j)
+        for (size_t j = 0; j < window.nRef; ++j)
         {
             fprintf(f, "\t\t<Reference>\n");
             fprintf(f, "\t\t\t<name>%s</name>\n", window.ref[j].m_specieName.c_str());
@@ -249,14 +250,14 @@ void SaveSlitFunctionAndWavelengthCalibration(novac::CFitWindow& window, novac::
 {
     if (slitfunctionFile.GetLength() > 0)
     {
-        for (int ii = 0; ii < window.nRef; ++ii)
+        for (size_t ii = 0; ii < window.nRef; ++ii)
         {
             window.ref[ii].m_slitFunctionFile = slitfunctionFile.ToStdString();
         }
     }
     if (wavelengthCalibFile.GetLength() > 0)
     {
-        for (int ii = 0; ii < window.nRef; ++ii)
+        for (size_t ii = 0; ii < window.nRef; ++ii)
         {
             window.ref[ii].m_wavelengthCalibrationFile = wavelengthCalibFile.ToStdString();
         }
@@ -269,7 +270,7 @@ RETURN_CODE CEvaluationConfigurationParser::Parse_FitWindow(novac::CFitWindow& w
     novac::CString slitfunctionFile, wavelengthCalibFile;
 
     // parse the file, one line at a time.
-    szToken = "start";
+    szToken = &start;
     while (szToken != nullptr)
     {
         szToken = NextToken();
@@ -421,7 +422,7 @@ RETURN_CODE CEvaluationConfigurationParser::Parse_FitWindow(novac::CFitWindow& w
 RETURN_CODE CEvaluationConfigurationParser::Parse_CalibrationSettings(Configuration::CInstrumentCalibrationConfiguration& calibrationSettings)
 {
     // parse the file, one line at a time.
-    szToken = "start";
+    szToken = &start;
     while (szToken != nullptr)
     {
         szToken = NextToken();
@@ -464,7 +465,7 @@ RETURN_CODE CEvaluationConfigurationParser::Parse_Reference(novac::CFitWindow& w
     const size_t nRef = window.nRef;
 
     // parse the file, one line at a time.
-    szToken = "start";
+    szToken = &start;
     while (szToken != nullptr)
     {
         szToken = NextToken();
@@ -586,7 +587,7 @@ RETURN_CODE CEvaluationConfigurationParser::Parse_DarkCorrection(Configuration::
     novac::CString str;
 
     // parse the file, one line at a time.
-    szToken = "start";
+    szToken = &start;
     while (szToken != nullptr)
     {
         szToken = NextToken();

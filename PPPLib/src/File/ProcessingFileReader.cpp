@@ -12,6 +12,8 @@ extern novac::CVolcanoInfo g_volcanoes;   // <-- A list of all known volcanoes
 using namespace FileHandler;
 using namespace novac;
 
+static char start = 's';
+
 CProcessingFileReader::CProcessingFileReader(ILogger& logger)
     : CXMLFileReader(logger)
 {}
@@ -27,7 +29,7 @@ void CProcessingFileReader::ReadProcessingFile(const novac::CString& filename, C
     }
 
     // parse the file, one line at a time.
-    szToken = "start";
+    szToken = &start;
     while (szToken != nullptr)
     {
         szToken = NextToken();
@@ -248,7 +250,7 @@ void CProcessingFileReader::Parse_FitWindow(Configuration::CUserConfiguration& s
     size_t nFitWindowsFound = 0;
 
     // parse the file, one line at a time.
-    szToken = "start";
+    szToken = &start;
     while (szToken != nullptr)
     {
         szToken = NextToken();
@@ -305,7 +307,7 @@ void CProcessingFileReader::Parse_CalibrationSetting(Configuration::CUserConfigu
     novac::CString fitWindowName, mainFitWindowName;
 
     // parse the file, one line at a time.
-    szToken = "start";
+    szToken = &start;
     while (szToken != nullptr)
     {
         szToken = NextToken();
@@ -379,7 +381,7 @@ void CProcessingFileReader::Parse_SkySpectrum(Configuration::CUserConfiguration&
     novac::CString tmpString;
 
     // parse the file, one line at a time.
-    szToken = "start";
+    szToken = &start;
     while (szToken != nullptr)
     {
         szToken = NextToken();
@@ -442,9 +444,8 @@ void CProcessingFileReader::Parse_SkySpectrum(Configuration::CUserConfiguration&
 
 void CProcessingFileReader::Parse_GeometryCalc(Configuration::CUserConfiguration& settings)
 {
-
     // parse the file, one line at a time.
-    szToken = "start";
+    szToken = &start;
     while (szToken != nullptr)
     {
         szToken = NextToken();
@@ -515,9 +516,8 @@ void CProcessingFileReader::Parse_GeometryCalc(Configuration::CUserConfiguration
 /** Parses an individual dual-beam section */
 void CProcessingFileReader::Parse_DualBeam(Configuration::CUserConfiguration& settings)
 {
-
     // parse the file, one line at a time.
-    szToken = "start";
+    szToken = &start;
     while (szToken != nullptr)
     {
         szToken = NextToken();
@@ -561,9 +561,8 @@ void CProcessingFileReader::Parse_DualBeam(Configuration::CUserConfiguration& se
 
 void CProcessingFileReader::Parse_DiscardSettings(Configuration::CUserConfiguration& settings)
 {
-
     // parse the file, one line at a time.
-    szToken = "start";
+    szToken = &start;
     while (szToken != nullptr)
     {
         szToken = NextToken();

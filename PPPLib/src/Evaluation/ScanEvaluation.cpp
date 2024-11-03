@@ -79,7 +79,7 @@ std::unique_ptr<CScanResult> CScanEvaluation::EvaluateScan(
     {
         // Find the optimal shift & squeeze from the spectrum with the highest column
         CFitWindow window2 = adjustedFitWindow;
-        for (int k = 0; k < window2.nRef; ++k)
+        for (size_t k = 0; k < window2.nRef; ++k)
         {
             window2.ref[k].m_shiftOption = SHIFT_TYPE::SHIFT_FIX;
             window2.ref[k].m_squeezeOption = SHIFT_TYPE::SHIFT_FIX;
@@ -358,7 +358,7 @@ static void SetupFitWindowFitShiftDetermination(CFitWindow& window)
     window.ref[0].m_shiftOption = SHIFT_TYPE::SHIFT_FREE;
     window.ref[0].m_squeezeOption = SHIFT_TYPE::SHIFT_FIX;
     window.ref[0].m_squeezeValue = 1.0;
-    for (int k = 1; k < window.nRef; ++k)
+    for (size_t k = 1; k < window.nRef; ++k)
     {
         if (novac::Equals(window.ref[k].m_specieName, "FraunhoferRef"))
         {
@@ -460,7 +460,7 @@ CEvaluationBase* CScanEvaluation::FindOptimumShiftAndSqueeze(novac::LogContext c
     double optimumSqueeze = newResult.m_referenceResult[0].m_squeeze;
 
     // 5. Set the shift for all references to this value
-    for (int k = 0; k < fitWindow2.nRef; ++k)
+    for (size_t k = 0; k < fitWindow2.nRef; ++k)
     {
         if (novac::Equals(fitWindow2.ref[k].m_specieName, "FraunhoferRef"))
         {
@@ -495,7 +495,7 @@ void CScanEvaluation::ValidateSetup(novac::LogContext context, const novac::CFit
     }
 
     std::vector<std::string> paths;
-    for (int refIdx = 0; refIdx < window.nRef; ++refIdx)
+    for (size_t refIdx = 0; refIdx < window.nRef; ++refIdx)
     {
         if (window.ref[refIdx].m_data == nullptr)
         {

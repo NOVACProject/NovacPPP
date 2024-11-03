@@ -8,6 +8,7 @@ namespace Meteorology
 // ----------- THE SUB-CLASS WindInTime --------------
 CWindDataBase::WindInTime::WindInTime()
 {}
+
 CWindDataBase::WindInTime::WindInTime(const WindInTime& other)
 {
     this->validFrom = other.validFrom;
@@ -18,6 +19,7 @@ CWindDataBase::WindInTime::WindInTime(const WindInTime& other)
         this->windData.push_back((WindData&)*(p++));
     }
 }
+
 CWindDataBase::WindInTime& CWindDataBase::WindInTime::operator=(const WindInTime& other)
 {
     this->validFrom = other.validFrom;
@@ -229,7 +231,7 @@ int CWindDataBase::WriteToFile(const novac::CString& fileName) const
 const novac::CGPSData& CWindDataBase::GetLocation(int index) const
 {
     static const novac::CGPSData nullPos = novac::CGPSData(-1, -1, -1);
-    if (index < 0 || index >= m_locations.size())
+    if (static_cast<size_t>(index) >= m_locations.size())
     {
         return nullPos;
     }
@@ -419,7 +421,7 @@ bool CWindDataBase::GetWindField_Nearest(const novac::CDateTime& time, const nov
     int closestPoint = -1; // the index of the closest location
 
     // loop through all locations to see which one is the closest
-    for (int k = 0; k < m_locations.size(); ++k)
+    for (size_t k = 0; k < m_locations.size(); ++k)
     {
         const novac::CGPSData& pos = GetLocation(k);
 

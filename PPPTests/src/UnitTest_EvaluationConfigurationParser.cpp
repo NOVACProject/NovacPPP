@@ -197,7 +197,7 @@ TEST_CASE("WriteConfigurationFile gives a file which can be read back in again",
         REQUIRE(resultingEvaluationSettings.m_serial == originalEvaluationSettings.m_serial);
         REQUIRE(resultingEvaluationSettings.NumberOfFitWindows() == originalEvaluationSettings.NumberOfFitWindows());
 
-        for (int index = 0; index < originalEvaluationSettings.NumberOfFitWindows(); ++index)
+        for (size_t index = 0; index < originalEvaluationSettings.NumberOfFitWindows(); ++index)
         {
             novac::CFitWindow originalWindow;
             novac::CDateTime originalValidFrom, originalValidTo;
@@ -217,7 +217,7 @@ TEST_CASE("WriteConfigurationFile gives a file which can be read back in again",
             REQUIRE(originalWindow.includeIntensitySpacePolyominal == resultingWindow.includeIntensitySpacePolyominal);
             REQUIRE(originalWindow.nRef == resultingWindow.nRef);
 
-            for (int refIndex = 0; refIndex < originalWindow.nRef; ++refIndex)
+            for (size_t refIndex = 0; refIndex < originalWindow.nRef; ++refIndex)
             {
                 REQUIRE(originalWindow.ref[refIndex].m_path == resultingWindow.ref[refIndex].m_path);
             }
@@ -228,7 +228,7 @@ TEST_CASE("WriteConfigurationFile gives a file which can be read back in again",
     {
         REQUIRE(resultingDarkSettings.GetSettingsNum() == originalDarkSettings.GetSettingsNum());
 
-        for (int index = 0; index < originalDarkSettings.GetSettingsNum(); ++index)
+        for (size_t index = 0; index < originalDarkSettings.GetSettingsNum(); ++index)
         {
             Configuration::CDarkSettings originalsettings;
             novac::CDateTime originalValidFrom, originalValidTo;

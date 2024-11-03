@@ -12,7 +12,7 @@ std::ostream& operator << (std::ostream& out, const CInstrumentLocation& locatio
 void CLocationConfiguration::Clear()
 {
     m_locationNum = 0;
-    for (int k = 0; k < MAX_N_LOCATIONS; ++k)
+    for (size_t k = 0; k < MAX_N_LOCATIONS; ++k)
     {
         this->m_location[k].Clear();
     }

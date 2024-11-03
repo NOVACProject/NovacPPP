@@ -1,5 +1,6 @@
 #include <PPPLib/ContinuationOfProcessing.h>
 #include <PPPLib/File/Filesystem.h>
+#include <SpectralEvaluation/StringUtils.h>
 
 // This is the settings for how to do the procesing
 #include <PPPLib/Configuration/UserConfiguration.h>
@@ -52,9 +53,9 @@ void CContinuationOfProcessing::ScanStatusLogFileForOldScans(const Configuration
 
 bool CContinuationOfProcessing::IsPreviouslyIgnored(const std::string& pakFileName) const
 {
-    for (const novac::CString & fileName : this->m_previouslyIgnoredFiles)
+    for (const std::string& fileName : this->m_previouslyIgnoredFiles)
     {
-        if (Equals(fileName, pakFileName))
+        if (EqualsIgnoringCase(fileName, pakFileName))
         {
             return true;
         }

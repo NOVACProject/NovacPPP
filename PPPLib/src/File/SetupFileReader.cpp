@@ -6,6 +6,8 @@
 using namespace FileHandler;
 using namespace novac;
 
+static char start = 's';
+
 void CSetupFileReader::ReadSetupFile(const novac::CString& filename, Configuration::CNovacPPPConfiguration& setup)
 {
     // 1. Open the file
@@ -17,7 +19,7 @@ void CSetupFileReader::ReadSetupFile(const novac::CString& filename, Configurati
     }
 
     // parse the file, one line at a time.
-    szToken = "start";
+    szToken = &start;
     while (szToken != nullptr)
     {
         szToken = NextToken();
@@ -43,9 +45,8 @@ void CSetupFileReader::ReadSetupFile(const novac::CString& filename, Configurati
 
 void CSetupFileReader::Parse_Instrument(Configuration::CInstrumentConfiguration& instr)
 {
-
     // parse the file, one line at a time.
-    szToken = "start";
+    szToken = &start;
     while (szToken != nullptr)
     {
         szToken = NextToken();
@@ -78,7 +79,7 @@ void CSetupFileReader::Parse_Location(Configuration::CLocationConfiguration& loc
     Configuration::CInstrumentLocation location;
 
     // parse the file, one line at a time.
-    szToken = "start";
+    szToken = &start;
     while (szToken != nullptr)
     {
         szToken = NextToken();
@@ -241,7 +242,7 @@ RETURN_CODE CSetupFileReader::WriteSetupFile(const novac::CString& fileName, con
 void CSetupFileReader::Parse_CustomSpectrometer(SpectrometerModel& model)
 {
     // parse the file, one line at a time.
-    szToken = "start";
+    szToken = &start;
     while (szToken != nullptr)
     {
         szToken = NextToken();

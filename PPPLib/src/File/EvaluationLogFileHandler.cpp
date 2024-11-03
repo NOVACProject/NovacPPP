@@ -574,7 +574,7 @@ RETURN_CODE CEvaluationLogFileHandler::ReadEvaluationLog()
                     continue;
                 }
 
-                for (size_t k = 0; k < m_col.nSpecies; ++k)
+                for (size_t k = 0; k < static_cast<size_t>(m_col.nSpecies); ++k)
                 {
                     if (curCol == m_col.column[k])
                     {
