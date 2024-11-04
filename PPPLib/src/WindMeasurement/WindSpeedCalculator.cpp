@@ -503,7 +503,7 @@ int CWindSpeedCalculator::CalculateWindSpeed(const novac::CString &evalLog1, con
     // 2. Get the average delay, for all datapoints where the correlation is > 0.9
     double *goodDelays = new double[m_length];
     size_t nGoodPoints = 0;
-    for (size_t k = m_firstDataPoint; k < m_firstDataPoint + m_arrayLength; ++k)
+    for (size_t k = static_cast<size_t>(m_firstDataPoint); k < m_firstDataPoint + m_arrayLength; ++k)
     {
         if (corr[k] > 0.9)
         {

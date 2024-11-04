@@ -421,7 +421,7 @@ bool CWindDataBase::GetWindField_Nearest(const novac::CDateTime& time, const nov
     int closestPoint = -1; // the index of the closest location
 
     // loop through all locations to see which one is the closest
-    for (size_t k = 0; k < m_locations.size(); ++k)
+    for (int k = 0; k < static_cast<int>(m_locations.size()); ++k)
     {
         const novac::CGPSData& pos = GetLocation(k);
 
