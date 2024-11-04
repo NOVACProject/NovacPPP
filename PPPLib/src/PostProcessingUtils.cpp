@@ -7,6 +7,7 @@
 
 #include <PPPLib/File/Filesystem.h>
 
+#include <iostream>
 #include <sstream>
 #include <stdexcept>
 
@@ -19,7 +20,7 @@ static bool ConvolveReference(novac::ILogger& logger, novac::LogContext context,
     if (!IsExistingFile(ref.m_crossSectionFile))
     {
         const std::string fullPath = Filesystem::GetAbsolutePathFromRelative(ref.m_crossSectionFile, exePath);
-        if (Filesystem::IsExistingFile(fullPath))
+        if (IsExistingFile(fullPath))
         {
             ref.m_crossSectionFile = fullPath;
         }
@@ -34,8 +35,8 @@ static bool ConvolveReference(novac::ILogger& logger, novac::LogContext context,
     // Make sure the slit-function do exist.
     if (!IsExistingFile(ref.m_slitFunctionFile))
     {
-        std::string fullPath = Filesystem::GetAbsolutePathFromRelative(ref.m_slitFunctionFile, exePath);
-        if (Filesystem::IsExistingFile(fullPath))
+        const std::string fullPath = Filesystem::GetAbsolutePathFromRelative(ref.m_slitFunctionFile, exePath);
+        if (IsExistingFile(fullPath))
         {
             ref.m_slitFunctionFile = fullPath;
         }
@@ -50,8 +51,8 @@ static bool ConvolveReference(novac::ILogger& logger, novac::LogContext context,
     // Make sure the wavelength calibration do exist.
     if (!IsExistingFile(ref.m_wavelengthCalibrationFile))
     {
-        std::string fullPath = Filesystem::GetAbsolutePathFromRelative(ref.m_wavelengthCalibrationFile, exePath);
-        if (Filesystem::IsExistingFile(fullPath))
+        const std::string fullPath = Filesystem::GetAbsolutePathFromRelative(ref.m_wavelengthCalibrationFile, exePath);
+        if (IsExistingFile(fullPath))
         {
             ref.m_wavelengthCalibrationFile = fullPath;
         }
@@ -114,7 +115,7 @@ void PrepareEvaluation(novac::ILogger& logger, std::string tempDirectory, Config
             // For each reference in the fit-window, read it in and make sure that it exists...
             for (size_t referenceIndex = 0; referenceIndex < window.nRef; ++referenceIndex)
             {
-                auto referenceContext = instrumentContext.With(novac::LogContext::FileName, window.ref[referenceIndex].m_path);
+                auto referenceContext = windowContext.With(novac::LogContext::FileName, window.ref[referenceIndex].m_path);
 
                 if (window.ref[referenceIndex].m_path.empty())
                 {
@@ -136,9 +137,8 @@ void PrepareEvaluation(novac::ILogger& logger, std::string tempDirectory, Config
                     if (!IsExistingFile(window.ref[referenceIndex].m_path))
                     {
                         // the file does not exist, try to change it to include the path of the configuration-directory...
-                        std::string fileName = Filesystem::GetAbsolutePathFromRelative(window.ref[referenceIndex].m_path, setup.m_executableDirectory);
-
-                        if (Filesystem::IsExistingFile(fileName))
+                        const std::string fileName = Filesystem::GetAbsolutePathFromRelative(window.ref[referenceIndex].m_path, setup.m_executableDirectory);
+                        if (IsExistingFile(fileName))
                         {
                             window.ref[referenceIndex].m_path = fileName;
                         }
@@ -207,9 +207,9 @@ void PrepareEvaluation(novac::ILogger& logger, std::string tempDirectory, Config
                 if (!IsExistingFile(window.fraunhoferRef.m_path))
                 {
                     // the file does not exist, try to change it to include the path of the configuration-directory...
-                    std::string fileName = Filesystem::GetAbsolutePathFromRelative(window.fraunhoferRef.m_path, setup.m_executableDirectory);
+                    const std::string fileName = Filesystem::GetAbsolutePathFromRelative(window.fraunhoferRef.m_path, setup.m_executableDirectory);
 
-                    if (Filesystem::IsExistingFile(fileName))
+                    if (IsExistingFile(fileName))
                     {
                         window.fraunhoferRef.m_path = fileName;
                     }

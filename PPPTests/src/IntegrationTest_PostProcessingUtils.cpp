@@ -97,7 +97,7 @@ TEST_CASE("PrepareEvaluation, reference file not found - throws exception", "[Pr
     }
 }
 
-TEST_CASE("PrepareEvaluation, reads references", "[PrepareEvaluation]")
+TEST_CASE("PrepareEvaluation, reads references", "[PrepareEvaluation][Test1]")
 {
     novac::ConsoleLog logger;
     std::string tempDirectory = ".";
@@ -112,11 +112,11 @@ TEST_CASE("PrepareEvaluation, reads references", "[PrepareEvaluation]")
         novac::CFitWindow window;
         window.fitType = novac::FIT_TYPE::FIT_POLY;
         window.nRef = 2;
-        window.ref[0].m_path = GetTestDataDirectory() + "2002128M1/calibrated/2002128M1_SO2_Bogumil_293K.txt"; // exists
+        window.ref[0].m_path = GetTestDataDirectory() + "2002128M1/Calibrated/2002128M1_SO2_Bogumil_293K.txt"; // exists
         window.ref[0].m_isFiltered = false;
-        window.ref[1].m_path = GetTestDataDirectory() + "2002128M1/calibrated/2002128M1_O3_Voigt_223K.txt"; // exists
+        window.ref[1].m_path = GetTestDataDirectory() + "2002128M1/Calibrated/2002128M1_O3_Voigt_223K.txt"; // exists
         window.ref[1].m_isFiltered = false;
-        window.fraunhoferRef.m_path = GetTestDataDirectory() + "2002128M1/calibrated/2002128M1_Fraunhofer.txt"; // exists
+        window.fraunhoferRef.m_path = GetTestDataDirectory() + "2002128M1/Calibrated/2002128M1_Fraunhofer.txt"; // exists
         instrument.m_eval.InsertFitWindow(window, novac::CDateTime::MinValue(), novac::CDateTime::MaxValue());
 
         setup.m_instrument.push_back(instrument);
@@ -156,11 +156,11 @@ TEST_CASE("PrepareEvaluation, reads references", "[PrepareEvaluation]")
         novac::CFitWindow window;
         window.fitType = novac::FIT_TYPE::FIT_HP_DIV;
         window.nRef = 2;
-        window.ref[0].m_path = GetTestDataDirectory() + "2002128M1/calibrated/2002128M1_SO2_Bogumil_293K.txt"; // exists
+        window.ref[0].m_path = GetTestDataDirectory() + "2002128M1/Calibrated/2002128M1_SO2_Bogumil_293K.txt"; // exists
         window.ref[0].m_isFiltered = false;
-        window.ref[1].m_path = GetTestDataDirectory() + "2002128M1/calibrated/2002128M1_O3_Voigt_223K.txt"; // exists
+        window.ref[1].m_path = GetTestDataDirectory() + "2002128M1/Calibrated/2002128M1_O3_Voigt_223K.txt"; // exists
         window.ref[1].m_isFiltered = false;
-        window.fraunhoferRef.m_path = GetTestDataDirectory() + "2002128M1/calibrated/2002128M1_Fraunhofer.txt"; // exists
+        window.fraunhoferRef.m_path = GetTestDataDirectory() + "2002128M1/Calibrated/2002128M1_Fraunhofer.txt"; // exists
         instrument.m_eval.InsertFitWindow(window, novac::CDateTime::MinValue(), novac::CDateTime::MaxValue());
 
         setup.m_instrument.push_back(instrument);
