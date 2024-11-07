@@ -1,7 +1,9 @@
 #include <PPPLib/Evaluation/ScanEvaluation.h>
+#include <PPPLib/PostProcessingUtils.h>
 #include <SpectralEvaluation/Spectra/SpectrometerModel.h>
 #include <SpectralEvaluation/Evaluation/FitWindow.h>
 #include <SpectralEvaluation/File/File.h>
+#include <SpectralEvaluation/VectorUtils.h>
 #include "catch.hpp"
 
 static std::string GetTestDataDirectory()
@@ -25,20 +27,17 @@ static void SetupFitWindow(novac::CFitWindow& window)
     novac::CReferenceFile so2;
     so2.SetShift(novac::SHIFT_TYPE::SHIFT_FIX, 0.0);
     so2.SetSqueeze(novac::SHIFT_TYPE::SHIFT_FIX, 1.0);
-    so2.m_path = GetTestDataDirectory() + "2002128M1/2002128M1_SO2_Bogumil_293K_HP500.txt";
-    so2.ReadCrossSectionDataFromFile();
+    so2.m_path = GetTestDataDirectory() + "2002128M1/2002128M1_SO2_Bogumil_293K.txt";
 
     novac::CReferenceFile o3;
     o3.SetShift(novac::SHIFT_TYPE::SHIFT_FIX, 0.0);
     o3.SetSqueeze(novac::SHIFT_TYPE::SHIFT_FIX, 1.0);
-    o3.m_path = GetTestDataDirectory() + "2002128M1/2002128M1_O3_Voigt_223K_HP500.txt";
-    o3.ReadCrossSectionDataFromFile();
+    o3.m_path = GetTestDataDirectory() + "2002128M1/2002128M1_O3_Voigt_223K.txt";
 
     novac::CReferenceFile ring;
     ring.SetShift(novac::SHIFT_TYPE::SHIFT_FIX, 0.0);
     ring.SetSqueeze(novac::SHIFT_TYPE::SHIFT_FIX, 1.0);
-    ring.m_path = GetTestDataDirectory() + "2002128M1/2002128M1_Ring_HP500_PPMM_0.txt";
-    ring.ReadCrossSectionDataFromFile();
+    ring.m_path = GetTestDataDirectory() + "2002128M1/2002128M1_Ring_HR.txt";
 
     window.ref[0] = so2;
     window.ref[1] = o3;
@@ -46,7 +45,7 @@ static void SetupFitWindow(novac::CFitWindow& window)
     window.nRef = 3;
 }
 
-static void SetupFitWindowWithCalibratedReferences(novac::CFitWindow& window, bool highPassFilter)
+static void SetupFitWindowWithCalibratedReferences(novac::CFitWindow& window)
 {
     window.fitLow = 464;
     window.fitHigh = 630;
@@ -55,51 +54,19 @@ static void SetupFitWindowWithCalibratedReferences(novac::CFitWindow& window, bo
     so2.SetShift(novac::SHIFT_TYPE::SHIFT_FIX, 0.0);
     so2.SetSqueeze(novac::SHIFT_TYPE::SHIFT_FIX, 1.0);
     so2.m_path = GetTestDataDirectory() + "2002128M1/Calibrated/2002128M1_SO2_Bogumil_293K.txt";
-    so2.ReadCrossSectionDataFromFile();
-    REQUIRE(so2.m_data != nullptr);
-    REQUIRE(so2.m_data->GetSize() == 2048);
-    if (highPassFilter)
-    {
-        novac::HighPassFilter(*so2.m_data, novac::CrossSectionUnit::cm2_molecule);
-    }
 
     novac::CReferenceFile o3;
     o3.SetShift(novac::SHIFT_TYPE::SHIFT_FIX, 0.0);
     o3.SetSqueeze(novac::SHIFT_TYPE::SHIFT_FIX, 1.0);
     o3.m_path = GetTestDataDirectory() + "2002128M1/Calibrated/2002128M1_O3_Voigt_223K.txt";
-    o3.ReadCrossSectionDataFromFile();
-    REQUIRE(o3.m_data != nullptr);
-    REQUIRE(o3.m_data->GetSize() == 2048);
-    if (highPassFilter)
-    {
-        novac::HighPassFilter(*o3.m_data, novac::CrossSectionUnit::cm2_molecule);
-    }
 
     novac::CReferenceFile ring;
     ring.SetShift(novac::SHIFT_TYPE::SHIFT_FIX, 0.0);
     ring.SetSqueeze(novac::SHIFT_TYPE::SHIFT_FIX, 1.0);
     ring.m_path = GetTestDataDirectory() + "2002128M1/Calibrated/2002128M1_Ring.txt";
-    ring.ReadCrossSectionDataFromFile();
-    REQUIRE(ring.m_data != nullptr);
-    REQUIRE(ring.m_data->GetSize() == 2048);
-    if (highPassFilter)
-    {
-        novac::HighPassFilter_Ring(*ring.m_data);
-    }
 
     novac::CReferenceFile fraunhofer;
     fraunhofer.m_path = GetTestDataDirectory() + "2002128M1/Calibrated/2002128M1_Fraunhofer.txt";
-    fraunhofer.ReadCrossSectionDataFromFile();
-    REQUIRE(fraunhofer.m_data != nullptr);
-    REQUIRE(fraunhofer.m_data->GetSize() == 2048);
-    if (highPassFilter)
-    {
-        novac::HighPassFilter_Ring(*fraunhofer.m_data);
-    }
-    else
-    {
-        novac::Log(*fraunhofer.m_data);
-    }
 
     window.ref[0] = so2;
     window.ref[1] = o3;
@@ -125,13 +92,16 @@ TEST_CASE("EvaluateScan, Invalid fit window - throws Exception", "[ScanEvaluatio
     context = context.With(novac::LogContext::FileName, novac::GetFileName(filename));
     context = context.With(novac::LogContext::DeviceModel, spectrometerModel.modelName);
 
+    novac::directorySetup setup;
+    setup.executableDirectory = ".";
+    setup.tempDirectory = ".";
+
     novac::CFitWindow fitWindow;
 
     novac::CReferenceFile so2;
     so2.SetShift(novac::SHIFT_TYPE::SHIFT_FIX, 0.0);
     so2.SetSqueeze(novac::SHIFT_TYPE::SHIFT_FIX, 1.0);
     so2.m_path = GetTestDataDirectory() + "2002128M1/2002128M1_SO2_Bogumil_293K_HP500.txt";
-    so2.ReadCrossSectionDataFromFile();
 
     Evaluation::CScanEvaluation sut(userSettings, logger);
 
@@ -180,15 +150,20 @@ TEST_CASE("EvaluateScan, scan with saturated sky spectrum expected result ", "[S
     Configuration::CUserConfiguration userSettings;
     const Configuration::CDarkSettings* darkSettings = nullptr;
 
-    novac::CFitWindow fitWindow;
-    fitWindow.fitType = novac::FIT_TYPE::FIT_HP_DIV; // the references are HP500
-    SetupFitWindow(fitWindow);
+    const novac::SpectrometerModel spectrometerModel = novac::CSpectrometerDatabase::GetInstance().SpectrometerModel_AVASPEC();
 
-    novac::SpectrometerModel spectrometerModel = novac::CSpectrometerDatabase::GetInstance().SpectrometerModel_AVASPEC();
+    novac::directorySetup setup;
+    setup.executableDirectory = ".";
+    setup.tempDirectory = ".";
 
     novac::LogContext context;
     context = context.With(novac::LogContext::FileName, novac::GetFileName(filename));
     context = context.With(novac::LogContext::DeviceModel, spectrometerModel.modelName);
+
+    novac::CFitWindow fitWindow;
+    fitWindow.fitType = novac::FIT_TYPE::FIT_HP_DIV; // the references are HP500
+    SetupFitWindow(fitWindow);
+    PrepareFitWindow(logger, context, "2002128M1", fitWindow, setup);
 
     Evaluation::CScanEvaluation sut(userSettings, logger);
 
@@ -210,7 +185,11 @@ TEST_CASE("EvaluateScan, scan with visible plume)", "[ScanEvaluation][EvaluateSc
     Configuration::CUserConfiguration userSettings;
     const Configuration::CDarkSettings* darkSettings = nullptr;
 
-    novac::SpectrometerModel spectrometerModel = novac::CSpectrometerDatabase::GetInstance().SpectrometerModel_AVASPEC();
+    const novac::SpectrometerModel spectrometerModel = novac::CSpectrometerDatabase::GetInstance().SpectrometerModel_AVASPEC();
+
+    novac::directorySetup setup;
+    setup.executableDirectory = ".";
+    setup.tempDirectory = ".";
 
     novac::LogContext context;
     context = context.With(novac::LogContext::FileName, novac::GetFileName(filename));
@@ -219,8 +198,9 @@ TEST_CASE("EvaluateScan, scan with visible plume)", "[ScanEvaluation][EvaluateSc
     SECTION("Default settings")
     {
         novac::CFitWindow fitWindow;
-        fitWindow.fitType = novac::FIT_TYPE::FIT_HP_DIV; // the references are HP500
+        fitWindow.fitType = novac::FIT_TYPE::FIT_HP_DIV;
         SetupFitWindow(fitWindow);
+        PrepareFitWindow(logger, context, "2002128M1", fitWindow, setup);
 
         Evaluation::CScanEvaluation sut(userSettings, logger);
 
@@ -233,24 +213,75 @@ TEST_CASE("EvaluateScan, scan with visible plume)", "[ScanEvaluation][EvaluateSc
         REQUIRE(-90.0 == result->GetScanAngle(0));
         REQUIRE(82.0 == result->GetScanAngle(43));
 
-        REQUIRE(Approx(-61.56348) == result->GetColumn(0, 0));
+        REQUIRE(Approx(-1.593e17).margin(1e16) == result->GetColumn(0, 0));
         REQUIRE(0.0 == result->GetShift(0, 0));
 
+        // All the evaluations should be reasonably good
+        for (size_t specIdx = 0; specIdx < result->GetEvaluatedNum(); ++specIdx)
+        {
+            REQUIRE(result->GetChiSquare(specIdx) < 8e-2);
+        }
+
+        const std::vector<double> columns = novac::GetColumns(*result, 0);
+        REQUIRE(Approx(1.3e17).margin(2e16) == Max(columns));
+        REQUIRE(Approx(-1.8e17).margin(2e16) == Min(columns));
+
         // the sky spectrum info should be set
-        auto skySpecInfo = result->GetSkySpectrumInfo();
+        const auto& skySpecInfo = result->GetSkySpectrumInfo();
         REQUIRE(skySpecInfo.m_startTime == novac::CDateTime(2023, 1, 20, 19, 7, 48, 870));
 
         // the dark spectrum info should be set
-        auto darkSpecInfo = result->GetDarkSpectrumInfo();
+        const auto& darkSpecInfo = result->GetDarkSpectrumInfo();
+        REQUIRE(darkSpecInfo.m_startTime == novac::CDateTime(2023, 1, 20, 19, 8, 29, 240));
+    }
+
+    SECTION("Default setup but FIT_HP_SUB")
+    {
+        novac::CFitWindow fitWindow;
+        fitWindow.fitType = novac::FIT_TYPE::FIT_HP_SUB;
+        SetupFitWindow(fitWindow);
+        PrepareFitWindow(logger, context, "2002128M1", fitWindow, setup);
+
+        Evaluation::CScanEvaluation sut(userSettings, logger);
+
+        // Act
+        auto result = sut.EvaluateScan(context, scan, fitWindow, spectrometerModel, darkSettings);
+
+        // Assert
+        REQUIRE(result != nullptr);
+        REQUIRE(44 == result->GetEvaluatedNum());
+        REQUIRE(-90.0 == result->GetScanAngle(0));
+        REQUIRE(82.0 == result->GetScanAngle(43));
+
+        REQUIRE(Approx(-1.593e17).margin(1e16) == result->GetColumn(0, 0));
+        REQUIRE(0.0 == result->GetShift(0, 0));
+
+        // All the evaluations should be reasonably good
+        for (size_t specIdx = 0; specIdx < result->GetEvaluatedNum(); ++specIdx)
+        {
+            REQUIRE(result->GetChiSquare(specIdx) < 8e-2);
+        }
+
+        const std::vector<double> columns = novac::GetColumns(*result, 0);
+        REQUIRE(Approx(1.4e17).margin(2e16) == Max(columns));
+        REQUIRE(Approx(-1.8e17).margin(2e16) == Min(columns));
+
+        // the sky spectrum info should be set
+        const auto& skySpecInfo = result->GetSkySpectrumInfo();
+        REQUIRE(skySpecInfo.m_startTime == novac::CDateTime(2023, 1, 20, 19, 7, 48, 870));
+
+        // the dark spectrum info should be set
+        const auto& darkSpecInfo = result->GetDarkSpectrumInfo();
         REQUIRE(darkSpecInfo.m_startTime == novac::CDateTime(2023, 1, 20, 19, 8, 29, 240));
     }
 
     SECTION("Find optimum shift of references (there is a shift between the references and the spectra)")
     {
         novac::CFitWindow fitWindow;
-        fitWindow.fitType = novac::FIT_TYPE::FIT_HP_DIV; // the references are HP500
+        fitWindow.fitType = novac::FIT_TYPE::FIT_HP_DIV;
         fitWindow.findOptimalShift = 1;
         SetupFitWindow(fitWindow);
+        PrepareFitWindow(logger, context, "2002128M1", fitWindow, setup);
 
         Evaluation::CScanEvaluation sut(userSettings, logger);
 
@@ -263,18 +294,86 @@ TEST_CASE("EvaluateScan, scan with visible plume)", "[ScanEvaluation][EvaluateSc
         REQUIRE(-90.0 == result->GetScanAngle(0));
         REQUIRE(82.0 == result->GetScanAngle(43));
 
-        REQUIRE(Approx(-61.8223) == result->GetColumn(0, 0));
-        REQUIRE(Approx(0.0113).margin(0.001) == result->GetShift(0, 0));
+        REQUIRE(Approx(-1.593e17).margin(1e16) == result->GetColumn(0, 0));
+        REQUIRE(Approx(0.07769).margin(0.001) == result->GetShift(0, 0));
         REQUIRE(Approx(1.00) == result->GetSqueeze(0, 0));
+
+        // All the evaluations should be reasonably good and have the same shift/squeeze
+        for (size_t specIdx = 0; specIdx < result->GetEvaluatedNum(); ++specIdx)
+        {
+            REQUIRE(result->GetChiSquare(specIdx) < 8e-2);
+
+            REQUIRE(3 == result->GetSpecieNum(specIdx));
+            for (size_t specieIdx = 0; specieIdx < result->GetSpecieNum(specIdx); ++specieIdx)
+            {
+                REQUIRE(Approx(0.07769).margin(0.001) == result->GetShift(specIdx, specieIdx));
+                REQUIRE(Approx(1.00) == result->GetSqueeze(specIdx, specieIdx));
+            }
+        }
+
+        const std::vector<double> columns = novac::GetColumns(*result, 0);
+        REQUIRE(Approx(1.4e17).margin(2e16) == Max(columns));
+        REQUIRE(Approx(-1.8e17).margin(2e16) == Min(columns));
     }
 
-    SECTION("Lower minimum saturation ratio")
+    SECTION("Find optimum shift from Fraunhofer reference")
+    {
+        novac::CFitWindow fitWindow;
+        fitWindow.fitType = novac::FIT_TYPE::FIT_HP_SUB; // This is actually the setup used in the NZ setup
+        fitWindow.findOptimalShift = 1;
+        SetupFitWindow(fitWindow);
+
+        novac::CReferenceFile fraunhofer;
+        fraunhofer.m_path = GetTestDataDirectory() + "2002128M1/2002128M1_Solar.txt";
+        fitWindow.fraunhoferRef = fraunhofer;
+
+        PrepareFitWindow(logger, context, "2002128M1", fitWindow, setup);
+
+        const double expectedShift = 1.460;
+
+        Evaluation::CScanEvaluation sut(userSettings, logger);
+
+        // Act
+        auto result = sut.EvaluateScan(context, scan, fitWindow, spectrometerModel, darkSettings);
+
+        // Assert
+        REQUIRE(result != nullptr);
+        REQUIRE(44 == result->GetEvaluatedNum());
+        REQUIRE(-90.0 == result->GetScanAngle(0));
+        REQUIRE(82.0 == result->GetScanAngle(43));
+
+        REQUIRE(Approx(expectedShift).margin(0.001) == result->GetShift(0, 0));
+        REQUIRE(Approx(1.00) == result->GetSqueeze(0, 0));
+
+        // TODO: This does not agree with the realtime results
+        REQUIRE(Approx(-2.293e+17).margin(1e16) == result->GetColumn(0, 0));
+
+        // All the evaluations should be reasonably good and have the same shift/squeeze
+        for (size_t specIdx = 0; specIdx < result->GetEvaluatedNum(); ++specIdx)
+        {
+            REQUIRE(result->GetChiSquare(specIdx) < 8e-2);
+
+            REQUIRE(4 == result->GetSpecieNum(specIdx));
+            for (size_t specieIdx = 0; specieIdx < 3; ++specieIdx)
+            {
+                REQUIRE(Approx(expectedShift).margin(0.001) == result->GetShift(specIdx, specieIdx));
+                REQUIRE(Approx(1.00) == result->GetSqueeze(specIdx, specieIdx));
+            }
+        }
+
+        const std::vector<double> columns = novac::GetColumns(*result, 0);
+        REQUIRE(Approx(1.65e17).margin(2e16) == Max(columns));
+        REQUIRE(Approx(-2.36e17).margin(2e16) == Min(columns));
+    }
+
+    SECTION("Lower minimum saturation ratio evaluates all spectra")
     {
         userSettings.m_minimumSaturationInFitRegion = 0.01; // less than the default value of 5%
 
         novac::CFitWindow fitWindow;
         fitWindow.fitType = novac::FIT_TYPE::FIT_HP_DIV; // the references are HP500
         SetupFitWindow(fitWindow);
+        PrepareFitWindow(logger, context, "2002128M1", fitWindow, setup);
 
         Evaluation::CScanEvaluation sut(userSettings, logger);
 
@@ -301,7 +400,11 @@ TEST_CASE("EvaluateScan, scan with visible plume and calibrated references", "[S
     Configuration::CUserConfiguration userSettings;
     const Configuration::CDarkSettings* darkSettings = nullptr;
 
-    novac::SpectrometerModel spectrometerModel = novac::CSpectrometerDatabase::GetInstance().SpectrometerModel_AVASPEC();
+    const novac::SpectrometerModel spectrometerModel = novac::CSpectrometerDatabase::GetInstance().SpectrometerModel_AVASPEC();
+
+    novac::directorySetup setup;
+    setup.executableDirectory = ".";
+    setup.tempDirectory = ".";
 
     novac::LogContext context;
     context = context.With(novac::LogContext::FileName, novac::GetFileName(filename));
@@ -311,7 +414,8 @@ TEST_CASE("EvaluateScan, scan with visible plume and calibrated references", "[S
     {
         novac::CFitWindow fitWindow;
         fitWindow.fitType = novac::FIT_TYPE::FIT_POLY;
-        SetupFitWindowWithCalibratedReferences(fitWindow, false);
+        SetupFitWindowWithCalibratedReferences(fitWindow);
+        PrepareFitWindow(logger, context, "2002128M1", fitWindow, setup);
 
         Evaluation::CScanEvaluation sut(userSettings, logger);
 
@@ -325,9 +429,9 @@ TEST_CASE("EvaluateScan, scan with visible plume and calibrated references", "[S
         REQUIRE(82.0 == result->GetScanAngle(43));
 
         // A shift has been applied to the DOAS fit.
-        REQUIRE(Approx(-0.38).margin(0.01) == result->GetShift(0, 0));
+        REQUIRE(Approx(-0.446).margin(0.01) == result->GetShift(0, 0));
 
-        REQUIRE(Approx(-2.251e17).margin(1e15) == result->GetColumn(0, 0));
+        REQUIRE(Approx(-2.238e17).margin(1e15) == result->GetColumn(0, 0));
 
         // the sky spectrum info should be set
         auto skySpecInfo = result->GetSkySpectrumInfo();
@@ -342,7 +446,8 @@ TEST_CASE("EvaluateScan, scan with visible plume and calibrated references", "[S
     {
         novac::CFitWindow fitWindow;
         fitWindow.fitType = novac::FIT_TYPE::FIT_HP_DIV;
-        SetupFitWindowWithCalibratedReferences(fitWindow, true);
+        SetupFitWindowWithCalibratedReferences(fitWindow);
+        PrepareFitWindow(logger, context, "2002128M1", fitWindow, setup);
 
         Evaluation::CScanEvaluation sut(userSettings, logger);
 
@@ -356,7 +461,7 @@ TEST_CASE("EvaluateScan, scan with visible plume and calibrated references", "[S
         REQUIRE(82.0 == result->GetScanAngle(43));
 
         // A shift has been applied to the DOAS fit.
-        REQUIRE(Approx(-0.38).margin(0.01) == result->GetShift(0, 0));
+        REQUIRE(Approx(-0.43).margin(0.01) == result->GetShift(0, 0));
 
         REQUIRE(Approx(-89.43 * 2.5e15).margin(2.5e15) == result->GetColumn(0, 0));
 
@@ -369,3 +474,4 @@ TEST_CASE("EvaluateScan, scan with visible plume and calibrated references", "[S
         REQUIRE(darkSpecInfo.m_startTime == novac::CDateTime(2023, 1, 20, 19, 8, 29, 240));
     }
 }
+

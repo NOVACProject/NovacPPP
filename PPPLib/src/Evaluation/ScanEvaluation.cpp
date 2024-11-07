@@ -68,7 +68,7 @@ std::unique_ptr<CScanResult> CScanEvaluation::EvaluateScan(
 
         // If we have a solar-spectrum that we can use to determine the shift
         // & squeeze then fit that first so that we know the wavelength calibration
-        novac::CEvaluationBase* newEval = FindOptimumShiftAndSqueezeFromFraunhoferReference(context, adjustedFitWindow, spectrometerModel, *darkSettings, m_userSettings.sky, scan);
+        novac::CEvaluationBase* newEval = FindOptimumShiftAndSqueezeFromFraunhoferReference(context, adjustedFitWindow, spectrometerModel, *darkSettings, scan);
 
         if (newEval != nullptr)
         {
