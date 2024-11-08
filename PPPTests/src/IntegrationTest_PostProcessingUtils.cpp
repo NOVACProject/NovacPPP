@@ -45,7 +45,7 @@ TEST_CASE("PrepareEvaluation, reference file not found - throws exception", "[Pr
         setup.m_instrument.push_back(instrument);
 
         // Act & assert
-        REQUIRE_THROWS_AS(novac::PrepareEvaluation(logger, tempDirectory, setup), std::invalid_argument);
+        REQUIRE_THROWS_AS(novac::PrepareEvaluation(logger, tempDirectory, setup), novac::InvalidReferenceException);
     }
 
     SECTION("Single instrument, single fit window, second reference missing")
@@ -53,14 +53,14 @@ TEST_CASE("PrepareEvaluation, reference file not found - throws exception", "[Pr
         // Arrange
         novac::CFitWindow window;
         window.nRef = 2;
-        window.ref[0].m_path = GetTestDataDirectory() + "2002128M1/2002128M1_SO2_Bogumil_293K_HP500.txt"; // exists
+        window.ref[0].m_path = GetTestDataDirectory() + "2002128M1/2002128M1_SO2_Bogumil_293K.txt"; // exists
         window.ref[1].m_path = "/some/none-existing/reference.txt";
         instrument.m_eval.InsertFitWindow(window, novac::CDateTime::MinValue(), novac::CDateTime::MaxValue());
 
         setup.m_instrument.push_back(instrument);
 
         // Act & assert
-        REQUIRE_THROWS_AS(novac::PrepareEvaluation(logger, tempDirectory, setup), std::invalid_argument);
+        REQUIRE_THROWS_AS(novac::PrepareEvaluation(logger, tempDirectory, setup), novac::InvalidReferenceException);
     }
 
     SECTION("Single instrument, Fraunhofer reference missing")
@@ -68,15 +68,15 @@ TEST_CASE("PrepareEvaluation, reference file not found - throws exception", "[Pr
         // Arrange
         novac::CFitWindow window;
         window.nRef = 2;
-        window.ref[0].m_path = GetTestDataDirectory() + "2002128M1/2002128M1_SO2_Bogumil_293K_HP500.txt"; // exists
-        window.ref[1].m_path = GetTestDataDirectory() + "2002128M1/2002128M1_O3_Voigt_223K_HP500.txt"; // exists
+        window.ref[0].m_path = GetTestDataDirectory() + "2002128M1/2002128M1_SO2_Bogumil_293K.txt"; // exists
+        window.ref[1].m_path = GetTestDataDirectory() + "2002128M1/2002128M1_O3_Voigt_223K.txt"; // exists
         window.fraunhoferRef.m_path = "/some/none-existing/reference.txt";
         instrument.m_eval.InsertFitWindow(window, novac::CDateTime::MinValue(), novac::CDateTime::MaxValue());
 
         setup.m_instrument.push_back(instrument);
 
         // Act & assert
-        REQUIRE_THROWS_AS(novac::PrepareEvaluation(logger, tempDirectory, setup), std::invalid_argument);
+        REQUIRE_THROWS_AS(novac::PrepareEvaluation(logger, tempDirectory, setup), novac::InvalidReferenceException);
     }
 
     SECTION("Single instrument, reference is already filtered.")
@@ -84,16 +84,16 @@ TEST_CASE("PrepareEvaluation, reference file not found - throws exception", "[Pr
         // Arrange
         novac::CFitWindow window;
         window.nRef = 2;
-        window.ref[0].m_path = GetTestDataDirectory() + "2002128M1/2002128M1_SO2_Bogumil_293K_HP500.txt"; // exists
+        window.ref[0].m_path = GetTestDataDirectory() + "2002128M1/2002128M1_SO2_Bogumil_293K.txt"; // exists
         window.ref[0].m_isFiltered = true;
-        window.ref[1].m_path = GetTestDataDirectory() + "2002128M1/2002128M1_O3_Voigt_223K_HP500.txt"; // exists
+        window.ref[1].m_path = GetTestDataDirectory() + "2002128M1/2002128M1_O3_Voigt_223K.txt"; // exists
         window.ref[1].m_isFiltered = true;
         instrument.m_eval.InsertFitWindow(window, novac::CDateTime::MinValue(), novac::CDateTime::MaxValue());
 
         setup.m_instrument.push_back(instrument);
 
         // Act & assert
-        REQUIRE_THROWS_AS(novac::PrepareEvaluation(logger, tempDirectory, setup), std::invalid_argument);
+        REQUIRE_THROWS_AS(novac::PrepareEvaluation(logger, tempDirectory, setup), novac::InvalidReferenceException);
     }
 }
 
