@@ -283,6 +283,8 @@ TEST_CASE("EvaluateScan, scan with visible plume)", "[ScanEvaluation][EvaluateSc
         SetupFitWindow(fitWindow);
         PrepareFitWindow(logger, context, "2002128M1", fitWindow, setup);
 
+        const double expectedShift = 0.07769;
+
         Evaluation::CScanEvaluation sut(userSettings, logger);
 
         // Act
@@ -295,7 +297,7 @@ TEST_CASE("EvaluateScan, scan with visible plume)", "[ScanEvaluation][EvaluateSc
         REQUIRE(82.0 == result->GetScanAngle(43));
 
         REQUIRE(Approx(-1.593e17).margin(1e16) == result->GetColumn(0, 0));
-        REQUIRE(Approx(0.07769).margin(0.001) == result->GetShift(0, 0));
+        REQUIRE(Approx(expectedShift).margin(0.001) == result->GetShift(0, 0));
         REQUIRE(Approx(1.00) == result->GetSqueeze(0, 0));
 
         // All the evaluations should be reasonably good and have the same shift/squeeze
@@ -306,7 +308,7 @@ TEST_CASE("EvaluateScan, scan with visible plume)", "[ScanEvaluation][EvaluateSc
             REQUIRE(3 == result->GetSpecieNum(specIdx));
             for (size_t specieIdx = 0; specieIdx < result->GetSpecieNum(specIdx); ++specieIdx)
             {
-                REQUIRE(Approx(0.07769).margin(0.001) == result->GetShift(specIdx, specieIdx));
+                REQUIRE(Approx(expectedShift).margin(0.001) == result->GetShift(specIdx, specieIdx));
                 REQUIRE(Approx(1.00) == result->GetSqueeze(specIdx, specieIdx));
             }
         }
@@ -353,12 +355,16 @@ TEST_CASE("EvaluateScan, scan with visible plume)", "[ScanEvaluation][EvaluateSc
         {
             REQUIRE(result->GetChiSquare(specIdx) < 8e-2);
 
-            REQUIRE(4 == result->GetSpecieNum(specIdx));
+            REQUIRE(4 == result->GetSpecieNum(specIdx)); // The sky spectrum is included in the DOAS fit
             for (size_t specieIdx = 0; specieIdx < 3; ++specieIdx)
             {
                 REQUIRE(Approx(expectedShift).margin(0.001) == result->GetShift(specIdx, specieIdx));
                 REQUIRE(Approx(1.00) == result->GetSqueeze(specIdx, specieIdx));
             }
+
+            // The sky spectrum wasn't shifted/squeezed
+            REQUIRE(Approx(0.0).margin(0.001) == result->GetShift(specIdx, 3));
+            REQUIRE(Approx(1.00) == result->GetSqueeze(specIdx, 3));
         }
 
         const std::vector<double> columns = novac::GetColumns(*result, 0);
@@ -417,6 +423,8 @@ TEST_CASE("EvaluateScan, scan with visible plume and calibrated references", "[S
         SetupFitWindowWithCalibratedReferences(fitWindow);
         PrepareFitWindow(logger, context, "2002128M1", fitWindow, setup);
 
+        const double expectedShift = -0.446;
+
         Evaluation::CScanEvaluation sut(userSettings, logger);
 
         // Act
@@ -428,17 +436,34 @@ TEST_CASE("EvaluateScan, scan with visible plume and calibrated references", "[S
         REQUIRE(-90.0 == result->GetScanAngle(0));
         REQUIRE(82.0 == result->GetScanAngle(43));
 
-        // A shift has been applied to the DOAS fit.
-        REQUIRE(Approx(-0.446).margin(0.01) == result->GetShift(0, 0));
+        // A small shift has been applied to the DOAS fit.
+        REQUIRE(Approx(expectedShift).margin(0.01) == result->GetShift(0, 0));
 
         REQUIRE(Approx(-2.238e17).margin(1e15) == result->GetColumn(0, 0));
 
+        // All the evaluations should be reasonably good and have the same shift/squeeze
+        for (size_t specIdx = 0; specIdx < result->GetEvaluatedNum(); ++specIdx)
+        {
+            REQUIRE(result->GetChiSquare(specIdx) < 8e-2);
+
+            REQUIRE(4 == result->GetSpecieNum(specIdx)); // the sky spectrum is included in the DOAS fit
+            for (size_t specieIdx = 0; specieIdx < 3; ++specieIdx)
+            {
+                REQUIRE(Approx(expectedShift).margin(0.001) == result->GetShift(specIdx, specieIdx));
+                REQUIRE(Approx(1.00) == result->GetSqueeze(specIdx, specieIdx));
+            }
+
+            // The sky spectrum wasn't shifted/squeezed
+            REQUIRE(Approx(0.0).margin(0.001) == result->GetShift(specIdx, 3));
+            REQUIRE(Approx(1.00) == result->GetSqueeze(specIdx, 3));
+        }
+
         // the sky spectrum info should be set
-        auto skySpecInfo = result->GetSkySpectrumInfo();
+        const auto skySpecInfo = result->GetSkySpectrumInfo();
         REQUIRE(skySpecInfo.m_startTime == novac::CDateTime(2023, 1, 20, 19, 7, 48, 870));
 
         // the dark spectrum info should be set
-        auto darkSpecInfo = result->GetDarkSpectrumInfo();
+        const auto darkSpecInfo = result->GetDarkSpectrumInfo();
         REQUIRE(darkSpecInfo.m_startTime == novac::CDateTime(2023, 1, 20, 19, 8, 29, 240));
     }
 
@@ -449,6 +474,8 @@ TEST_CASE("EvaluateScan, scan with visible plume and calibrated references", "[S
         SetupFitWindowWithCalibratedReferences(fitWindow);
         PrepareFitWindow(logger, context, "2002128M1", fitWindow, setup);
 
+        const double expectedShift = -0.43;
+
         Evaluation::CScanEvaluation sut(userSettings, logger);
 
         // Act
@@ -461,16 +488,30 @@ TEST_CASE("EvaluateScan, scan with visible plume and calibrated references", "[S
         REQUIRE(82.0 == result->GetScanAngle(43));
 
         // A shift has been applied to the DOAS fit.
-        REQUIRE(Approx(-0.43).margin(0.01) == result->GetShift(0, 0));
+        REQUIRE(Approx(expectedShift).margin(0.01) == result->GetShift(0, 0));
 
         REQUIRE(Approx(-89.43 * 2.5e15).margin(2.5e15) == result->GetColumn(0, 0));
 
+
+        // All the evaluations should be reasonably good and have the same shift/squeeze
+        for (size_t specIdx = 0; specIdx < result->GetEvaluatedNum(); ++specIdx)
+        {
+            REQUIRE(result->GetChiSquare(specIdx) < 8e-2);
+
+            REQUIRE(3 == result->GetSpecieNum(specIdx));
+            for (size_t specieIdx = 0; specieIdx < result->GetSpecieNum(specIdx); ++specieIdx)
+            {
+                REQUIRE(Approx(expectedShift).margin(0.001) == result->GetShift(specIdx, specieIdx));
+                REQUIRE(Approx(1.00) == result->GetSqueeze(specIdx, specieIdx));
+            }
+        }
+
         // the sky spectrum info should be set
-        auto& skySpecInfo = result->GetSkySpectrumInfo();
+        const auto& skySpecInfo = result->GetSkySpectrumInfo();
         REQUIRE(skySpecInfo.m_startTime == novac::CDateTime(2023, 1, 20, 19, 7, 48, 870));
 
         // the dark spectrum info should be set
-        auto& darkSpecInfo = result->GetDarkSpectrumInfo();
+        const auto& darkSpecInfo = result->GetDarkSpectrumInfo();
         REQUIRE(darkSpecInfo.m_startTime == novac::CDateTime(2023, 1, 20, 19, 8, 29, 240));
     }
 }
