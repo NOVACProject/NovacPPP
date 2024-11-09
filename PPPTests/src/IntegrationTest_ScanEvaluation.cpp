@@ -24,25 +24,21 @@ static void SetupFitWindow(novac::CFitWindow& window)
     window.fitLow = 464;
     window.fitHigh = 630;
 
-    novac::CReferenceFile so2;
+    novac::CReferenceFile so2{ GetTestDataDirectory() + "2002128M1/2002128M1_SO2_Bogumil_293K.txt" };
     so2.SetShift(novac::SHIFT_TYPE::SHIFT_FIX, 0.0);
     so2.SetSqueeze(novac::SHIFT_TYPE::SHIFT_FIX, 1.0);
-    so2.m_path = GetTestDataDirectory() + "2002128M1/2002128M1_SO2_Bogumil_293K.txt";
 
-    novac::CReferenceFile o3;
+    novac::CReferenceFile o3{ GetTestDataDirectory() + "2002128M1/2002128M1_O3_Voigt_223K.txt" };
     o3.SetShift(novac::SHIFT_TYPE::SHIFT_FIX, 0.0);
     o3.SetSqueeze(novac::SHIFT_TYPE::SHIFT_FIX, 1.0);
-    o3.m_path = GetTestDataDirectory() + "2002128M1/2002128M1_O3_Voigt_223K.txt";
 
-    novac::CReferenceFile ring;
+    novac::CReferenceFile ring{ GetTestDataDirectory() + "2002128M1/2002128M1_Ring_HR.txt" };
     ring.SetShift(novac::SHIFT_TYPE::SHIFT_FIX, 0.0);
     ring.SetSqueeze(novac::SHIFT_TYPE::SHIFT_FIX, 1.0);
-    ring.m_path = GetTestDataDirectory() + "2002128M1/2002128M1_Ring_HR.txt";
 
-    window.ref[0] = so2;
-    window.ref[1] = o3;
-    window.ref[2] = ring;
-    window.nRef = 3;
+    window.reference.push_back(so2);
+    window.reference.push_back(o3);
+    window.reference.push_back(ring);
 }
 
 static void SetupFitWindowWithCalibratedReferences(novac::CFitWindow& window)
@@ -50,28 +46,24 @@ static void SetupFitWindowWithCalibratedReferences(novac::CFitWindow& window)
     window.fitLow = 464;
     window.fitHigh = 630;
 
-    novac::CReferenceFile so2;
+    novac::CReferenceFile so2{ GetTestDataDirectory() + "2002128M1/Calibrated/2002128M1_SO2_Bogumil_293K.txt" };
     so2.SetShift(novac::SHIFT_TYPE::SHIFT_FIX, 0.0);
     so2.SetSqueeze(novac::SHIFT_TYPE::SHIFT_FIX, 1.0);
-    so2.m_path = GetTestDataDirectory() + "2002128M1/Calibrated/2002128M1_SO2_Bogumil_293K.txt";
 
-    novac::CReferenceFile o3;
+    novac::CReferenceFile o3{ GetTestDataDirectory() + "2002128M1/Calibrated/2002128M1_O3_Voigt_223K.txt" };
     o3.SetShift(novac::SHIFT_TYPE::SHIFT_FIX, 0.0);
     o3.SetSqueeze(novac::SHIFT_TYPE::SHIFT_FIX, 1.0);
-    o3.m_path = GetTestDataDirectory() + "2002128M1/Calibrated/2002128M1_O3_Voigt_223K.txt";
 
-    novac::CReferenceFile ring;
+    novac::CReferenceFile ring{ GetTestDataDirectory() + "2002128M1/Calibrated/2002128M1_Ring.txt" };
     ring.SetShift(novac::SHIFT_TYPE::SHIFT_FIX, 0.0);
     ring.SetSqueeze(novac::SHIFT_TYPE::SHIFT_FIX, 1.0);
-    ring.m_path = GetTestDataDirectory() + "2002128M1/Calibrated/2002128M1_Ring.txt";
 
     novac::CReferenceFile fraunhofer;
     fraunhofer.m_path = GetTestDataDirectory() + "2002128M1/Calibrated/2002128M1_Fraunhofer.txt";
 
-    window.ref[0] = so2;
-    window.ref[1] = o3;
-    window.ref[2] = ring;
-    window.nRef = 3;
+    window.reference.push_back(so2);
+    window.reference.push_back(o3);
+    window.reference.push_back(ring);
     window.fraunhoferRef = fraunhofer;
 }
 
@@ -98,10 +90,9 @@ TEST_CASE("EvaluateScan, Invalid fit window - throws Exception", "[ScanEvaluatio
 
     novac::CFitWindow fitWindow;
 
-    novac::CReferenceFile so2;
+    novac::CReferenceFile so2{ GetTestDataDirectory() + "2002128M1/2002128M1_SO2_Bogumil_293K_HP500.txt" };
     so2.SetShift(novac::SHIFT_TYPE::SHIFT_FIX, 0.0);
     so2.SetSqueeze(novac::SHIFT_TYPE::SHIFT_FIX, 1.0);
-    so2.m_path = GetTestDataDirectory() + "2002128M1/2002128M1_SO2_Bogumil_293K_HP500.txt";
 
     Evaluation::CScanEvaluation sut(userSettings, logger);
 
@@ -109,8 +100,7 @@ TEST_CASE("EvaluateScan, Invalid fit window - throws Exception", "[ScanEvaluatio
     {
         fitWindow.fitLow = 320;
         fitWindow.fitHigh = 320;
-        fitWindow.ref[0] = so2;
-        fitWindow.nRef = 1;
+        fitWindow.reference.push_back(so2);
 
         // Act & Assert
         REQUIRE_THROWS(sut.EvaluateScan(context, scan, fitWindow, spectrometerModel, darkSettings));
@@ -120,8 +110,7 @@ TEST_CASE("EvaluateScan, Invalid fit window - throws Exception", "[ScanEvaluatio
     {
         fitWindow.fitLow = 320;
         fitWindow.fitHigh = 460;
-        fitWindow.ref[0] = so2;
-        fitWindow.nRef = 0;
+        fitWindow.reference.push_back(so2);
 
         // Act & Assert
         REQUIRE_THROWS(sut.EvaluateScan(context, scan, fitWindow, spectrometerModel, darkSettings));
@@ -131,9 +120,8 @@ TEST_CASE("EvaluateScan, Invalid fit window - throws Exception", "[ScanEvaluatio
     {
         fitWindow.fitLow = 320;
         fitWindow.fitHigh = 460;
-        fitWindow.ref[0] = so2;
-        fitWindow.ref[1] = so2;
-        fitWindow.nRef = 2;
+        fitWindow.reference.push_back(so2);
+        fitWindow.reference.push_back(so2);
 
         // Act & Assert
         REQUIRE_THROWS(sut.EvaluateScan(context, scan, fitWindow, spectrometerModel, darkSettings));

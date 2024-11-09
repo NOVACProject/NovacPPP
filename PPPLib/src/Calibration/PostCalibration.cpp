@@ -467,7 +467,7 @@ void CPostCalibration::CreateEvaluationSettings(const SpectrometerId& spectromet
         statistics.GetCalibration(spectrometer, idx, evaluationWindow.validFrom, evaluationWindow.validTo, references);
 
         evaluationWindow.window = originalWindowsForThisChannel.front().window;
-        evaluationWindow.window.nRef = 0;
+        evaluationWindow.window.reference.clear();
         for (const auto& reference : references)
         {
             if (Equals(reference.m_specieName, "Fraunhofer") && evaluationWindow.window.fraunhoferRef.m_path.size() != 0)
@@ -476,13 +476,13 @@ void CPostCalibration::CreateEvaluationSettings(const SpectrometerId& spectromet
             }
             else
             {
-                evaluationWindow.window.ref[evaluationWindow.window.nRef] = reference;
-                evaluationWindow.window.ref[evaluationWindow.window.nRef].m_shiftOption = novac::SHIFT_TYPE::SHIFT_FIX;
-                evaluationWindow.window.ref[evaluationWindow.window.nRef].m_shiftValue = 0.0;
-                evaluationWindow.window.ref[evaluationWindow.window.nRef].m_squeezeOption = novac::SHIFT_TYPE::SHIFT_FIX;
-                evaluationWindow.window.ref[evaluationWindow.window.nRef].m_squeezeValue = 1.0;
+                novac::CReferenceFile ref(reference);
+                ref.m_shiftOption = novac::SHIFT_TYPE::SHIFT_FIX;
+                ref.m_shiftValue = 0.0;
+                ref.m_squeezeOption = novac::SHIFT_TYPE::SHIFT_FIX;
+                ref.m_squeezeValue = 1.0;
 
-                ++evaluationWindow.window.nRef;
+                evaluationWindow.window.reference.push_back(ref);
             }
         }
 

@@ -144,27 +144,32 @@ RETURN_CODE CEvaluationConfigurationParser::WriteConfigurationFile(
         }
 
         // Each of the references...
-        for (size_t j = 0; j < window.nRef; ++j)
+        for (const auto& reference : window.reference)
         {
             fprintf(f, "\t\t<Reference>\n");
-            fprintf(f, "\t\t\t<name>%s</name>\n", window.ref[j].m_specieName.c_str());
-            fprintf(f, "\t\t\t<path>%s</path>\n", window.ref[j].m_path.c_str());
+            fprintf(f, "\t\t\t<name>%s</name>\n", reference.m_specieName.c_str());
+            fprintf(f, "\t\t\t<path>%s</path>\n", reference.m_path.c_str());
 
             // The value for the shift
-            fprintf(f, "\t\t\t<shiftOption>%d</shiftOption>\n", (int)window.ref[j].m_shiftOption);
-            if (window.ref[j].m_shiftOption != novac::SHIFT_TYPE::SHIFT_FREE)
-                fprintf(f, "\t\t\t<shiftValue>%lf</shiftValue>\n", window.ref[j].m_shiftValue);
+            fprintf(f, "\t\t\t<shiftOption>%d</shiftOption>\n", (int)reference.m_shiftOption);
+            if (reference.m_shiftOption != novac::SHIFT_TYPE::SHIFT_FREE)
+            {
+                fprintf(f, "\t\t\t<shiftValue>%lf</shiftValue>\n", reference.m_shiftValue);
+            }
 
             // The value for the squeeze
-            fprintf(f, "\t\t\t<squeezeOption>%d</squeezeOption>\n", (int)window.ref[j].m_squeezeOption);
-            if (window.ref[j].m_squeezeOption != novac::SHIFT_TYPE::SHIFT_FREE)
-                fprintf(f, "\t\t\t<squeezeValue>%lf</squeezeValue>\n", window.ref[j].m_squeezeValue);
+            fprintf(f, "\t\t\t<squeezeOption>%d</squeezeOption>\n", (int)reference.m_squeezeOption);
+            if (reference.m_squeezeOption != novac::SHIFT_TYPE::SHIFT_FREE)
+            {
+                fprintf(f, "\t\t\t<squeezeValue>%lf</squeezeValue>\n", reference.m_squeezeValue);
+            }
 
             // The value for the column
-            fprintf(f, "\t\t\t<columnOption>%d</columnOption>\n", (int)window.ref[j].m_columnOption);
-            if (window.ref[j].m_columnOption != novac::SHIFT_TYPE::SHIFT_FREE)
-                fprintf(f, "\t\t\t<columnValue>%lf</columnValue>\n", window.ref[j].m_columnValue);
-
+            fprintf(f, "\t\t\t<columnOption>%d</columnOption>\n", (int)reference.m_columnOption);
+            if (reference.m_columnOption != novac::SHIFT_TYPE::SHIFT_FREE)
+            {
+                fprintf(f, "\t\t\t<columnValue>%lf</columnValue>\n", reference.m_columnValue);
+            }
             fprintf(f, "\t\t</Reference>\n");
         }
 
@@ -246,20 +251,20 @@ RETURN_CODE CEvaluationConfigurationParser::WriteConfigurationFile(
     return RETURN_CODE::SUCCESS;
 }
 
-void SaveSlitFunctionAndWavelengthCalibration(novac::CFitWindow& window, novac::CString& slitfunctionFile, novac::CString& wavelengthCalibFile)
+static void SaveSlitFunctionAndWavelengthCalibration(novac::CFitWindow& window, novac::CString& slitfunctionFile, novac::CString& wavelengthCalibFile)
 {
     if (slitfunctionFile.GetLength() > 0)
     {
-        for (size_t ii = 0; ii < window.nRef; ++ii)
+        for (auto& reference : window.reference)
         {
-            window.ref[ii].m_slitFunctionFile = slitfunctionFile.ToStdString();
+            reference.m_slitFunctionFile = slitfunctionFile.ToStdString();
         }
     }
     if (wavelengthCalibFile.GetLength() > 0)
     {
-        for (size_t ii = 0; ii < window.nRef; ++ii)
+        for (auto& reference : window.reference)
         {
-            window.ref[ii].m_wavelengthCalibrationFile = wavelengthCalibFile.ToStdString();
+            reference.m_wavelengthCalibrationFile = wavelengthCalibFile.ToStdString();
         }
     }
 }
@@ -462,7 +467,7 @@ RETURN_CODE CEvaluationConfigurationParser::Parse_CalibrationSettings(Configurat
 
 RETURN_CODE CEvaluationConfigurationParser::Parse_Reference(novac::CFitWindow& window)
 {
-    const size_t nRef = window.nRef;
+    novac::CReferenceFile newReference;
 
     // parse the file, one line at a time.
     szToken = &start;
@@ -482,13 +487,13 @@ RETURN_CODE CEvaluationConfigurationParser::Parse_Reference(novac::CFitWindow& w
 
         if (Equals(szToken, "/Reference"))
         {
-            ++window.nRef;
+            window.reference.push_back(newReference);
             return RETURN_CODE::SUCCESS;
         }
 
         if (Equals(szToken, "name"))
         {
-            Parse_StringItem("/name", window.ref[nRef].m_specieName);
+            Parse_StringItem("/name", newReference.m_specieName);
             continue;
         }
 
@@ -498,7 +503,7 @@ RETURN_CODE CEvaluationConfigurationParser::Parse_Reference(novac::CFitWindow& w
             Parse_StringItem("/filtered", str);
             if (Equals(str, "HP500"))
             {
-                window.ref[nRef].m_isFiltered = true;
+                newReference.m_isFiltered = true;
             }
             continue;
         }
@@ -506,14 +511,14 @@ RETURN_CODE CEvaluationConfigurationParser::Parse_Reference(novac::CFitWindow& w
         if (Equals(szToken, "path"))
         {
             // This is the path to a pre-convolved reference. Just read the path and read the reference from there.
-            Parse_PathItem("/path", window.ref[nRef].m_path);
+            Parse_PathItem("/path", newReference.m_path);
             continue;
         }
 
         if (Equals(szToken, "crossSection"))
         {
             // This is the path to a reference which needs to be convolved before we can continue.
-            Parse_PathItem("/crossSection", window.ref[nRef].m_crossSectionFile);
+            Parse_PathItem("/crossSection", newReference.m_crossSectionFile);
             continue;
         }
 
@@ -523,17 +528,17 @@ RETURN_CODE CEvaluationConfigurationParser::Parse_Reference(novac::CFitWindow& w
             Parse_IntItem("/shiftOption", tmpInt);
             switch (tmpInt)
             {
-            case 0: window.ref[nRef].m_shiftOption = novac::SHIFT_TYPE::SHIFT_FREE; break;
-            case 1: window.ref[nRef].m_shiftOption = novac::SHIFT_TYPE::SHIFT_FIX; break;
-            case 2: window.ref[nRef].m_shiftOption = novac::SHIFT_TYPE::SHIFT_LINK; break;
-            case 3: window.ref[nRef].m_shiftOption = novac::SHIFT_TYPE::SHIFT_LIMIT; break;
+            case 0: newReference.m_shiftOption = novac::SHIFT_TYPE::SHIFT_FREE; break;
+            case 1: newReference.m_shiftOption = novac::SHIFT_TYPE::SHIFT_FIX; break;
+            case 2: newReference.m_shiftOption = novac::SHIFT_TYPE::SHIFT_LINK; break;
+            case 3: newReference.m_shiftOption = novac::SHIFT_TYPE::SHIFT_LIMIT; break;
             }
             continue;
         }
 
         if (Equals(szToken, "shiftValue"))
         {
-            Parse_FloatItem("/shiftValue", window.ref[nRef].m_shiftValue);
+            Parse_FloatItem("/shiftValue", newReference.m_shiftValue);
             continue;
         }
 
@@ -543,17 +548,17 @@ RETURN_CODE CEvaluationConfigurationParser::Parse_Reference(novac::CFitWindow& w
             Parse_IntItem("/squeezeOption", tmpInt);
             switch (tmpInt)
             {
-            case 0: window.ref[nRef].m_squeezeOption = novac::SHIFT_TYPE::SHIFT_FREE; break;
-            case 1: window.ref[nRef].m_squeezeOption = novac::SHIFT_TYPE::SHIFT_FIX; break;
-            case 2: window.ref[nRef].m_squeezeOption = novac::SHIFT_TYPE::SHIFT_LINK; break;
-            case 3: window.ref[nRef].m_squeezeOption = novac::SHIFT_TYPE::SHIFT_LIMIT; break;
+            case 0: newReference.m_squeezeOption = novac::SHIFT_TYPE::SHIFT_FREE; break;
+            case 1: newReference.m_squeezeOption = novac::SHIFT_TYPE::SHIFT_FIX; break;
+            case 2: newReference.m_squeezeOption = novac::SHIFT_TYPE::SHIFT_LINK; break;
+            case 3: newReference.m_squeezeOption = novac::SHIFT_TYPE::SHIFT_LIMIT; break;
             }
             continue;
         }
 
         if (Equals(szToken, "squeezeValue"))
         {
-            Parse_FloatItem("/squeezeValue", window.ref[nRef].m_squeezeValue);
+            Parse_FloatItem("/squeezeValue", newReference.m_squeezeValue);
             continue;
         }
 
@@ -563,17 +568,17 @@ RETURN_CODE CEvaluationConfigurationParser::Parse_Reference(novac::CFitWindow& w
             Parse_IntItem("/columnOption", tmpInt);
             switch (tmpInt)
             {
-            case 0: window.ref[nRef].m_columnOption = novac::SHIFT_TYPE::SHIFT_FREE; break;
-            case 1: window.ref[nRef].m_columnOption = novac::SHIFT_TYPE::SHIFT_FIX; break;
-            case 2: window.ref[nRef].m_columnOption = novac::SHIFT_TYPE::SHIFT_LINK; break;
-            case 3: window.ref[nRef].m_columnOption = novac::SHIFT_TYPE::SHIFT_LIMIT; break;
+            case 0: newReference.m_columnOption = novac::SHIFT_TYPE::SHIFT_FREE; break;
+            case 1: newReference.m_columnOption = novac::SHIFT_TYPE::SHIFT_FIX; break;
+            case 2: newReference.m_columnOption = novac::SHIFT_TYPE::SHIFT_LINK; break;
+            case 3: newReference.m_columnOption = novac::SHIFT_TYPE::SHIFT_LIMIT; break;
             }
             continue;
         }
 
         if (Equals(szToken, "columnValue"))
         {
-            Parse_FloatItem("/columnValue", window.ref[nRef].m_columnValue);
+            Parse_FloatItem("/columnValue", newReference.m_columnValue);
             continue;
         }
     }

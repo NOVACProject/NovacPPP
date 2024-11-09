@@ -125,29 +125,29 @@ void PrepareFitWindow(novac::ILogger& logger, novac::LogContext& instrumentConte
     auto windowContext = instrumentContext.With(novac::LogContext::FitWindow, window.name);
 
     // For each reference in the fit-window, read it in and make sure that it exists...
-    for (size_t referenceIndex = 0; referenceIndex < window.nRef; ++referenceIndex)
+    for (size_t referenceIndex = 0; referenceIndex < window.reference.size(); ++referenceIndex)
     {
-        auto referenceContext = windowContext.With(novac::LogContext::FileName, window.ref[referenceIndex].m_path);
+        auto referenceContext = windowContext.With(novac::LogContext::FileName, window.reference[referenceIndex].m_path);
 
-        if (window.ref[referenceIndex].m_path.empty())
+        if (window.reference[referenceIndex].m_path.empty())
         {
             // The reference file was not given in the configuration. Try to generate a configuration
             //  from the cross section, slit-function and wavelength calibration. These three must then 
             //  exist or the evaluation fails.
             novac::CString tempFile;
-            tempFile.Format("%s%s_%s.xs", setup.tempDirectory.c_str(), instrumentSerial.c_str(), window.ref[referenceIndex].m_specieName.c_str());
+            tempFile.Format("%s%s_%s.xs", setup.tempDirectory.c_str(), instrumentSerial.c_str(), window.reference[referenceIndex].m_specieName.c_str());
 
-            ConvolveReference(logger, referenceContext, setup.executableDirectory, tempFile.std_str(), window.ref[referenceIndex]);
+            ConvolveReference(logger, referenceContext, setup.executableDirectory, tempFile.std_str(), window.reference[referenceIndex]);
         }
         else
         {
-            if (!IsExistingFile(window.ref[referenceIndex].m_path))
+            if (!IsExistingFile(window.reference[referenceIndex].m_path))
             {
                 // the file does not exist, try to change it to include the path of the configuration-directory...
-                const std::string fileName = Filesystem::GetAbsolutePathFromRelative(window.ref[referenceIndex].m_path, setup.executableDirectory);
+                const std::string fileName = Filesystem::GetAbsolutePathFromRelative(window.reference[referenceIndex].m_path, setup.executableDirectory);
                 if (IsExistingFile(fileName))
                 {
-                    window.ref[referenceIndex].m_path = fileName;
+                    window.reference[referenceIndex].m_path = fileName;
                 }
                 else
                 {
@@ -156,17 +156,17 @@ void PrepareFitWindow(novac::ILogger& logger, novac::LogContext& instrumentConte
             }
 
             // Read in the cross section
-            window.ref[referenceIndex].ReadCrossSectionDataFromFile();
+            window.reference[referenceIndex].ReadCrossSectionDataFromFile();
 
             // Verify that the reference has values in the given range. Throws InvalidReferenceException if it doesn't.
-            window.ref[referenceIndex].VerifyReferenceValues(window.fitLow, window.fitHigh);
+            window.reference[referenceIndex].VerifyReferenceValues(window.fitLow, window.fitHigh);
 
             // Make a check of the data range as well, in order to show the user.
             {
                 std::pair<size_t, size_t> indices;
                 const auto minMaxValues = MinMax(
-                    window.ref[referenceIndex].m_data->m_crossSection.begin() + window.fitLow,
-                    window.ref[referenceIndex].m_data->m_crossSection.begin() + window.fitHigh,
+                    window.reference[referenceIndex].m_data->m_crossSection.begin() + window.fitLow,
+                    window.reference[referenceIndex].m_data->m_crossSection.begin() + window.fitHigh,
                     indices);
 
                 std::stringstream msg;
@@ -182,21 +182,21 @@ void PrepareFitWindow(novac::ILogger& logger, novac::LogContext& instrumentConte
             // we should also high-pass filter the cross-sections
             if (window.fitType == novac::FIT_TYPE::FIT_HP_DIV || window.fitType == novac::FIT_TYPE::FIT_HP_SUB)
             {
-                if (window.ref[referenceIndex].m_isFiltered == false)
+                if (window.reference[referenceIndex].m_isFiltered == false)
                 {
                     logger.Information(referenceContext, "High pass filtering reference.");
-                    if (novac::Equals(window.ref[referenceIndex].m_specieName, "ring"))
+                    if (novac::Equals(window.reference[referenceIndex].m_specieName, "ring"))
                     {
-                        HighPassFilter_Ring(*window.ref[referenceIndex].m_data);
+                        HighPassFilter_Ring(*window.reference[referenceIndex].m_data);
                     }
                     else
                     {
-                        HighPassFilter(*window.ref[referenceIndex].m_data, CrossSectionUnit::cm2_molecule);
+                        HighPassFilter(*window.reference[referenceIndex].m_data, CrossSectionUnit::cm2_molecule);
                     }
                 }
                 else
                 {
-                    throw InvalidReferenceException("Reference file is filtered. This is not supported in the NovacPPP. Reference: '" + window.ref[referenceIndex].Name() + "' defined for fit window :'" + window.name + "' for instrument: " + instrumentSerial);
+                    throw InvalidReferenceException("Reference file is filtered. This is not supported in the NovacPPP. Reference: '" + window.reference[referenceIndex].Name() + "' defined for fit window :'" + window.name + "' for instrument: " + instrumentSerial);
                 }
             }
         }// endif

@@ -79,12 +79,12 @@ std::unique_ptr<CScanResult> CScanEvaluation::EvaluateScan(
     {
         // Find the optimal shift & squeeze from the spectrum with the highest column
         CFitWindow window2 = adjustedFitWindow;
-        for (size_t k = 0; k < window2.nRef; ++k)
+        for(auto& reference : window2.reference)
         {
-            window2.ref[k].m_shiftOption = SHIFT_TYPE::SHIFT_FIX;
-            window2.ref[k].m_squeezeOption = SHIFT_TYPE::SHIFT_FIX;
-            window2.ref[k].m_shiftValue = 0.0;
-            window2.ref[k].m_squeezeValue = 1.0;
+            reference.m_shiftOption = SHIFT_TYPE::SHIFT_FIX;
+            reference.m_squeezeOption = SHIFT_TYPE::SHIFT_FIX;
+            reference.m_shiftValue = 0.0;
+            reference.m_squeezeValue = 1.0;
         }
         eval.reset(new CEvaluationBase(window2, m_log));
 
@@ -214,9 +214,9 @@ std::unique_ptr<CScanResult> CScanEvaluation::EvaluateOpenedScan(
         const int spectrumIndex = current.ScanIndex();
 
         // a. Read the next spectrum from the file
-        int ret = scan.GetNextSpectrum(logContext, current);
+        const int spectrumRead = scan.GetNextSpectrum(logContext, current);
 
-        if (ret == 0)
+        if (spectrumRead == 0)
         {
             // if something went wrong when reading the spectrum
             if (scan.m_lastError == novac::FileError::SpectrumNotFound || scan.m_lastError == novac::FileError::EndOfFile)
@@ -352,23 +352,24 @@ bool CScanEvaluation::GetSky(novac::CScanFileHandler& scan, const Configuration:
     return successs;
 }
 
-// Sets the first reference to 'shfit free' and links the shift of all the other refernces to the first.
+// Sets the first reference to 'shift free' and links the shift of all the other references to the first.
 static void SetupFitWindowFitShiftDetermination(CFitWindow& window)
 {
-    window.ref[0].m_shiftOption = SHIFT_TYPE::SHIFT_FREE;
-    window.ref[0].m_squeezeOption = SHIFT_TYPE::SHIFT_FIX;
-    window.ref[0].m_squeezeValue = 1.0;
-    for (size_t k = 1; k < window.nRef; ++k)
+    window.reference[0].m_shiftOption = SHIFT_TYPE::SHIFT_FREE;
+    window.reference[0].m_squeezeOption = SHIFT_TYPE::SHIFT_FIX;
+    window.reference[0].m_squeezeValue = 1.0;
+
+    for (size_t k = 1; k < window.NumberOfReferences(); ++k)
     {
-        if (novac::Equals(window.ref[k].m_specieName, "FraunhoferRef"))
+        if (novac::Equals(window.reference[k].m_specieName, "FraunhoferRef"))
         {
             continue;
         }
 
-        window.ref[k].m_shiftOption = SHIFT_TYPE::SHIFT_LINK;
-        window.ref[k].m_squeezeOption = SHIFT_TYPE::SHIFT_LINK;
-        window.ref[k].m_shiftValue = 0.0;
-        window.ref[k].m_squeezeValue = 0.0;
+        window.reference[k].m_shiftOption = SHIFT_TYPE::SHIFT_LINK;
+        window.reference[k].m_squeezeOption = SHIFT_TYPE::SHIFT_LINK;
+        window.reference[k].m_shiftValue = 0.0;
+        window.reference[k].m_squeezeValue = 0.0;
     }
 }
 
@@ -460,17 +461,17 @@ CEvaluationBase* CScanEvaluation::FindOptimumShiftAndSqueeze(novac::LogContext c
     double optimumSqueeze = newResult.m_referenceResult[0].m_squeeze;
 
     // 5. Set the shift for all references to this value
-    for (size_t k = 0; k < fitWindow2.nRef; ++k)
+    for (size_t k = 0; k < fitWindow2.NumberOfReferences(); ++k)
     {
-        if (novac::Equals(fitWindow2.ref[k].m_specieName, "FraunhoferRef"))
+        if (novac::Equals(fitWindow2.reference[k].m_specieName, "FraunhoferRef"))
         {
             continue;
         }
 
-        fitWindow2.ref[k].m_shiftOption = SHIFT_TYPE::SHIFT_FIX;
-        fitWindow2.ref[k].m_squeezeOption = SHIFT_TYPE::SHIFT_FIX;
-        fitWindow2.ref[k].m_shiftValue = optimumShift;
-        fitWindow2.ref[k].m_squeezeValue = optimumSqueeze;
+        fitWindow2.reference[k].m_shiftOption = SHIFT_TYPE::SHIFT_FIX;
+        fitWindow2.reference[k].m_squeezeOption = SHIFT_TYPE::SHIFT_FIX;
+        fitWindow2.reference[k].m_shiftValue = optimumShift;
+        fitWindow2.reference[k].m_squeezeValue = optimumSqueeze;
     }
 
     CEvaluationBase* newEvaluator = new CEvaluationBase(fitWindow2, m_log);
@@ -489,29 +490,29 @@ void CScanEvaluation::ValidateSetup(novac::LogContext context, const novac::CFit
     {
         throw std::invalid_argument("The given fit window has an empty (fitLow, fitHigh) range");
     }
-    if (window.nRef == 0)
+    if (window.NumberOfReferences() == 0)
     {
         throw std::invalid_argument("The given fit window has no references defined");
     }
 
     std::vector<std::string> paths;
-    for (size_t refIdx = 0; refIdx < window.nRef; ++refIdx)
+    for(const auto& reference : window.reference)
     {
-        if (window.ref[refIdx].m_data == nullptr)
+        if (reference.m_data == nullptr)
         {
             throw std::invalid_argument("At least one of the references of the fit window has no data (not read from disk?).");
         }
 
         for (const std::string& path : paths)
         {
-            if (novac::Equals(path, window.ref[refIdx].m_path))
+            if (novac::Equals(path, reference.m_path))
             {
                 throw std::invalid_argument("The given fit window has one reference defined multiple times (" + path + ")");
             }
         }
 
-        window.ref[refIdx].VerifyReferenceValues(window.fitLow, window.fitHigh);
+        reference.VerifyReferenceValues(window.fitLow, window.fitHigh);
 
-        paths.push_back(window.ref[refIdx].m_path);
+        paths.push_back(reference.m_path);
     }
 }

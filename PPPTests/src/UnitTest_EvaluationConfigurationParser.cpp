@@ -22,14 +22,17 @@ static Configuration::CEvaluationConfiguration CreateEvaluationSettings()
     Configuration::CEvaluationConfiguration settings;
     settings.m_serial = "ABC80";
 
+    novac::CReferenceFile so2Reference{ "C:/SO2_reference.txt" };
+    novac::CReferenceFile broReference{ "C:/BrO_reference.txt" };
+    novac::CReferenceFile ringReference{ "C:/Ring_reference.txt" };
+
     novac::CFitWindow so2Evaluation;
     so2Evaluation.fitLow = 405;
     so2Evaluation.fitHigh = 503;
     so2Evaluation.fitType = novac::FIT_TYPE::FIT_POLY;
     so2Evaluation.name = "SO2";
     so2Evaluation.polyOrder = 3;
-    so2Evaluation.nRef = 1;
-    so2Evaluation.ref[0].m_path = "C:/SO2_reference.txt";
+    so2Evaluation.reference.push_back(so2Reference);
     settings.InsertFitWindow(so2Evaluation, novac::CDateTime(1999, 01, 01, 12, 13, 14), novac::CDateTime(2029, 12, 31, 14, 15, 16));
 
 
@@ -39,10 +42,9 @@ static Configuration::CEvaluationConfiguration CreateEvaluationSettings()
     brOEvaluation.fitType = novac::FIT_TYPE::FIT_POLY;
     brOEvaluation.name = "BrO";
     brOEvaluation.polyOrder = 3;
-    brOEvaluation.nRef = 3;
-    brOEvaluation.ref[0].m_path = "C:/SO2_reference.txt";
-    brOEvaluation.ref[1].m_path = "C:/Ring_reference.txt";
-    brOEvaluation.ref[2].m_path = "C:/BrO_reference.txt";
+    brOEvaluation.reference.push_back(so2Reference);
+    brOEvaluation.reference.push_back(ringReference);
+    brOEvaluation.reference.push_back(broReference);
     settings.InsertFitWindow(so2Evaluation, novac::CDateTime(1999, 01, 01, 12, 13, 14), novac::CDateTime(2029, 12, 31, 14, 15, 16));
 
     return settings;
@@ -107,8 +109,8 @@ TEST_CASE("ReadConfigurationFile gives expected configuration", "[EvaluationConf
         REQUIRE(validFrom == novac::CDateTime(0, 0, 0, 0, 0, 0));
         REQUIRE(validTo == novac::CDateTime(2017, 2, 20, 5, 49, 1));
 
-        REQUIRE(window.nRef == 3);
-        REQUIRE(window.ref[0].m_path == "D:/NovacPostProcessingProgram/TestRun_2021_12/OutputFeb2017UTC/2017.02.20/I2J8552/I2J8552_SO2_Bogumil_293K_170220_0348.txt");
+        REQUIRE(window.NumberOfReferences() == 3);
+        REQUIRE(window.reference[0].m_path == "D:/NovacPostProcessingProgram/TestRun_2021_12/OutputFeb2017UTC/2017.02.20/I2J8552/I2J8552_SO2_Bogumil_293K_170220_0348.txt");
         REQUIRE(window.fraunhoferRef.m_path == "D:/NovacPostProcessingProgram/TestRun_2021_12/OutputFeb2017UTC/2017.02.20/I2J8552/I2J8552_Fraunhofer_170220_0348.txt");
     }
 
@@ -124,8 +126,8 @@ TEST_CASE("ReadConfigurationFile gives expected configuration", "[EvaluationConf
         REQUIRE(validFrom == novac::CDateTime(2017, 2, 20, 5, 49, 1));
         REQUIRE(validTo == novac::CDateTime(2017, 2, 20, 9, 53, 24));
 
-        REQUIRE(window.nRef == 3);
-        REQUIRE(window.ref[0].m_path == "D:/NovacPostProcessingProgram/TestRun_2021_12/OutputFeb2017UTC/2017.02.20/I2J8552/I2J8552_SO2_Bogumil_293K_170220_0749.txt");
+        REQUIRE(window.NumberOfReferences() == 3);
+        REQUIRE(window.reference[0].m_path == "D:/NovacPostProcessingProgram/TestRun_2021_12/OutputFeb2017UTC/2017.02.20/I2J8552/I2J8552_SO2_Bogumil_293K_170220_0749.txt");
         REQUIRE(window.fraunhoferRef.m_path == "D:/NovacPostProcessingProgram/TestRun_2021_12/OutputFeb2017UTC/2017.02.20/I2J8552/I2J8552_Fraunhofer_170220_0749.txt");
     }
 
@@ -141,8 +143,8 @@ TEST_CASE("ReadConfigurationFile gives expected configuration", "[EvaluationConf
         REQUIRE(validFrom == novac::CDateTime(2017, 2, 20, 9, 53, 24));
         REQUIRE(validTo == novac::CDateTime(9999, 12, 31, 23, 59, 59));
 
-        REQUIRE(window.nRef == 3);
-        REQUIRE(window.ref[0].m_path == "D:/NovacPostProcessingProgram/TestRun_2021_12/OutputFeb2017UTC/2017.02.20/I2J8552/I2J8552_SO2_Bogumil_293K_170220_1157.txt");
+        REQUIRE(window.NumberOfReferences() == 3);
+        REQUIRE(window.reference[0].m_path == "D:/NovacPostProcessingProgram/TestRun_2021_12/OutputFeb2017UTC/2017.02.20/I2J8552/I2J8552_SO2_Bogumil_293K_170220_1157.txt");
         REQUIRE(window.fraunhoferRef.m_path == "D:/NovacPostProcessingProgram/TestRun_2021_12/OutputFeb2017UTC/2017.02.20/I2J8552/I2J8552_Fraunhofer_170220_1157.txt");
     }
 
@@ -215,11 +217,11 @@ TEST_CASE("WriteConfigurationFile gives a file which can be read back in again",
             REQUIRE(originalWindow.fitType == resultingWindow.fitType);
             REQUIRE(originalWindow.polyOrder == resultingWindow.polyOrder);
             REQUIRE(originalWindow.includeIntensitySpacePolyominal == resultingWindow.includeIntensitySpacePolyominal);
-            REQUIRE(originalWindow.nRef == resultingWindow.nRef);
+            REQUIRE(originalWindow.NumberOfReferences() == resultingWindow.NumberOfReferences());
 
-            for (size_t refIndex = 0; refIndex < originalWindow.nRef; ++refIndex)
+            for (size_t refIndex = 0; refIndex < originalWindow.NumberOfReferences(); ++refIndex)
             {
-                REQUIRE(originalWindow.ref[refIndex].m_path == resultingWindow.ref[refIndex].m_path);
+                REQUIRE(originalWindow.reference[refIndex].m_path == resultingWindow.reference[refIndex].m_path);
             }
         }
     }

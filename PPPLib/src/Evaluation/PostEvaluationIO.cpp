@@ -23,7 +23,7 @@ bool Evaluation::PostEvaluationIO::GetArchivingfileName(
 {
     novac::CSpectrumIO reader;
     novac::CSpectrum tmpSpec;
-    novac::CString serialNumber, dateStr, timeStr, dateStr2, modeStr, userMessage;
+    novac::CString dateStr, timeStr, dateStr2, userMessage;
 
     const char pathSeparator = '/';
 
@@ -61,7 +61,7 @@ bool Evaluation::PostEvaluationIO::GetArchivingfileName(
     }
 
     // 2. Get the serialNumber of the spectrometer
-    serialNumber.Format("%s", info.m_device.c_str());
+    const std::string serialNumber = info.m_device;
 
     // 3. Get the time and date when the scan started
     dateStr.Format("%02d%02d%02d", info.m_startTime.year % 1000, info.m_startTime.month, info.m_startTime.day);
@@ -73,12 +73,11 @@ bool Evaluation::PostEvaluationIO::GetArchivingfileName(
 
     // 4a. Write the folder name
     pakFile.Format("%s%s%c%s%c%s%c", outputDirectory.c_str(), (const char*)fitWindowName, pathSeparator,
-        (const char*)dateStr2, pathSeparator, (const char*)serialNumber, pathSeparator);
+        (const char*)dateStr2, pathSeparator, serialNumber.c_str(), pathSeparator);
     txtFile.Format("%s", (const char*)pakFile);
 
     // 4b. Make sure that the folder exists
-    int ret = Filesystem::CreateDirectoryStructure(pakFile);
-    if (ret)
+    if (Filesystem::CreateDirectoryStructure(pakFile))
     {
         userMessage.Format("Could not create directory for archiving .pak-file: %s", (const char*)pakFile);
         log.Error(userMessage.std_str());
@@ -86,18 +85,7 @@ bool Evaluation::PostEvaluationIO::GetArchivingfileName(
     }
 
     // 4c. Write the code for the measurement mode
-    switch (mode)
-    {
-    case novac::MeasurementMode::Flux:   modeStr.Format("flux"); break;
-    case novac::MeasurementMode::Windspeed: modeStr.Format("wind"); break;
-    case novac::MeasurementMode::Stratosphere: modeStr.Format("stra"); break;
-    case novac::MeasurementMode::DirectSun: modeStr.Format("dsun"); break;
-    case novac::MeasurementMode::Composition:  modeStr.Format("comp"); break;
-    case novac::MeasurementMode::Lunar:  modeStr.Format("luna"); break;
-    case novac::MeasurementMode::Troposphere:  modeStr.Format("trop"); break;
-    case novac::MeasurementMode::MaxDoas:  modeStr.Format("maxd"); break;
-    default:    modeStr.Format("unkn"); break;
-    }
+    const std::string modeStr = novac::ToString(mode);
 
     // 4c. Write the name of the archiving file itself
     if (channel < 128 && channel > MAX_CHANNEL_NUM)
@@ -105,8 +93,8 @@ bool Evaluation::PostEvaluationIO::GetArchivingfileName(
         channel = channel % 16;
     }
 
-    pakFile.AppendFormat("%s_%s_%s_%1d_%4s.pak", (const char*)serialNumber, (const char*)dateStr, (const char*)timeStr, channel, (const char*)modeStr);
-    txtFile.AppendFormat("%s_%s_%s_%1d_%4s.txt", (const char*)serialNumber, (const char*)dateStr, (const char*)timeStr, channel, (const char*)modeStr);
+    pakFile.AppendFormat("%s_%s_%s_%1d_%4s.pak", serialNumber.c_str(), (const char*)dateStr, (const char*)timeStr, channel, modeStr.c_str());
+    txtFile.AppendFormat("%s_%s_%s_%1d_%4s.txt", serialNumber.c_str(), (const char*)dateStr, (const char*)timeStr, channel, modeStr.c_str());
 
     if (strlen(pakFile) > MAX_PATH - 2)
     {
@@ -241,14 +229,14 @@ RETURN_CODE Evaluation::PostEvaluationIO::WriteEvaluationResult(
     }
     string.Append("starttime\tstoptime\tname\tspecsaturation\tfitsaturation\tcounts_ms\tdelta\tchisquare\texposuretime\tnumspec\t");
 
-    for (size_t specieIdx = 0; specieIdx < window->nRef; ++specieIdx)
+    for(const auto& reference : window->reference)
     {
-        string.AppendFormat("column(%s)\tcolumnerror(%s)\t", window->ref[specieIdx].m_specieName.c_str(), window->ref[specieIdx].m_specieName.c_str());
-        string.AppendFormat("shift(%s)\tshifterror(%s)\t", window->ref[specieIdx].m_specieName.c_str(), window->ref[specieIdx].m_specieName.c_str());
-        string.AppendFormat("squeeze(%s)\tsqueezeerror(%s)\t", window->ref[specieIdx].m_specieName.c_str(), window->ref[specieIdx].m_specieName.c_str());
+        string.AppendFormat("column(%s)\tcolumnerror(%s)\t", reference.m_specieName.c_str(), reference.m_specieName.c_str());
+        string.AppendFormat("shift(%s)\tshifterror(%s)\t", reference.m_specieName.c_str(), reference.m_specieName.c_str());
+        string.AppendFormat("squeeze(%s)\tsqueezeerror(%s)\t", reference.m_specieName.c_str(), reference.m_specieName.c_str());
     }
     string.Append("isgoodpoint\toffset\tflag");
-
+    
     // 1a. Write the header to the log file
     if (f != nullptr)
     {
@@ -263,7 +251,10 @@ RETURN_CODE Evaluation::PostEvaluationIO::WriteEvaluationResult(
     string1.Format(""); string2.Format(""); string3.Format(""); string4.Format("");
     scan->GetSky(sky);
     if (sky.m_info.m_interlaceStep > 1)
+    {
         sky.InterpolateSpectrum();
+    }
+
     if (sky.m_length > 0)
     {
         sky.m_info.m_fitIntensity = (float)(sky.MaxValue(window->fitLow, window->fitHigh));
@@ -271,7 +262,7 @@ RETURN_CODE Evaluation::PostEvaluationIO::WriteEvaluationResult(
         {
             sky.Div(sky.NumSpectra());
         }
-        FileHandler::CEvaluationLogFileHandler::FormatEvaluationResult(&sky.m_info, nullptr, instrLocation->m_instrumentType, spectrometerModel.maximumIntensityForSingleReadout * sky.NumSpectra(), window->nRef, string1);
+        FileHandler::CEvaluationLogFileHandler::FormatEvaluationResult(&sky.m_info, nullptr, instrLocation->m_instrumentType, spectrometerModel.maximumIntensityForSingleReadout * sky.NumSpectra(), window->reference.size(), string1);
     }
     scan->GetDark(dark);
     if (dark.m_info.m_interlaceStep > 1)
@@ -285,7 +276,7 @@ RETURN_CODE Evaluation::PostEvaluationIO::WriteEvaluationResult(
         {
             dark.Div(dark.NumSpectra());
         }
-        FileHandler::CEvaluationLogFileHandler::FormatEvaluationResult(&dark.m_info, nullptr, instrLocation->m_instrumentType, spectrometerModel.maximumIntensityForSingleReadout * dark.NumSpectra(), window->nRef, string2);
+        FileHandler::CEvaluationLogFileHandler::FormatEvaluationResult(&dark.m_info, nullptr, instrLocation->m_instrumentType, spectrometerModel.maximumIntensityForSingleReadout * dark.NumSpectra(), window->reference.size(), string2);
     }
     scan->GetOffset(offset);
     if (offset.m_info.m_interlaceStep > 1)
@@ -296,7 +287,7 @@ RETURN_CODE Evaluation::PostEvaluationIO::WriteEvaluationResult(
     {
         offset.m_info.m_fitIntensity = (float)(offset.MaxValue(window->fitLow, window->fitHigh));
         offset.Div(offset.NumSpectra());
-        FileHandler::CEvaluationLogFileHandler::FormatEvaluationResult(&offset.m_info, nullptr, instrLocation->m_instrumentType, spectrometerModel.maximumIntensityForSingleReadout * offset.NumSpectra(), window->nRef, string3);
+        FileHandler::CEvaluationLogFileHandler::FormatEvaluationResult(&offset.m_info, nullptr, instrLocation->m_instrumentType, spectrometerModel.maximumIntensityForSingleReadout * offset.NumSpectra(), window->reference.size(), string3);
     }
     scan->GetDarkCurrent(darkCurrent);
     if (darkCurrent.m_info.m_interlaceStep > 1)
@@ -305,7 +296,7 @@ RETURN_CODE Evaluation::PostEvaluationIO::WriteEvaluationResult(
     {
         darkCurrent.m_info.m_fitIntensity = (float)(darkCurrent.MaxValue(window->fitLow, window->fitHigh));
         darkCurrent.Div(darkCurrent.NumSpectra());
-        FileHandler::CEvaluationLogFileHandler::FormatEvaluationResult(&darkCurrent.m_info, nullptr, instrLocation->m_instrumentType, spectrometerModel.maximumIntensityForSingleReadout * darkCurrent.NumSpectra(), window->nRef, string4);
+        FileHandler::CEvaluationLogFileHandler::FormatEvaluationResult(&darkCurrent.m_info, nullptr, instrLocation->m_instrumentType, spectrometerModel.maximumIntensityForSingleReadout * darkCurrent.NumSpectra(), window->reference.size(), string4);
     }
 
     // 2b. Write it all to the evaluation log file
@@ -338,7 +329,7 @@ RETURN_CODE Evaluation::PostEvaluationIO::WriteEvaluationResult(
         int nSpectra = result->GetSpectrumInfo(spectrumIdx).m_numSpec;
 
         // 3a. Pretty print the result and the spectral info into a string
-        FileHandler::CEvaluationLogFileHandler::FormatEvaluationResult(&result->GetSpectrumInfo(spectrumIdx), result->GetResult(spectrumIdx), instrLocation->m_instrumentType, spectrometerModel.maximumIntensityForSingleReadout * nSpectra, window->nRef, string);
+        FileHandler::CEvaluationLogFileHandler::FormatEvaluationResult(&result->GetSpectrumInfo(spectrumIdx), result->GetResult(spectrumIdx), instrLocation->m_instrumentType, spectrometerModel.maximumIntensityForSingleReadout * nSpectra, window->reference.size(), string);
 
         // 3b. Write it all to the evaluation log file
         if (f != nullptr)
@@ -407,47 +398,43 @@ RETURN_CODE Evaluation::PostEvaluationIO::AppendToEvaluationSummaryFile(
     Meteorology::WindField& /*windField*/)
 {
     novac::CString evalSummaryLog;
-    bool fWriteHeaderLine = false;
-
-    // we can also write an evaluation-summary log file
-    evalSummaryLog.Format("%s/%s/EvaluationSummary_%s.txt",
+    evalSummaryLog.Format("%s/%s/EvaluationSummary_%s.csv",
         outputDirectory.c_str(),
         window->name.c_str(),
         result->GetSerial().c_str());
 
-    if (!Filesystem::IsExistingFile(evalSummaryLog))
-    {
-        fWriteHeaderLine = true;
-    }
+    const bool writeHeaderLine = !Filesystem::IsExistingFile(evalSummaryLog);
 
     FILE* f = fopen(evalSummaryLog, "a");
     if (f == nullptr)
-        return RETURN_CODE::FAIL;
-
-    if (fWriteHeaderLine)
     {
-        fprintf(f, "StartTime\tExpTime\tAppliedShift\tTemperature\tCalculatedOffset\tCalculatedPlumeCentre\tCalculatedPlumeCompleteness\t#Spectra\n");
+        return RETURN_CODE::FAIL;
+    }
+
+    if (writeHeaderLine)
+    {
+        fprintf(f, "StartTime;ExpTime;AppliedShift;Temperature;CalculatedOffset;CalculatedPlumeCentre;CalculatedPlumeCompleteness;#Spectra\n");
     }
 
     // the start-time
-    fprintf(f, "%04d.%02d.%02dT%02d:%02d:%02d\t", scan->m_startTime.year, scan->m_startTime.month, scan->m_startTime.day, scan->m_startTime.hour, scan->m_startTime.minute, scan->m_startTime.second);
+    fprintf(f, "%04d.%02d.%02dT%02d:%02d:%02d;", scan->m_startTime.year, scan->m_startTime.month, scan->m_startTime.day, scan->m_startTime.hour, scan->m_startTime.minute, scan->m_startTime.second);
 
     // The exposure time
-    fprintf(f, "%ld\t", result->GetSkySpectrumInfo().m_exposureTime);
+    fprintf(f, "%ld;", result->GetSkySpectrumInfo().m_exposureTime);
 
     // the shift applied
-    fprintf(f, "%.2lf\t", result->GetResult(0)->m_referenceResult[0].m_shift);
+    fprintf(f, "%.2lf;", result->GetResult(0)->m_referenceResult[0].m_shift);
 
     // the temperature of the spectrometer
-    fprintf(f, "%.2lf\t", result->GetTemperature());
+    fprintf(f, "%.2lf;", result->GetTemperature());
 
     // the calculated plume parameters
-    fprintf(f, "%.2lf\t", result->m_plumeProperties.offset.ValueOrDefault(NOT_A_NUMBER));
-    fprintf(f, "%.2lf\t", result->m_plumeProperties.plumeCenter.ValueOrDefault(NOT_A_NUMBER));
-    fprintf(f, "%.2lf\t", result->m_plumeProperties.completeness.ValueOrDefault(NOT_A_NUMBER));
+    fprintf(f, "%.3e;", result->m_plumeProperties.offset.ValueOrDefault(NOT_A_NUMBER));
+    fprintf(f, "%.3lf;", result->m_plumeProperties.plumeCenter.ValueOrDefault(NOT_A_NUMBER));
+    fprintf(f, "%.3lf;", result->m_plumeProperties.completeness.ValueOrDefault(NOT_A_NUMBER));
 
     // the number of evaluated spectra
-    fprintf(f, "%zd\t", result->GetEvaluatedNum());
+    fprintf(f, "%zd;", result->GetEvaluatedNum());
 
     // make a new line
     fprintf(f, "\n");
