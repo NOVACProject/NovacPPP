@@ -360,12 +360,12 @@ int CXMLWindFileReader::Parse_WindField(Meteorology::CWindDataBase& dataBase)
             // check the reasonability of the values
             if (winddirection < -360.0 || winddirection > 360.0)
             {
-                userMessage.Format("Received wind-field file with invalid wind direction (%lf degrees) in file %s", winddirection, (const char*)m_filename);
+                userMessage.Format("Received wind-field file with invalid wind direction (%lf degrees) in file %s", winddirection, m_filename.c_str());
                 ShowMessage(userMessage);
             }
             if (windspeed < 0.0 || windspeed > 50.0)
             {
-                userMessage.Format("Received wind-field file with invalid wind speed (%lf m/s) in file %s", windspeed, (const char*)m_filename);
+                userMessage.Format("Received wind-field file with invalid wind speed (%lf m/s) in file %s", windspeed, m_filename.c_str());
                 ShowMessage(userMessage);
             }
 

@@ -7,13 +7,14 @@
 
 #include <iostream> // for debugging
 
-using namespace FileHandler;
 using namespace novac;
+
+namespace FileHandler
+{
 
 CXMLFileReader::CXMLFileReader(novac::ILogger& logger)
     : m_log(logger)
-{
-}
+{}
 
 CXMLFileReader::~CXMLFileReader()
 {
@@ -49,7 +50,7 @@ bool CXMLFileReader::Open(const novac::CString& fileName)
         return false;
     }
 
-    m_filename = fileName;
+    m_filename = fileName.std_str();
     this->nLinesRead = 0;
 
     return true;
@@ -146,7 +147,7 @@ const char* CXMLFileReader::GetAttributeValue(const novac::CString& label)
     }
     *pt_end = '\0'; // make the string end at the position of the double-quote
 
-    // now we have the value of the attribute	
+    // now we have the value of the attribute
     sprintf(attributeValue, "%s", pt_start);
 
     return attributeValue;
@@ -266,6 +267,39 @@ int CXMLFileReader::Parse_IntItem(const novac::CString& label, int& number)
     return 0;
 }
 
+int CXMLFileReader::Parse_IntItem(const novac::CString& label, int& number, std::string& valueParsed)
+{
+    while (nullptr != (szToken = NextToken()))
+    {
+        if (IsClosingTag(label, szToken))
+        {
+            return 1;
+        }
+
+        valueParsed = std::string(szToken);
+        number = std::atoi(szToken);
+    }
+
+    return 0;
+}
+
+int CXMLFileReader::Parse_SizeItem(const novac::CString& label, size_t& number)
+{
+    while (nullptr != (szToken = NextToken()))
+    {
+        if (IsClosingTag(label, szToken))
+        {
+            return 1;
+        }
+        if (sscanf(szToken, "%zd", &number) == 1)
+        {
+            return 0;
+        }
+    }
+
+    return 0;
+}
+
 int CXMLFileReader::Parse_IPNumber(const novac::CString& label, std::uint8_t& ip0, std::uint8_t& ip1, std::uint8_t& ip2, std::uint8_t& ip3)
 {
     while (nullptr != (szToken = NextToken()))
@@ -333,4 +367,6 @@ int CXMLFileReader::Parse_Date(const novac::CString& label, CDateTime& datum)
     }
 
     return 0;
+}
+
 }

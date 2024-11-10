@@ -4,14 +4,10 @@
 <EvaluationConfiguration>
 	<serial>I2J8552</serial>
 	<fitWindow>
-		<channel>0</channel>
 		<name>SO2</name>
 		<validFrom>0000.00.00T00:00:00</validFrom>
 		<validTo>2017.02.20T05:49:01</validTo>
-		<specLength>2048</specLength>
-		<interlaceStep>1</interlaceStep>
 		<polyOrder>5</polyOrder>
-		<fitType>0</fitType>
 		<fitLow>385</fitLow>
 		<fitHigh>576</fitHigh>
 		<wavelengthCalibration>
@@ -52,17 +48,19 @@
 		<validTo>2017.02.20T09:53:24</validTo>
 		<specLength>2048</specLength>
 		<interlaceStep>1</interlaceStep>
-		<polyOrder>5</polyOrder>
-		<fitType>0</fitType>
-		<fitLow>385</fitLow>
-		<fitHigh>576</fitHigh>
+		<polyOrder>4</polyOrder>
+		<fitType>1</fitType>
+		<fitLow>394</fitLow>
+		<fitHigh>597</fitHigh>
+        <offsetFrom>5</offsetFrom>
+        <offsetTo>19</offsetTo>
 		<wavelengthCalibration>
 			<fraunhoferSpec>D:\NovacPostProcessingProgram\TestRun_2021_12\OutputFeb2017UTC\2017.02.20/I2J8552/I2J8552_Fraunhofer_170220_0749.txt</fraunhoferSpec>
 		</wavelengthCalibration>
 		<Reference>
 			<name>SO2_Bogumil_293K</name>
 			<path>D:\NovacPostProcessingProgram\TestRun_2021_12\OutputFeb2017UTC\2017.02.20/I2J8552/I2J8552_SO2_Bogumil_293K_170220_0749.txt</path>
-			<shiftOption>1</shiftOption>
+			<shiftOption>0</shiftOption>
 			<shiftValue>0.000000</shiftValue>
 			<squeezeOption>1</squeezeOption>
 			<squeezeValue>0.000000</squeezeValue>
@@ -88,16 +86,17 @@
 		</Reference>
 	</fitWindow>
 	<fitWindow>
-		<channel>0</channel>
 		<name>SO2</name>
 		<validFrom>2017.02.20T09:53:24</validFrom>
 		<validTo>9999.12.31T23:59:59</validTo>
 		<specLength>2048</specLength>
 		<interlaceStep>1</interlaceStep>
 		<polyOrder>5</polyOrder>
-		<fitType>0</fitType>
+		<fitType>2</fitType>
 		<fitLow>385</fitLow>
 		<fitHigh>576</fitHigh>
+        <offsetFrom>0</offsetFrom>
+        <offsetTo>7</offsetTo>
 		<wavelengthCalibration>
 			<fraunhoferSpec>D:\NovacPostProcessingProgram\TestRun_2021_12\OutputFeb2017UTC\2017.02.20/I2J8552/I2J8552_Fraunhofer_170220_1157.txt</fraunhoferSpec>
 		</wavelengthCalibration>

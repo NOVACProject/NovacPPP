@@ -6,8 +6,10 @@
 #include <cstring>
 #include <SpectralEvaluation/Configuration/DarkSettings.h>
 
-using namespace FileHandler;
 using namespace novac;
+
+namespace FileHandler
+{
 
 static char start = 's';
 
@@ -251,20 +253,20 @@ RETURN_CODE CEvaluationConfigurationParser::WriteConfigurationFile(
     return RETURN_CODE::SUCCESS;
 }
 
-static void SaveSlitFunctionAndWavelengthCalibration(novac::CFitWindow& window, novac::CString& slitfunctionFile, novac::CString& wavelengthCalibFile)
+static void SaveSlitFunctionAndWavelengthCalibration(novac::CFitWindow& window, const std::string& slitfunctionFile, const std::string& wavelengthCalibFile)
 {
-    if (slitfunctionFile.GetLength() > 0)
+    if (slitfunctionFile.size() > 0)
     {
         for (auto& reference : window.reference)
         {
-            reference.m_slitFunctionFile = slitfunctionFile.ToStdString();
+            reference.m_slitFunctionFile = slitfunctionFile;
         }
     }
-    if (wavelengthCalibFile.GetLength() > 0)
+    if (wavelengthCalibFile.size() > 0)
     {
         for (auto& reference : window.reference)
         {
-            reference.m_wavelengthCalibrationFile = wavelengthCalibFile.ToStdString();
+            reference.m_wavelengthCalibrationFile = wavelengthCalibFile;
         }
     }
 }
@@ -272,7 +274,7 @@ static void SaveSlitFunctionAndWavelengthCalibration(novac::CFitWindow& window, 
 RETURN_CODE CEvaluationConfigurationParser::Parse_FitWindow(novac::CFitWindow& window, novac::CDateTime& validFrom, novac::CDateTime& validTo)
 {
     window.Clear();
-    novac::CString slitfunctionFile, wavelengthCalibFile;
+    std::string slitfunctionFile, wavelengthCalibFile;
 
     // parse the file, one line at a time.
     szToken = &start;
@@ -306,6 +308,17 @@ RETURN_CODE CEvaluationConfigurationParser::Parse_FitWindow(novac::CFitWindow& w
             continue;
         }
 
+        if (Equals(szToken, "offsetFrom"))
+        {
+            Parse_SizeItem("/offsetFrom", window.offsetRemovalRange.from);
+            continue;
+        }
+
+        if (Equals(szToken, "offsetTo"))
+        {
+            Parse_SizeItem("/offsetTo", window.offsetRemovalRange.to);
+            continue;
+        }
 
         if (Equals(szToken, "name"))
         {
@@ -345,7 +358,14 @@ RETURN_CODE CEvaluationConfigurationParser::Parse_FitWindow(novac::CFitWindow& w
 
         if (Equals(szToken, "fitType"))
         {
-            Parse_IntItem("/fitType", (int&)window.fitType); // TODO: Will this be ok????
+            int fitType = 0;
+            std::string valueParsed;
+            Parse_IntItem("/fitType", fitType, valueParsed);
+            if (fitType < 0 || fitType >(int)FIT_TYPE::FIT_POLY)
+            {
+                throw EvaluationConfigurationException(m_filename, "FitType does not match any known fit type.", valueParsed);
+            }
+            window.fitType = (FIT_TYPE)fitType;
             continue;
         }
 
@@ -525,13 +545,15 @@ RETURN_CODE CEvaluationConfigurationParser::Parse_Reference(novac::CFitWindow& w
         if (Equals(szToken, "shiftOption"))
         {
             int tmpInt;
-            Parse_IntItem("/shiftOption", tmpInt);
+            std::string valueParsed;
+            Parse_IntItem("/shiftOption", tmpInt, valueParsed);
             switch (tmpInt)
             {
             case 0: newReference.m_shiftOption = novac::SHIFT_TYPE::SHIFT_FREE; break;
             case 1: newReference.m_shiftOption = novac::SHIFT_TYPE::SHIFT_FIX; break;
             case 2: newReference.m_shiftOption = novac::SHIFT_TYPE::SHIFT_LINK; break;
             case 3: newReference.m_shiftOption = novac::SHIFT_TYPE::SHIFT_LIMIT; break;
+            default: throw EvaluationConfigurationException(m_filename, "Failed to parse shift option type.", valueParsed);
             }
             continue;
         }
@@ -545,13 +567,15 @@ RETURN_CODE CEvaluationConfigurationParser::Parse_Reference(novac::CFitWindow& w
         if (Equals(szToken, "squeezeOption"))
         {
             int tmpInt;
-            Parse_IntItem("/squeezeOption", tmpInt);
+            std::string valueParsed;
+            Parse_IntItem("/squeezeOption", tmpInt, valueParsed);
             switch (tmpInt)
             {
             case 0: newReference.m_squeezeOption = novac::SHIFT_TYPE::SHIFT_FREE; break;
             case 1: newReference.m_squeezeOption = novac::SHIFT_TYPE::SHIFT_FIX; break;
             case 2: newReference.m_squeezeOption = novac::SHIFT_TYPE::SHIFT_LINK; break;
             case 3: newReference.m_squeezeOption = novac::SHIFT_TYPE::SHIFT_LIMIT; break;
+            default: throw EvaluationConfigurationException(m_filename, "Failed to parse squeeze option type.", valueParsed);
             }
             continue;
         }
@@ -565,13 +589,15 @@ RETURN_CODE CEvaluationConfigurationParser::Parse_Reference(novac::CFitWindow& w
         if (Equals(szToken, "columnOption"))
         {
             int tmpInt;
-            Parse_IntItem("/columnOption", tmpInt);
+            std::string valueParsed;
+            Parse_IntItem("/columnOption", tmpInt, valueParsed);
             switch (tmpInt)
             {
             case 0: newReference.m_columnOption = novac::SHIFT_TYPE::SHIFT_FREE; break;
             case 1: newReference.m_columnOption = novac::SHIFT_TYPE::SHIFT_FIX; break;
             case 2: newReference.m_columnOption = novac::SHIFT_TYPE::SHIFT_LINK; break;
             case 3: newReference.m_columnOption = novac::SHIFT_TYPE::SHIFT_LIMIT; break;
+            default: throw EvaluationConfigurationException(m_filename, "Failed to parse column option type.", valueParsed);
             }
             continue;
         }
@@ -691,3 +717,4 @@ RETURN_CODE CEvaluationConfigurationParser::Parse_DarkCorrection(Configuration::
     return RETURN_CODE::FAIL;
 }
 
+}

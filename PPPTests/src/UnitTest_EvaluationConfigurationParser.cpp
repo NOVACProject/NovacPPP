@@ -92,7 +92,6 @@ TEST_CASE("ReadConfigurationFile gives expected configuration", "[EvaluationConf
     {
         REQUIRE("I2J8552" == resultingEvaluationSettings.m_serial);
         REQUIRE(3 == resultingEvaluationSettings.NumberOfFitWindows());
-
     }
 
     REQUIRE_NOTHROW(resultingEvaluationSettings.CheckSettings());
@@ -103,7 +102,7 @@ TEST_CASE("ReadConfigurationFile gives expected configuration", "[EvaluationConf
         novac::CDateTime validFrom;
         novac::CDateTime validTo;
 
-        int result = resultingEvaluationSettings.GetFitWindow(0, window, validFrom, validTo);
+        const int result = resultingEvaluationSettings.GetFitWindow(0, window, validFrom, validTo);
 
         REQUIRE(result == 0);
         REQUIRE(validFrom == novac::CDateTime(0, 0, 0, 0, 0, 0));
@@ -111,7 +110,17 @@ TEST_CASE("ReadConfigurationFile gives expected configuration", "[EvaluationConf
 
         REQUIRE(window.NumberOfReferences() == 3);
         REQUIRE(window.reference[0].m_path == "D:/NovacPostProcessingProgram/TestRun_2021_12/OutputFeb2017UTC/2017.02.20/I2J8552/I2J8552_SO2_Bogumil_293K_170220_0348.txt");
+        REQUIRE(window.reference[0].m_shiftOption == SHIFT_TYPE::SHIFT_FIX);
         REQUIRE(window.fraunhoferRef.m_path == "D:/NovacPostProcessingProgram/TestRun_2021_12/OutputFeb2017UTC/2017.02.20/I2J8552/I2J8552_Fraunhofer_170220_0348.txt");
+
+        REQUIRE(window.channel == 0); // nothing specified in the file so this should be the default.
+        REQUIRE(window.specLength == 2048); // nothing specified in the file so this should be the default.
+        REQUIRE(window.interlaceStep == 1); // nothing specified in the file so this should be the default.
+        REQUIRE(window.fitLow == 385);
+        REQUIRE(window.fitHigh == 576);
+        REQUIRE(window.fitType == FIT_TYPE::FIT_HP_DIV); // nothing specified in the file so this should be the default.
+        REQUIRE(window.polyOrder == 5);
+        REQUIRE(window.offsetRemovalRange == IndexRange(50, 200)); // nothing specified in the file so this should be the default.
     }
 
     // Expected second evaluation fit window
@@ -120,7 +129,7 @@ TEST_CASE("ReadConfigurationFile gives expected configuration", "[EvaluationConf
         novac::CDateTime validFrom;
         novac::CDateTime validTo;
 
-        int result = resultingEvaluationSettings.GetFitWindow(1, window, validFrom, validTo);
+        const int result = resultingEvaluationSettings.GetFitWindow(1, window, validFrom, validTo);
 
         REQUIRE(result == 0);
         REQUIRE(validFrom == novac::CDateTime(2017, 2, 20, 5, 49, 1));
@@ -128,7 +137,14 @@ TEST_CASE("ReadConfigurationFile gives expected configuration", "[EvaluationConf
 
         REQUIRE(window.NumberOfReferences() == 3);
         REQUIRE(window.reference[0].m_path == "D:/NovacPostProcessingProgram/TestRun_2021_12/OutputFeb2017UTC/2017.02.20/I2J8552/I2J8552_SO2_Bogumil_293K_170220_0749.txt");
+        REQUIRE(window.reference[0].m_shiftOption == SHIFT_TYPE::SHIFT_FREE);
         REQUIRE(window.fraunhoferRef.m_path == "D:/NovacPostProcessingProgram/TestRun_2021_12/OutputFeb2017UTC/2017.02.20/I2J8552/I2J8552_Fraunhofer_170220_0749.txt");
+
+        REQUIRE(window.fitLow == 394);
+        REQUIRE(window.fitHigh == 597);
+        REQUIRE(window.fitType == FIT_TYPE::FIT_HP_SUB);
+        REQUIRE(window.polyOrder == 4);
+        REQUIRE(window.offsetRemovalRange == IndexRange(5, 19));
     }
 
     // Expected third evaluation fit window
@@ -146,6 +162,13 @@ TEST_CASE("ReadConfigurationFile gives expected configuration", "[EvaluationConf
         REQUIRE(window.NumberOfReferences() == 3);
         REQUIRE(window.reference[0].m_path == "D:/NovacPostProcessingProgram/TestRun_2021_12/OutputFeb2017UTC/2017.02.20/I2J8552/I2J8552_SO2_Bogumil_293K_170220_1157.txt");
         REQUIRE(window.fraunhoferRef.m_path == "D:/NovacPostProcessingProgram/TestRun_2021_12/OutputFeb2017UTC/2017.02.20/I2J8552/I2J8552_Fraunhofer_170220_1157.txt");
+
+        REQUIRE(window.channel == 0);
+        REQUIRE(window.fitLow == 385);
+        REQUIRE(window.fitHigh == 576);
+        REQUIRE(window.fitType == FIT_TYPE::FIT_POLY);
+        REQUIRE(window.polyOrder == 5);
+        REQUIRE(window.offsetRemovalRange == IndexRange(0, 7));
     }
 
     // Expected dark settings

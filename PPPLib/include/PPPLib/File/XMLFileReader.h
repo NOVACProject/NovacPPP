@@ -38,8 +38,10 @@ public:
     /** General parsing of a single, simple float item */
     int Parse_FloatItem(const novac::CString& label, double& number);
 
-    /** General parsing of a single, simple integer item */
     int Parse_IntItem(const novac::CString& label, int& number);
+    int Parse_IntItem(const novac::CString& label, int& number, std::string& valueParsed);
+
+    int Parse_SizeItem(const novac::CString& label, size_t& number);
 
     /** General parsing of a single, simple long integer item */
     int Parse_LongItem(const novac::CString& label, long& number);
@@ -57,7 +59,7 @@ protected:
     char* szToken = nullptr;
 
     /** The name of the currently opened file. For debugging reasons */
-    novac::CString m_filename = "";
+    std::string m_filename = "";
 
     /** Opens the provided file for reading.
         @return true if successful */

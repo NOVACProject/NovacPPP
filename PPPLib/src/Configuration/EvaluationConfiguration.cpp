@@ -81,6 +81,12 @@ void  CEvaluationConfiguration::CheckSettings() const
             msg << "Evaluation configuration for " << this->m_serial << " has invalid time range: " << m_windows[k];
             throw std::invalid_argument(msg.str());
         }
+        if (m_windows[k].window.offsetRemovalRange.from > m_windows[k].window.offsetRemovalRange.to)
+        {
+            std::stringstream msg;
+            msg << "Fit window for " << this->m_serial << " has invalid offset removal range: " << m_windows[k];
+            throw std::invalid_argument(msg.str());
+        }
 
         // check if this time range overlaps some other 
         for (size_t j = k + 1; j < nWindows; ++j)

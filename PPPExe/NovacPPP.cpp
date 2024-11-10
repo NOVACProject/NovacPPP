@@ -195,6 +195,7 @@ void ReadEvaluationXmlFile(
 
     if (Filesystem::IsExistingFile(evalConfPath))
     {
+        // may throw EvaluationConfigurationException
         eval_reader.ReadConfigurationFile(
             evalConfPath,
             instrument.m_eval,
