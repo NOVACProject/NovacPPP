@@ -4,6 +4,7 @@
 #include "GeometryResult.h"
 #include <SpectralEvaluation/DateTime.h>
 #include <PPPLib/MFC/CString.h>
+#include <PPPLib/Configuration/UserConfiguration.h>
 
 // include the list-template from the C++ standard library
 #include <list>
@@ -19,11 +20,7 @@ namespace Geometry
 class CPlumeDataBase
 {
 public:
-    /** Default constructor*/
-    CPlumeDataBase(void);
-
-    /** Default destructor */
-    ~CPlumeDataBase(void);
+    CPlumeDataBase(const Configuration::CUserConfiguration& userSettings);
 
     // ----------------------------------------------------------------------
     // ---------------------- PUBLIC DATA -----------------------------------
@@ -55,6 +52,8 @@ public:
     int WriteToFile(const novac::CString& fileName) const;
 
 private:
+
+    const Configuration::CUserConfiguration& m_userSettings;
 
     // the structure PlumeData is used to hold the information about the plume for a
     //  single point in time

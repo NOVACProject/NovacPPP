@@ -287,7 +287,7 @@ TEST_CASE("mode overrides default", "[CommandLineParser][Configuration]")
     std::string setExePath;
     std::vector<std::string>arguments = { "--mode=2" };
     Configuration::CUserConfiguration userSettings;
-    REQUIRE(userSettings.m_processingMode == PROCESSING_MODE::PROCESSING_MODE_FLUX); // check assumption here
+    REQUIRE(userSettings.m_processingMode == ProcessingMode::Flux); // check assumption here
     novac::CVolcanoInfo volcanoes;
     novac::ConsoleLog logger;
 
@@ -295,7 +295,7 @@ TEST_CASE("mode overrides default", "[CommandLineParser][Configuration]")
     CommandLineParser::ParseCommandLineOptions(arguments, userSettings, volcanoes, setExePath, logger);
 
     // Assert
-    REQUIRE(userSettings.m_processingMode == PROCESSING_MODE::PROCESSING_MODE_STRATOSPHERE);
+    REQUIRE(userSettings.m_processingMode == ProcessingMode::Stratosphere);
 }
 
 TEST_CASE("molecule O3 overrides default", "[CommandLineParser][Configuration]")

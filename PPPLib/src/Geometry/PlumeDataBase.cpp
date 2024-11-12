@@ -4,15 +4,10 @@
 #include <vector>
 #include <SpectralEvaluation/VectorUtils.h>
 
-// This is the settings for how to do the procesing
-#include <PPPLib/Configuration/UserConfiguration.h>
-
 #undef min
 #undef max
 
 using namespace Geometry;
-
-extern Configuration::CUserConfiguration g_userSettings;// <-- The settings of the user
 
 // ----------- THE SUB-CLASS PlumeData --------------
 CPlumeDataBase::PlumeData::PlumeData()
@@ -53,21 +48,11 @@ CPlumeDataBase::PlumeData& CPlumeDataBase::PlumeData::operator =(const CPlumeDat
 
 // --------- THE CLASS CPlumeDataBase ----------
 
-CPlumeDataBase::CPlumeDataBase(void)
+CPlumeDataBase::CPlumeDataBase(const Configuration::CUserConfiguration& userSettings)
+    : m_userSettings(userSettings)
 {
 }
 
-CPlumeDataBase::~CPlumeDataBase(void)
-{
-    m_dataBase.clear();
-}
-
-/** Retrieves the plume height at a given time.
-    @param time - the time for which the wind field should be retrieved
-    @param plumeHeight - will on successful return be filled with the information
-        about the plume height at the requested time.
-    @return true if the wind field could be retrieved, otherwise false.
-    */
 bool CPlumeDataBase::GetPlumeHeight(const novac::CDateTime& time, PlumeHeight& plumeHeight) const
 {
     std::list <PlumeData> validData;
@@ -183,7 +168,6 @@ bool CPlumeDataBase::GetPlumeHeight(const novac::CDateTime& time, PlumeHeight& p
     return false;
 }
 
-/** Inserts a plume height into the database */
 void CPlumeDataBase::InsertPlumeHeight(const PlumeHeight& plumeHeight)
 {
     PlumeData data;
@@ -199,16 +183,15 @@ void CPlumeDataBase::InsertPlumeHeight(const PlumeHeight& plumeHeight)
     m_dataBase.push_back(data);
 }
 
-/** Inserts a calculated plume height into the database */
 void CPlumeDataBase::InsertPlumeHeight(const CGeometryResult& geomResult)
 {
     PlumeData data;
     novac::CDateTime validFrom = geomResult.m_averageStartTime;
     novac::CDateTime validTo = geomResult.m_averageStartTime;
 
-    // make the result of the measurement valid within +- 'g_userSettings.m_calcGeometryValidTime'/2 minutes of the measurement occasion
-    validFrom.Decrement(g_userSettings.m_calcGeometryValidTime / 2);
-    validTo.Increment(g_userSettings.m_calcGeometryValidTime / 2);
+    // make the result of the measurement valid within +- 'm_userSettings.m_calcGeometryValidTime'/2 minutes of the measurement occasion
+    validFrom.Decrement(m_userSettings.m_calcGeometryValidTime / 2);
+    validTo.Increment(m_userSettings.m_calcGeometryValidTime / 2);
 
     // generate a copy of the CGeometryResult
     data.altitude = geomResult.m_plumeAltitude.Value();
@@ -221,8 +204,6 @@ void CPlumeDataBase::InsertPlumeHeight(const CGeometryResult& geomResult)
     m_dataBase.push_back(data);
 }
 
-/** Writes the contents of this database to file.
-    @return 0 on success. */
 int CPlumeDataBase::WriteToFile(const novac::CString& /*fileName*/) const
 {
 

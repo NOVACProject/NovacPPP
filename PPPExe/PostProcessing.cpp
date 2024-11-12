@@ -64,7 +64,7 @@ void EvaluateScansThread(
     CPostProcessingStatistics& processingStats);
 
 CPostProcessing::CPostProcessing(ILogger& logger, Configuration::CNovacPPPConfiguration setup, Configuration::CUserConfiguration userSettings, const CContinuationOfProcessing& continuation)
-    : m_log(logger), m_setup(setup), m_userSettings(userSettings), m_continuation(continuation)
+    : m_plumeDataBase(userSettings), m_log(logger), m_setup(setup), m_userSettings(userSettings), m_continuation(continuation)
 {
     assert(m_setup.m_executableDirectory.size() > 3); // This should be set
 }

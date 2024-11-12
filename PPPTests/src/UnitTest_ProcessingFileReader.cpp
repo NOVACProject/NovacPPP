@@ -36,7 +36,7 @@ TEST_CASE("ReadProcessingFile gives expected configuration", "[ProcessingFileRea
         REQUIRE("~/Novac/Piton de la Fournaise/Temp/" == resultingConfiguration.m_tempDirectory.std_str());
 #endif // _MSC_VER
 
-        REQUIRE(PROCESSING_MODE::PROCESSING_MODE_FLUX == resultingConfiguration.m_processingMode);
+        REQUIRE(ProcessingMode::Flux == resultingConfiguration.m_processingMode);
         REQUIRE(StandardMolecule::SO2 == resultingConfiguration.m_molecule);
 
         REQUIRE(novac::CDateTime(2017, 1, 29, 12, 50, 51) == resultingConfiguration.m_fromDate);

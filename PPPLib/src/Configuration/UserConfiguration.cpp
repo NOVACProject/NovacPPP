@@ -1,90 +1,16 @@
 #include <PPPLib/Configuration/UserConfiguration.h>
 #include <algorithm>
 
-// The global user-configuration object
-Configuration::CUserConfiguration g_userSettings;
-
 namespace Configuration
 {
+
 CUserConfiguration::CUserConfiguration()
 {
-    Clear();
-}
-
-void CUserConfiguration::Clear()
-{
-    m_maxThreadNum = 2;
-
-    m_fIsContinuation = false;
-
-    // don't know where to put the output data
-    m_tempDirectory.Format("");
-    m_outputDirectory.Format("");
-
-    m_processingMode = PROCESSING_MODE::PROCESSING_MODE_FLUX;
-    m_doEvaluations = true;
-
-    // the molecule
-    m_molecule = novac::StandardMolecule::SO2;
-
-    // The volcano that we should process
-    m_volcano = 0;
-
-    // The time range where to search for data
-    m_fromDate = novac::CDateTime(2005, 10, 01, 00, 00, 00);
-    m_toDate.SetToNow();
-
-    // The directory where to search for data
-    m_LocalDirectory.Format("C:\\Novac\\Data\\");
-    m_includeSubDirectories_Local = 1;
-
-    // The FTP-directory where to search for data
-    m_includeSubDirectories_FTP = 1;
-
-    // If we should upload the results to the ftp or not
-    m_uploadResults = 0;
-
-    // the settings for the fit-windows to use
-    m_nFitWindowsToUse = 1;
-    m_fitWindowsToUse[0].Format("SO2");
-    for (int k = 1; k < MAX_FIT_WINDOWS; ++k)
-    {
-        m_fitWindowsToUse[k].Format("");
-    }
-    m_mainFitWindow = 0;
-
-    // The settings for the sky-spectrum
     sky.skyOption = Configuration::SKY_OPTION::MEASURED_IN_SCAN;
     sky.indexInScan = 0;
     sky.skySpectrumFile = "";
-
-    // the wind field
-    m_windFieldFile.Format("");
-    m_windFieldFileOption = 0;
-
-    // The geometry calculations
-    m_calcGeometry_CompletenessLimit = 0.7;
-    m_calcGeometryValidTime = 10 * 60;
-    m_calcGeometry_MaxTimeDifference = 900;
-    m_calcGeometry_MinDistance = 200;
-    m_calcGeometry_MaxDistance = 10000;
-    m_calcGeometry_MaxPlumeAltError = 500.0;
-    m_calcGeometry_MaxWindDirectionError = 10.0;
-
-    // the dual-beam calculations
-    m_fUseMaxTestLength_DualBeam = true;
-    m_dualBeam_MaxWindSpeedError = 10.0;
-    m_dualBeam_ValidTime = 15 * 60;
-
-    // The quality parameters
-    m_completenessLimitFlux = 0.9;
-    m_minimumSaturationInFitRegion = 0.05;
-    m_maxExposureTime_got = 900;
-    m_maxExposureTime_hei = 4000;
-
 }
 
-/** Compares to set of settings */
 bool CUserConfiguration::operator==(const CUserConfiguration& settings2)
 {
 

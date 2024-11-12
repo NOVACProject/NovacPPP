@@ -27,8 +27,6 @@
 #include <Poco/Util/Application.h>
 #include "Common/Common.h"
 
-extern Configuration::CUserConfiguration            g_userSettings;// <-- The settings of the user
-
 novac::CVolcanoInfo g_volcanoes;   // <-- A list of all known volcanoes
 PocoLogger g_logger; // <-- global logger
 
@@ -40,29 +38,192 @@ std::string s_exeFileName;
 #undef min
 #undef max
 
-void LoadConfigurations(
-    const novac::CString& workDir,
-    Configuration::CNovacPPPConfiguration& configuration,
-    Configuration::CUserConfiguration& userSettings);
+using namespace novac;
 
-void ReadEvaluationXmlFile(
+static void ReadProcessingXml(const std::string& workDir, Configuration::CUserConfiguration& userSettings)
+{
+    novac::CString processingPath;
+    processingPath.Format("%sconfiguration%cprocessing.xml", workDir.c_str(), Poco::Path::separator());
+    FileHandler::CProcessingFileReader processing_reader{ g_logger };
+    processing_reader.ReadProcessingFile(processingPath, userSettings);
+}
+
+static void ReadSetupXml(const std::string& workDir, Configuration::CNovacPPPConfiguration& configuration)
+{
+    novac::CString setupPath;
+    setupPath.Format("%sconfiguration%csetup.xml", workDir.c_str(), Poco::Path::separator());
+
+    FileHandler::CSetupFileReader reader{ g_logger };
+    reader.ReadSetupFile(setupPath, configuration);
+
+    ShowMessage(novac::CString::FormatString(" Parsed %s, %d instruments found.", setupPath.c_str(), configuration.NumberOfInstruments()));
+}
+
+static void ReadEvaluationXmlFile(
     const novac::CString& workDir,
     FileHandler::CEvaluationConfigurationParser& eval_reader,
-    Configuration::CInstrumentConfiguration& instrument);
+    Configuration::CInstrumentConfiguration& instrument)
+{
+    novac::CString evalConfPath;
+    evalConfPath.Format("%sconfiguration%c%s.exml", (const char*)workDir, Poco::Path::separator(), (const char*)instrument.m_serial);
 
-void ReadProcessingXml(const novac::CString& workDir, Configuration::CUserConfiguration& userSettings);
+    if (Filesystem::IsExistingFile(evalConfPath))
+    {
+        // may throw EvaluationConfigurationException
+        eval_reader.ReadConfigurationFile(
+            evalConfPath,
+            instrument.m_eval,
+            instrument.m_darkCurrentCorrection,
+            instrument.m_instrumentCalibration);
+    }
+    else
+    {
+        throw std::logic_error("Could not find configuration file: " + evalConfPath);
+    }
+}
 
-void ReadSetupXml(const novac::CString& workDir, Configuration::CNovacPPPConfiguration& configuration);
+static void LoadConfigurations(
+    const std::string& workDir,
+    Configuration::CNovacPPPConfiguration& configuration,
+    Configuration::CUserConfiguration& userSettings)
+{
+    ReadSetupXml(workDir, configuration);
 
-void StartProcessing();
-void CalculateAllFluxes(CContinuationOfProcessing continuation);
+    ReadProcessingXml(workDir, userSettings);
 
-using namespace novac;
+    // Check if there is a configuration file for every spectrometer serial number
+    FileHandler::CEvaluationConfigurationParser eval_reader{ g_logger };
+    for (size_t k = 0; k < configuration.NumberOfInstruments(); ++k)
+    {
+        ReadEvaluationXmlFile(workDir, eval_reader, configuration.m_instrument[k]);
+    }
+}
+
+static void ArchiveSettingsFiles(const Configuration::CUserConfiguration& userSettings)
+{
+    // set the directory to which we want to copy the settings
+    novac::CString confCopyDir;
+    confCopyDir.Format("%scopiedConfiguration", (const char*)userSettings.m_outputDirectory);
+    confCopyDir = Filesystem::AppendPathSeparator(confCopyDir);
+
+    // make sure that the output directory exists
+    if (Filesystem::CreateDirectoryStructure(userSettings.m_outputDirectory))
+    {
+        novac::CString userMessage;
+        userMessage.Format("Could not create output directory: %s", (const char*)userSettings.m_outputDirectory);
+        throw novac::FileIoException(userMessage.c_str());
+    }
+
+    if (Filesystem::CreateDirectoryStructure(confCopyDir))
+    {
+        novac::CString userMessage;
+        userMessage.Format("Could not create directory for copied configuration: %s", (const char*)confCopyDir);
+        throw novac::FileIoException(userMessage.c_str());
+    }
+    // we want to copy the setup and processing files to the confCopyDir
+    novac::CString processingOutputFile, setupOutputFile;
+    processingOutputFile.Format("%sprocessing.xml", (const char*)confCopyDir);
+    setupOutputFile.Format("%ssetup.xml", (const char*)confCopyDir);
+
+    Common::ArchiveFile(setupOutputFile);
+    Common::ArchiveFile(processingOutputFile);
+
+    FileHandler::CProcessingFileReader writer{ g_logger };
+    writer.WriteProcessingFile(processingOutputFile, userSettings);
+
+    Common common;
+    Common::CopyFile(common.m_exePath + "configuration/setup.xml", setupOutputFile);
+    for (size_t k = 0; k < s_setup.NumberOfInstruments(); ++k)
+    {
+        novac::CString serial(s_setup.m_instrument[k].m_serial);
+
+        Common::CopyFile(common.m_exePath + "configuration/" + serial + ".exml", confCopyDir + serial + ".exml");
+    }
+}
+
+static void CalculateAllFluxes(CContinuationOfProcessing continuation, Configuration::CUserConfiguration& userSettings)
+{
+    try
+    {
+        Common common;
+        s_setup.m_executableDirectory = common.m_exePath.std_str();
+
+        CPostProcessing post{ g_logger, s_setup, userSettings, continuation };
+
+        // Copy the settings that we have read in from the 'configuration' directory
+        //  to the output directory to make it easier for the user to remember 
+        //  what has been done...
+        ArchiveSettingsFiles(userSettings);
+
+        // Do the post-processing
+        if (userSettings.m_processingMode == ProcessingMode::Composition)
+        {
+            ShowMessage("Warning: Post processing of composition measurements is not yet fully implemented");
+            post.DoPostProcessing_Flux(); // this uses the same code as the flux processing
+        }
+        else if (userSettings.m_processingMode == ProcessingMode::InstrumentCalibration)
+        {
+            post.DoPostProcessing_InstrumentCalibration();
+        }
+        else if (userSettings.m_processingMode == ProcessingMode::Stratosphere)
+        {
+            ShowMessage("Warning: Post processing of stratospheric measurements is not yet fully implemented");
+            post.DoPostProcessing_Strat();
+        }
+        else
+        {
+            post.DoPostProcessing_Flux();
+        }
+
+        ShowMessage("-- Exit post processing --");
+    }
+    catch (Poco::FileNotFoundException& e)
+    {
+        ShowMessage("File not found exception: " + e.displayText());
+        ShowMessage("-- Exit post processing --");
+        return;
+    }
+    catch (std::invalid_argument& e)
+    {
+        std::stringstream msg;
+        msg << "Invalid argument exception caught: " << e.what();
+        ShowMessage(msg.str());
+        ShowMessage("-- Exit post processing --");
+        return;
+    }
+    catch (std::exception& e)
+    {
+        std::stringstream msg;
+        msg << "General exception caught: " << e.what();
+        ShowMessage(msg.str());
+        ShowMessage("-- Exit post processing --");
+        return;
+    }
+}
+
+static void StartProcessing(Configuration::CUserConfiguration& userSettings)
+{
+    // Make sure that the ftp-path ends with a '/'
+    if (userSettings.m_FTPDirectory.GetLength() > 1)
+    {
+        if (!Equals(userSettings.m_FTPDirectory.Right(1), "/"))
+        {
+            userSettings.m_FTPDirectory.Append("/");
+        }
+    }
+
+    CContinuationOfProcessing continuation(userSettings);
+
+    // Run
+    std::thread postProcessingThread(CalculateAllFluxes, continuation, std::ref(userSettings));
+    postProcessingThread.join();
+}
 
 class NovacPPPApplication : public Poco::Util::Application
 {
 public:
-    NovacPPPApplication() : Poco::Util::Application(){
+    NovacPPPApplication() : Poco::Util::Application()
+    {
         this->setUnixOptions(false);
     }
 
@@ -123,23 +284,24 @@ protected:
             Poco::Logger& log = Poco::Logger::get("NovacPPP");
 
             // Get the options from the command line
+            Configuration::CUserConfiguration userSettings;
             ShowMessage("Getting command line arguments");
-            Configuration::CommandLineParser::ParseCommandLineOptions(arguments, g_userSettings, g_volcanoes, s_exePath, g_logger);
+            Configuration::CommandLineParser::ParseCommandLineOptions(arguments, userSettings, g_volcanoes, s_exePath, g_logger);
             ShowMessage(novac::CString::FormatString(" Executing %s in '%s'", s_exeFileName.c_str(), s_exePath.c_str()));
 
             // Read the configuration files
             ShowMessage("Loading configuration");
-            LoadConfigurations(s_exePath, s_setup, g_userSettings);
+            LoadConfigurations(s_exePath, s_setup, userSettings);
 
             // Read the command line options again, in order to make sure the command line arguments override the configuration files.
-            Configuration::CommandLineParser::ParseCommandLineOptions(arguments, g_userSettings, g_volcanoes, s_exePath, g_logger);
+            Configuration::CommandLineParser::ParseCommandLineOptions(arguments, userSettings, g_volcanoes, s_exePath, g_logger);
 
-            splitterChannel->addChannel(new Poco::FileChannel(g_userSettings.m_outputDirectory.std_str() + "StatusLog.txt"));
+            splitterChannel->addChannel(new Poco::FileChannel(userSettings.m_outputDirectory.std_str() + "StatusLog.txt"));
             log.setChannel(formattingChannel);
 
             // Start calculating the fluxes, this is the old button handler
             ShowMessage("Setup done: starting calculations");
-            StartProcessing();
+            StartProcessing(userSettings);
         }
         catch (Poco::FileNotFoundException& e)
         {
@@ -166,189 +328,3 @@ protected:
 };
 
 POCO_APP_MAIN(NovacPPPApplication)
-
-
-void LoadConfigurations(
-    const novac::CString& workDir,
-    Configuration::CNovacPPPConfiguration& configuration,
-    Configuration::CUserConfiguration& userSettings)
-{
-    ReadSetupXml(workDir, configuration);
-
-    ReadProcessingXml(workDir, userSettings);
-
-    // Check if there is a configuration file for every spectrometer serial number
-    FileHandler::CEvaluationConfigurationParser eval_reader{ g_logger };
-    for (size_t k = 0; k < configuration.NumberOfInstruments(); ++k)
-    {
-        ReadEvaluationXmlFile(workDir, eval_reader, configuration.m_instrument[k]);
-    }
-}
-
-void ReadEvaluationXmlFile(
-    const novac::CString& workDir,
-    FileHandler::CEvaluationConfigurationParser& eval_reader,
-    Configuration::CInstrumentConfiguration& instrument)
-{
-    novac::CString evalConfPath;
-    evalConfPath.Format("%sconfiguration%c%s.exml", (const char*)workDir, Poco::Path::separator(), (const char*)instrument.m_serial);
-
-    if (Filesystem::IsExistingFile(evalConfPath))
-    {
-        // may throw EvaluationConfigurationException
-        eval_reader.ReadConfigurationFile(
-            evalConfPath,
-            instrument.m_eval,
-            instrument.m_darkCurrentCorrection,
-            instrument.m_instrumentCalibration);
-    }
-    else
-    {
-        throw std::logic_error("Could not find configuration file: " + evalConfPath);
-    }
-}
-
-void ReadProcessingXml(const novac::CString& workDir, Configuration::CUserConfiguration& userSettings)
-{
-    novac::CString processingPath;
-    processingPath.Format("%sconfiguration%cprocessing.xml", (const char*)workDir, Poco::Path::separator());
-    FileHandler::CProcessingFileReader processing_reader{ g_logger };
-    processing_reader.ReadProcessingFile(processingPath, userSettings);
-}
-
-void ReadSetupXml(const novac::CString& workDir, Configuration::CNovacPPPConfiguration& configuration)
-{
-    novac::CString setupPath;
-    setupPath.Format("%sconfiguration%csetup.xml", (const char*)workDir, Poco::Path::separator());
-
-    FileHandler::CSetupFileReader reader{ g_logger };
-    reader.ReadSetupFile(setupPath, configuration);
-
-    ShowMessage(novac::CString::FormatString(" Parsed %s, %d instruments found.", setupPath.c_str(), configuration.NumberOfInstruments()));
-}
-
-void StartProcessing()
-{
-    // Make sure that the ftp-path ends with a '/'
-    if (g_userSettings.m_FTPDirectory.GetLength() > 1)
-    {
-        if (!Equals(g_userSettings.m_FTPDirectory.Right(1), "/"))
-        {
-            g_userSettings.m_FTPDirectory.Append("/");
-        }
-    }
-
-    CContinuationOfProcessing continuation(g_userSettings);
-
-    // Run
-#ifdef _MFC_VER 
-    CWinThread* postProcessingthread = AfxBeginThread(CalculateAllFluxes, NULL, THREAD_PRIORITY_NORMAL, 0, 0, NULL);
-    Common::SetThreadName(postProcessingthread->m_nThreadID, "PostProcessing");
-#else
-    std::thread postProcessingThread(CalculateAllFluxes, continuation);
-    postProcessingThread.join();
-#endif  // _MFC_VER 
-}
-
-void ArchiveSettingsFiles(const Configuration::CUserConfiguration& userSettings)
-{
-    // set the directory to which we want to copy the settings
-    novac::CString confCopyDir;
-    confCopyDir.Format("%scopiedConfiguration", (const char*)userSettings.m_outputDirectory);
-    confCopyDir = Filesystem::AppendPathSeparator(confCopyDir);
-
-    // make sure that the output directory exists
-    if (Filesystem::CreateDirectoryStructure(userSettings.m_outputDirectory))
-    {
-        novac::CString userMessage;
-        userMessage.Format("Could not create output directory: %s", (const char*)userSettings.m_outputDirectory);
-        throw novac::FileIoException(userMessage.c_str());
-    }
-
-    if (Filesystem::CreateDirectoryStructure(confCopyDir))
-    {
-        novac::CString userMessage;
-        userMessage.Format("Could not create directory for copied configuration: %s", (const char*)confCopyDir);
-        throw novac::FileIoException(userMessage.c_str());
-    }
-    // we want to copy the setup and processing files to the confCopyDir
-    novac::CString processingOutputFile, setupOutputFile;
-    processingOutputFile.Format("%sprocessing.xml", (const char*)confCopyDir);
-    setupOutputFile.Format("%ssetup.xml", (const char*)confCopyDir);
-
-    Common::ArchiveFile(setupOutputFile);
-    Common::ArchiveFile(processingOutputFile);
-
-    FileHandler::CProcessingFileReader writer{ g_logger };
-    writer.WriteProcessingFile(processingOutputFile, userSettings);
-
-    Common common;
-    Common::CopyFile(common.m_exePath + "configuration/setup.xml", setupOutputFile);
-    for (size_t k = 0; k < s_setup.NumberOfInstruments(); ++k)
-    {
-        novac::CString serial(s_setup.m_instrument[k].m_serial);
-
-        Common::CopyFile(common.m_exePath + "configuration/" + serial + ".exml", confCopyDir + serial + ".exml");
-    }
-}
-
-// This is the starting point for all the processing modes.
-void CalculateAllFluxes(CContinuationOfProcessing continuation)
-{
-    try
-    {
-        Common common;
-        s_setup.m_executableDirectory = common.m_exePath.std_str();
-
-        CPostProcessing post{ g_logger, s_setup, g_userSettings, continuation };
-
-        // Copy the settings that we have read in from the 'configuration' directory
-        //  to the output directory to make it easier for the user to remember 
-        //  what has been done...
-        ArchiveSettingsFiles(g_userSettings);
-
-        // Do the post-processing
-        if (g_userSettings.m_processingMode == PROCESSING_MODE::PROCESSING_MODE_COMPOSITION)
-        {
-            ShowMessage("Warning: Post processing of composition measurements is not yet fully implemented");
-            post.DoPostProcessing_Flux(); // this uses the same code as the flux processing
-        }
-        else if (g_userSettings.m_processingMode == PROCESSING_MODE::PROCESSING_MODE_INSTRUMENT_CALIBRATION)
-        {
-            post.DoPostProcessing_InstrumentCalibration();
-        }
-        else if (g_userSettings.m_processingMode == PROCESSING_MODE::PROCESSING_MODE_STRATOSPHERE)
-        {
-            ShowMessage("Warning: Post processing of stratospheric measurements is not yet fully implemented");
-            post.DoPostProcessing_Strat();
-        }
-        else
-        {
-            post.DoPostProcessing_Flux();
-        }
-
-        ShowMessage("-- Exit post processing --");
-    }
-    catch (Poco::FileNotFoundException& e)
-    {
-        ShowMessage("File not found exception: " + e.displayText());
-        ShowMessage("-- Exit post processing --");
-        return;
-    }
-    catch (std::invalid_argument& e)
-    {
-        std::stringstream msg;
-        msg << "Invalid argument exception caught: " << e.what();
-        ShowMessage(msg.str());
-        ShowMessage("-- Exit post processing --");
-        return;
-    }
-    catch (std::exception& e)
-    {
-        std::stringstream msg;
-        msg << "General exception caught: " << e.what();
-        ShowMessage(msg.str());
-        ShowMessage("-- Exit post processing --");
-        return;
-    }
-}

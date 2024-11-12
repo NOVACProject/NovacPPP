@@ -27,10 +27,6 @@ class CUserConfiguration
 public:
     CUserConfiguration();
 
-    /** Restores all values to their defaults */
-    void Clear();
-
-    /** Compares to set of settings */
     bool operator==(const CUserConfiguration& settings2);
 
     // ------------------------------------------------------------------------
@@ -38,7 +34,7 @@ public:
     // ------------------------------------------------------------------------
 
     /** The maximum number of threads that we can split up a task into */
-    unsigned long    m_maxThreadNum;
+    unsigned long m_maxThreadNum = 2;
 #define str_maxThreadNum "MaxThreadNum"
 
 
@@ -58,7 +54,7 @@ public:
                     to use.
 
                 If this is true, then the scan-files will not be evaluated again */
-    bool m_fIsContinuation;
+    bool m_fIsContinuation = false;
 
 
     // ------------------------------------------------------------------------
@@ -66,11 +62,11 @@ public:
     // ------------------------------------------------------------------------
 
     /** The directory that we should use for temporary files */
-    novac::CString   m_tempDirectory;
+    novac::CString m_tempDirectory = "";
 #define   str_tempDirectory "tempdirectory"
 
     /** The directory that we should use to store the results */
-    novac::CString   m_outputDirectory;
+    novac::CString m_outputDirectory = "";
 #define str_outputDirectory "outputdirectory"
 
     // ------------------------------------------------------------------------
@@ -78,7 +74,7 @@ public:
     // ------------------------------------------------------------------------
 
     /** This determines the processing mode of the program. */
-    PROCESSING_MODE  m_processingMode;
+    ProcessingMode m_processingMode = ProcessingMode::Flux;
 #define str_processingMode "mode"
 
 
@@ -90,7 +86,7 @@ public:
 
     /** The molecule of main interest.
         This is the one the fluxes will be calculated for if the processing mode is 'flux' */
-    novac::StandardMolecule m_molecule;
+    novac::StandardMolecule m_molecule = novac::StandardMolecule::SO2;
 #define str_molecule "molecule"
 
     // ------------------------------------------------------------------------
@@ -100,7 +96,7 @@ public:
     /** The volcano that we're processing at the moment.
         This is an index into the global array 'g_volcanoes'.
      */
-    int m_volcano;
+    int m_volcano = 0;
 #define    str_volcano "Volcano"
 
     // ------------------------------------------------------------------------
@@ -108,11 +104,11 @@ public:
     // ------------------------------------------------------------------------
 
     /** The first day that we should look for data (inclusive) */
-    novac::CDateTime  m_fromDate;
+    novac::CDateTime  m_fromDate = novac::CDateTime(2005, 10, 01, 00, 00, 00);
 #define   str_fromDate "FromDate"
 
     /** The last day that we should look for data (inclusive) */
-    novac::CDateTime  m_toDate;
+    novac::CDateTime  m_toDate = novac::CDateTime::Now();
 #define   str_toDate "ToDate"
 
     // ------------------------------------------------------------------------
@@ -121,26 +117,27 @@ public:
 
     /** The path to a directory on the location computer which we should scan for
         data files. */
-    novac::CString   m_LocalDirectory;
+    novac::CString m_LocalDirectory = "C:\\Novac\\Data\\";
 #define   str_LocalDirectory "LocalDirectory"
 
     /** This is non-zero if we should include sub-directories to 'm_LocalDirectory'
         in our search for data */
-    int    m_includeSubDirectories_Local;
+    int m_includeSubDirectories_Local = 1;
 #define   str_includeSubDirectories_Local "IncludeSubDirs_Local"
 
     /** The full path to a directory on a FTP - server where we should scan for
         data files */
-    novac::CString   m_FTPDirectory;
+    novac::CString m_FTPDirectory;
 #define   str_FTPDirectory "FTPDirectory"
 
     /** This is non-zero if we should include sub-directories to 'm_FTPDirectory'
         in our search for data */
-    int    m_includeSubDirectories_FTP;
+    int m_includeSubDirectories_FTP = 1;
 #define   str_includeSubDirectories_FTP "IncludeSubDirs_FTP"
 
     /** The username and password to log in to the FTP-server */
-    novac::CString  m_FTPUsername, m_FTPPassword;
+    novac::CString m_FTPUsername;
+    novac::CString m_FTPPassword;
 #define  str_FTPUsername "FTPUsername"
 #define  str_FTPPassword "FTPPassword"
 
@@ -151,7 +148,7 @@ public:
 
     /** This is true if we should upload the results (FluxLogs etc) to the
         NovacFTP server.*/
-    int   m_uploadResults;
+    int   m_uploadResults = 0;
 #define  str_uploadResults "UploadResults"
 
     // ------------------------------------------------------------------------
@@ -159,15 +156,16 @@ public:
     // ------------------------------------------------------------------------
 
     /** The file where to search for the wind field */
-    novac::CString   m_windFieldFile;
+    novac::CString m_windFieldFile = "";
 #define   str_windFieldFile "WindFieldFile"
 
     /** How to interpret the m_windFieldFile
         0 <=> m_windFieldFile is an ordinary .wxml file
         1 <=> m_windFieldFile is a directory containing .wxml files
                 with the name "VOLCANO_analysis_YYYYMMDD.wxml"
+    TODO: Enum!
     */
-    int    m_windFieldFileOption;
+    int m_windFieldFileOption = 0;
 #define   str_windFieldFileOption "WindFileOption"
 
     // ------------------------------------------------------------------------
@@ -176,38 +174,38 @@ public:
 
     /** Only scans with calculated completeness higher than this
             given value will be used to calculate the geometries. */
-    double   m_calcGeometry_CompletenessLimit;
+    double m_calcGeometry_CompletenessLimit = 0.7;
 #define   str_calcGeometry_CompletenessLimit "completenessLimit"
 
     /** The time a geometry measurement is valid. In seconds.
         Half of this time is before the measurement is made and half is after */
-    int    m_calcGeometryValidTime;
+    int m_calcGeometryValidTime = 10 * 60;
 #define   str_calcGeometryValidTime "validTime"
 
     /** The maximum time difference (in seconds) between the start-time
         of two scans that can be combined to make a plume altitude
         calculation */
-    int    m_calcGeometry_MaxTimeDifference;
+    int m_calcGeometry_MaxTimeDifference = 900;
 #define   str_calcGeometry_MaxTimeDifference "maxStartTimeDifference"
 
     /** The minimum distance between two instruments that can be used
         to make a geometry calculation. In meters */
-    int    m_calcGeometry_MinDistance;
+    int m_calcGeometry_MinDistance = 200;
 #define   str_calcGeometry_MinDistance "minInstrumentDistance"
 
     /** The maximum distance between two instruments that can be used
         to make a geometry calculation. In meters */
-    int    m_calcGeometry_MaxDistance;
+    int m_calcGeometry_MaxDistance = 10000;
 #define   str_calcGeometry_MaxDistance "maxInstrumentDistance"
 
     /** The maximum error in the plume altitude calculation that
         we can tolerate */
-    double   m_calcGeometry_MaxPlumeAltError;
+    double m_calcGeometry_MaxPlumeAltError = 500.0;
 #define   str_calcGeometry_MaxPlumeAltError "maxPlumeAltitudeError"
 
     /** The maximum error in the wind direction calculation that
         we can tolerate */
-    double   m_calcGeometry_MaxWindDirectionError;
+    double m_calcGeometry_MaxWindDirectionError = 10.0;
 #define   str_calcGeometry_MaxWindDirectionError "maxWindDirectionError"
 
     // ------------------------------------------------------------------------
@@ -215,17 +213,17 @@ public:
     // ------------------------------------------------------------------------
 
     /** true if we should use the maximum test length possible */
-    bool   m_fUseMaxTestLength_DualBeam;
+    bool m_fUseMaxTestLength_DualBeam = true;
 #define   str_fUseMaxTestLength_DualBeam "useMaximumTestLength"
 
     /** The maximum acceptable error in the wind-speed as determined
         from the dual-beam measurements */
-    double   m_dualBeam_MaxWindSpeedError;
+    double m_dualBeam_MaxWindSpeedError = 10.0;
 #define   str_dualBeam_MaxWindSpeedError "maxWindSpeedError"
 
     /** The time a geometry measurement is valid. In seconds.
         Half of this time is before the measurement is made and half is after */
-    int    m_dualBeam_ValidTime;
+    int m_dualBeam_ValidTime = 15 * 60;
 #define   str_dualBeam_ValidTime "validTime"
 
     // ------------------------------------------------------------------------
@@ -296,7 +294,7 @@ public:
 
     /** Only flux measurements with a calculated completeness higher than this
             given value will be used to calculate a flux. */
-    double   m_completenessLimitFlux;
+    double m_completenessLimitFlux = 0.9;
 #define   str_completenessLimitFlux "completenessLimit"
 
     /** All spectra with so little light that the pixel with the highest
@@ -305,15 +303,15 @@ public:
         This judgement is done after the dark-current & offset has been removed.
 
         Range is 0.0 (reject none) to 1.0 (reject all spectra) */
-    double   m_minimumSaturationInFitRegion;
+    double m_minimumSaturationInFitRegion = 0.05;
 #define   str_minimumSaturationInFitRegion "minimumSaturationInFitRegion"
 
     /** The maximum exposure-time for a spectrum for us to consider it good
         and to evaluate it */
-    int    m_maxExposureTime_got;
+    int m_maxExposureTime_got = 900;
 #define   str_maxExposureTime_got "MaxExpTime_Got"
 
-    int    m_maxExposureTime_hei;
+    int m_maxExposureTime_hei = 4000;
 #define   str_maxExposureTime_hei "MaxExpTime_Hei"
 
 };
