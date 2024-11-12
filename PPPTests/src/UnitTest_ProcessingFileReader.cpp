@@ -42,10 +42,10 @@ TEST_CASE("ReadProcessingFile gives expected configuration", "[ProcessingFileRea
         REQUIRE(novac::CDateTime(2017, 1, 29, 12, 50, 51) == resultingConfiguration.m_fromDate);
         REQUIRE(novac::CDateTime(2017, 3, 01, 23, 50, 51) == resultingConfiguration.m_toDate);
 
-        REQUIRE("C:/Temp/" == resultingConfiguration.m_LocalDirectory.std_str());
+        REQUIRE("C:/Temp/" == resultingConfiguration.m_LocalDirectory);
         REQUIRE(1 == resultingConfiguration.m_includeSubDirectories_Local);
 
-        REQUIRE("ftp://129.16.35.206/piton_de_la_fournaise/" == resultingConfiguration.m_FTPDirectory.std_str());
+        REQUIRE("ftp://129.16.35.206/piton_de_la_fournaise/" == resultingConfiguration.m_FTPDirectory);
         REQUIRE(1 == resultingConfiguration.m_includeSubDirectories_FTP);
 
         REQUIRE(0.5 == resultingConfiguration.m_calcGeometry_CompletenessLimit);

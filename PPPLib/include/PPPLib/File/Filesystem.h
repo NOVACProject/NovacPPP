@@ -25,7 +25,7 @@ struct FileSearchCriterion
     @param includeSubdirectories If set to true then sub-directories of the provided path will also be searched.
     @param fileList Will be appended with the path's and file-names of the found .pak-files.
     @param criteria If not null, then this is used to filter the list of files. */
-void SearchDirectoryForFiles(const novac::CString& path, bool includeSubdirectories, std::vector<std::string>& fileList, FileSearchCriterion* criteria = nullptr);
+void SearchDirectoryForFiles(const std::string& path, bool includeSubdirectories, std::vector<std::string>& fileList, FileSearchCriterion* criteria = nullptr);
 
 /** A simple function to find out whether a given file exists or not.
     @param - The filename (including path) to the file.

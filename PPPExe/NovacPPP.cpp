@@ -38,8 +38,6 @@ std::string s_exeFileName;
 #undef min
 #undef max
 
-using namespace novac;
-
 static void ReadProcessingXml(const std::string& workDir, Configuration::CUserConfiguration& userSettings)
 {
     novac::CString processingPath;
@@ -204,11 +202,11 @@ static void CalculateAllFluxes(CContinuationOfProcessing continuation, Configura
 static void StartProcessing(Configuration::CUserConfiguration& userSettings)
 {
     // Make sure that the ftp-path ends with a '/'
-    if (userSettings.m_FTPDirectory.GetLength() > 1)
+    if (userSettings.m_FTPDirectory.size() > 1)
     {
-        if (!Equals(userSettings.m_FTPDirectory.Right(1), "/"))
+        if (!EqualsIgnoringCase(Right(userSettings.m_FTPDirectory, 1), "/"))
         {
-            userSettings.m_FTPDirectory.Append("/");
+            userSettings.m_FTPDirectory = userSettings.m_FTPDirectory + "/";
         }
     }
 

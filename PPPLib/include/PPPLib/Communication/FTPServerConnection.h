@@ -33,9 +33,9 @@ public:
     */
     int DownloadDataFromFTP(
         novac::LogContext context,
-        const novac::CString& server,
-        const novac::CString& username,
-        const novac::CString& password,
+        const std::string& server,
+        const std::string& username,
+        const std::string& password,
         std::vector<std::string>& pakFileList);
 
     /** Downloads a single file from the given FTP-server

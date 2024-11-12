@@ -115,19 +115,17 @@ public:
     // ------- SETTINGS FOR THE LOCATION OF THE .PAK-FILES TO PROCESS ---------
     // ------------------------------------------------------------------------
 
-    /** The path to a directory on the location computer which we should scan for
-        data files. */
-    novac::CString m_LocalDirectory = "C:\\Novac\\Data\\";
-#define   str_LocalDirectory "LocalDirectory"
+    /** The path to a directory on the location computer which we should scan for data files. */
+    std::string m_LocalDirectory = "C:\\Novac\\Data\\";
+#define str_LocalDirectory "LocalDirectory"
 
     /** This is non-zero if we should include sub-directories to 'm_LocalDirectory'
         in our search for data */
     int m_includeSubDirectories_Local = 1;
 #define   str_includeSubDirectories_Local "IncludeSubDirs_Local"
 
-    /** The full path to a directory on a FTP - server where we should scan for
-        data files */
-    novac::CString m_FTPDirectory;
+    /** The full path to a directory on a FTP - server where we should scan for data files */
+    std::string m_FTPDirectory;
 #define   str_FTPDirectory "FTPDirectory"
 
     /** This is non-zero if we should include sub-directories to 'm_FTPDirectory'
@@ -136,8 +134,8 @@ public:
 #define   str_includeSubDirectories_FTP "IncludeSubDirs_FTP"
 
     /** The username and password to log in to the FTP-server */
-    novac::CString m_FTPUsername;
-    novac::CString m_FTPPassword;
+    std::string m_FTPUsername;
+    std::string m_FTPPassword;
 #define  str_FTPUsername "FTPUsername"
 #define  str_FTPPassword "FTPPassword"
 

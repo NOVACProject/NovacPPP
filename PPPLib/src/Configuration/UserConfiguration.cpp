@@ -47,17 +47,17 @@ bool CUserConfiguration::operator==(const CUserConfiguration& settings2)
         return false;
 
     // The directory where to search for data
-    if (!Equals(m_LocalDirectory, settings2.m_LocalDirectory))
+    if (!novac::EqualsIgnoringCase(m_LocalDirectory, settings2.m_LocalDirectory))
         return false;
     if (settings2.m_includeSubDirectories_Local != m_includeSubDirectories_Local)
         return false;
 
     // The FTP-directory where to search for data
-    if (!Equals(m_FTPDirectory, settings2.m_FTPDirectory))
+    if (!novac::EqualsIgnoringCase(m_FTPDirectory, settings2.m_FTPDirectory))
         return false;
-    if (!Equals(m_FTPUsername, settings2.m_FTPUsername))
+    if (!novac::EqualsIgnoringCase(m_FTPUsername, settings2.m_FTPUsername))
         return false;
-    if (!Equals(m_FTPPassword, settings2.m_FTPPassword))
+    if (!novac::EqualsIgnoringCase(m_FTPPassword, settings2.m_FTPPassword))
         return false;
     if (settings2.m_includeSubDirectories_FTP != m_includeSubDirectories_FTP)
         return false;

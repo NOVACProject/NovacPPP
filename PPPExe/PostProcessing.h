@@ -99,16 +99,6 @@ private:
         set of plume heights. This could also read in a set from file...? */
     void PreparePlumeHeights(novac::LogContext context);
 
-    /** Scans through the FTP-server (using the IP,username and password
-        found in userSettings) in search for .pak-files
-        The files will be downloaded to the local computer (to the
-        temporary directory) and the returned path's will be pointing
-        there.
-
-        @param fileList - will be appended with the path's and
-        file-names of the found .pak-files (these will be in the TEMP directory) */
-    void CheckForSpectraOnFTPServer(novac::LogContext context, std::vector<std::string>& fileList);
-
     /** Runs through the supplied list of .pak-files and evaluates
         each one using the setups found in m_setup and m_userSettings.
         @param pakFileList - the list of pak-files to evaluate.

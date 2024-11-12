@@ -83,9 +83,9 @@ static novac::GuardedValue nFTPThreadsRunning;
 
 int CFTPServerConnection::DownloadDataFromFTP(
     novac::LogContext context,
-    const novac::CString& serverDir,
-    const novac::CString& username,
-    const novac::CString& password,
+    const std::string& serverDir,
+    const std::string& username,
+    const std::string& password,
     std::vector<std::string>& pakFileList)
 {
     if (m_userSettings.m_volcano < 0)
@@ -96,8 +96,8 @@ int CFTPServerConnection::DownloadDataFromFTP(
     unsigned int nRounds = 0;
 
     ftpLogin login;
-    login.userName = username.std_str();
-    login.password = password.std_str();
+    login.userName = username;
+    login.password = password;
 
     nFTPThreadsRunning.Zero();
 

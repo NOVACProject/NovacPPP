@@ -138,10 +138,10 @@ void CommandLineParser::ParseCommandLineOptions(
         {
             if (sscanf(currentToken.c_str() + strlen(FLAG(str_LocalDirectory)), "%s", buffer.data()))
             {
-                userSettings.m_LocalDirectory.Format("%s", buffer.data());
+                userSettings.m_LocalDirectory = std::string(buffer.data());
                 userSettings.m_LocalDirectory = Filesystem::AppendPathSeparator(userSettings.m_LocalDirectory);
 
-                log.Information(context.With("cmd", str_LocalDirectory), "Set local directory: " + userSettings.m_LocalDirectory.std_str());
+                log.Information(context.With("cmd", str_LocalDirectory), "Set local directory: " + userSettings.m_LocalDirectory);
             }
             else
             {
@@ -166,12 +166,12 @@ void CommandLineParser::ParseCommandLineOptions(
         {
             if (sscanf(currentToken.c_str() + strlen(FLAG(str_FTPDirectory)), "%s", buffer.data()))
             {
-                userSettings.m_FTPDirectory.Format("%s", buffer.data());
-                log.Information(context.With("cmd", str_FTPDirectory), "Updated FTP directory: " + userSettings.m_FTPDirectory.std_str());
+                userSettings.m_FTPDirectory = std::string(buffer.data());
+                log.Information(context.With("cmd", str_FTPDirectory), "Updated FTP directory: " + userSettings.m_FTPDirectory);
             }
             else
             {
-                userSettings.m_FTPDirectory.Format("");
+                userSettings.m_FTPDirectory = "";
             }
             token = tokenizer.NextToken();
             continue;
@@ -182,7 +182,7 @@ void CommandLineParser::ParseCommandLineOptions(
             if (sscanf(currentToken.c_str() + strlen(FLAG(str_FTPUsername)), "%s", buffer.data()))
             {
                 log.Information(context.With("cmd", str_FTPUsername), "Updated FTP username");
-                userSettings.m_FTPUsername.Format("%s", buffer.data());
+                userSettings.m_FTPUsername = std::string(buffer.data());
             }
             token = tokenizer.NextToken();
             continue;
@@ -192,7 +192,7 @@ void CommandLineParser::ParseCommandLineOptions(
             if (sscanf(currentToken.c_str() + strlen(FLAG(str_FTPPassword)), "%s", buffer.data()))
             {
                 log.Information(context.With("cmd", str_FTPPassword), "Updated FTP password");
-                userSettings.m_FTPPassword.Format("%s", buffer.data());
+                userSettings.m_FTPPassword = std::string(buffer.data());
             }
             token = tokenizer.NextToken();
             continue;

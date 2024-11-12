@@ -3,25 +3,22 @@
 #include <Poco/DirectoryIterator.h>
 #include <Poco/Exception.h>
 
-using namespace novac;
-
 void ShowMessage(const char message[]);
 
 namespace Filesystem
 {
 
-void SearchDirectoryForFiles(const novac::CString& path, bool includeSubdirectories, std::vector<std::string>& fileList, FileSearchCriterion* criteria)
+void SearchDirectoryForFiles(const std::string& path, bool includeSubdirectories, std::vector<std::string>& fileList, FileSearchCriterion* criteria)
 {
     try
     {
-        Poco::DirectoryIterator dir{ path.std_str() };
+        Poco::DirectoryIterator dir{ path };
         Poco::DirectoryIterator end;
 
         while (dir != end)
         {
-            novac::CString fileName, fullFileName;
-            fileName.Format("%s", dir.name().c_str());
-            fullFileName.Format("%s/%s", (const char*)path, dir.name().c_str());
+            const std::string filename = dir.name();
+            const std::string filenameIncludingPath = path + "/" + dir.name();
             const bool isDirectory = dir->isDirectory();
 
             ++dir; // go to next file in the directory
@@ -34,7 +31,7 @@ void SearchDirectoryForFiles(const novac::CString& path, bool includeSubdirector
             // if this is a directory...
             if (isDirectory && includeSubdirectories)
             {
-                SearchDirectoryForFiles(fullFileName, includeSubdirectories, fileList, criteria);
+                SearchDirectoryForFiles(filenameIncludingPath, includeSubdirectories, fileList, criteria);
                 continue;
             }
 
@@ -44,10 +41,10 @@ void SearchDirectoryForFiles(const novac::CString& path, bool includeSubdirector
                 if (criteria->endTime > criteria->startTime)
                 {
                     int channel;
-                    CDateTime startTime;
-                    MeasurementMode mode;
+                    novac::CDateTime startTime;
+                    novac::MeasurementMode mode;
                     novac::CString serial;
-                    novac::CFileUtils::GetInfoFromFileName(fileName, startTime, serial, channel, mode);
+                    novac::CFileUtils::GetInfoFromFileName(filename, startTime, serial, channel, mode);
 
                     if (startTime < criteria->startTime || criteria->endTime < startTime)
                     {
@@ -57,13 +54,18 @@ void SearchDirectoryForFiles(const novac::CString& path, bool includeSubdirector
 
                 if (criteria->fileExtension.size() > 0)
                 {
-                    if (!novac::Equals(fileName.Right(criteria->fileExtension.size()), criteria->fileExtension))
+                    if (filename.size() <= criteria->fileExtension.size())
+                    {
+                        continue;
+                    }
+                    const std::string currentFileExtension = filename.substr(filename.size() - criteria->fileExtension.size(), criteria->fileExtension.size());
+                    if (!novac::Equals(currentFileExtension, criteria->fileExtension))
                     {
                         continue;
                     }
                     if (novac::Equals(criteria->fileExtension, ".pak"))
                     {
-                        if (novac::CFileUtils::IsIncompleteFile(fileName))
+                        if (novac::CFileUtils::IsIncompleteFile(filename))
                         {
                             continue;
                         }
@@ -72,8 +74,7 @@ void SearchDirectoryForFiles(const novac::CString& path, bool includeSubdirector
 
                 // We've passed all the tests for the .pak-file.
                 // Append the found file to the list of files to split and evaluate...
-                std::string filenameStr = fullFileName.ToStdString();
-                fileList.push_back(filenameStr);
+                fileList.push_back(filenameIncludingPath);
             }
         }
     }
@@ -153,7 +154,7 @@ novac::CString AppendPathSeparator(novac::CString path)
 
 std::string AppendPathSeparator(std::string path)
 {
-    CString p{ path };
+    novac::CString p{ path };
     p = AppendPathSeparator(p);
     return p.std_str();
 }
