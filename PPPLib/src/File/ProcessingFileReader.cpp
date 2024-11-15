@@ -71,7 +71,11 @@ void CProcessingFileReader::ReadProcessingFile(const novac::CString& filename, C
         // If we've found the end date
         if (Equals(szToken, str_toDate, strlen(str_toDate)))
         {
-            Parse_Date(ENDTAG(str_toDate), settings.m_toDate);
+            novac::CDateTime parsedDate = novac::CDateTime::MaxValue(); // sets hour/minute/second component to 23:59:59
+            if (Parse_Date(ENDTAG(str_toDate), parsedDate))
+            {
+                settings.m_toDate = parsedDate;
+            }
             continue;
         }
 

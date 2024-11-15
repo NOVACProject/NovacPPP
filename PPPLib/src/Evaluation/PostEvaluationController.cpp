@@ -14,35 +14,28 @@
 #include <chrono>
 #include <sstream>
 
-using namespace Evaluation;
 using namespace novac;
 
+namespace Evaluation
+{
+
 std::unique_ptr<CExtendedScanResult> CPostEvaluationController::EvaluateScan(
-    const novac::CString& pakFileName,
+    const std::string& pakFileName,
     const novac::CString& fitWindowName)
 {
-    novac::CString errorMessage, serialNumber;
-    Meteorology::WindField windField;
-    CDateTime startTime;
-    novac::CSpectrumIO reader;
-    CSpectrum skySpectrum;
 
-    // The CScanFileHandler is a structure for reading the 
-    //  spectral information from the scan-file
     CScanFileHandler scan(m_log);
 
     /** ------------- The process to evaluate a scan --------------- */
 
-    const std::string pakFileNameStr((const char*)pakFileName);
-
-    novac::LogContext context(novac::LogContext::FileName, novac::GetFileName(pakFileNameStr));
+    novac::LogContext context(novac::LogContext::FileName, novac::GetFileName(pakFileName));
 
     // ------------------ Read the scan file -----------------------
     // --- this to make sure that the spectra in the file are ok ---
-    if (!scan.CheckScanFile(context, pakFileNameStr))
+    if (!scan.CheckScanFile(context, pakFileName))
     {
         std::stringstream message;
-        message << "Could not read received pak file: '" << pakFileNameStr << "'";
+        message << "Could not read received pak file: '" << pakFileName << "'";
         if (scan.m_lastErrorMessage.size() > 0)
         {
             message << " (" << scan.m_lastErrorMessage << ")";
@@ -69,7 +62,7 @@ std::unique_ptr<CExtendedScanResult> CPostEvaluationController::EvaluateScan(
     // an old processing...
     if (m_userSettings.m_fIsContinuation)
     {
-        if (this->m_continuation.IsPreviouslyIgnored(pakFileNameStr))
+        if (this->m_continuation.IsPreviouslyIgnored(pakFileName))
         {
             m_log.Information(context, "Scan has already been evaluated and was ignored. Will proceed to the next scan");
             return nullptr;
@@ -135,6 +128,7 @@ std::unique_ptr<CExtendedScanResult> CPostEvaluationController::EvaluateScan(
     }
 
     // 9. Get the mode of the evaluation
+    CDateTime startTime;
     lastResult->m_measurementMode = CheckMeasurementMode(*lastResult);
     lastResult->GetStartTime(0, startTime);
 
@@ -146,13 +140,15 @@ std::unique_ptr<CExtendedScanResult> CPostEvaluationController::EvaluateScan(
     }
 
     // 10. Append the results to the evaluation-summary log
-    PostEvaluationIO::AppendToEvaluationSummaryFile(m_userSettings.m_outputDirectory.std_str(), lastResult, &scan, &instrLocation, &fitWindow, windField);
-    PostEvaluationIO::AppendToPakFileSummaryFile(m_userSettings.m_outputDirectory.std_str(), lastResult, &scan, &instrLocation, &fitWindow, windField);
+    PostEvaluationIO::AppendToEvaluationSummaryFile(m_userSettings.m_outputDirectory.std_str(), lastResult, &scan, &instrLocation, &fitWindow);
+    PostEvaluationIO::AppendToPakFileSummaryFile(m_userSettings.m_outputDirectory.std_str(), lastResult, &scan);
 
     // 10. Append the result to the log file of the corresponding scanningInstrument
     novac::CString evaluationLogFileName;
+    Meteorology::WindField windField; // TODO: This wind field isn't retrieved from anything
     if (RETURN_CODE::SUCCESS != PostEvaluationIO::WriteEvaluationResult(m_log, context, m_userSettings.m_outputDirectory.std_str(), spectrometerModel, lastResult, &scan, &instrLocation, &fitWindow, windField, &evaluationLogFileName))
     {
+        novac::CString errorMessage;
         errorMessage.Format("Failed to write evaluation log file %s. No result produced", evaluationLogFileName.c_str());
         m_log.Error(context, errorMessage.std_str());
         return nullptr;
@@ -208,3 +204,5 @@ bool CPostEvaluationController::IsGoodEnoughToCalculateFlux(LogContext context, 
 
     return true;
 }
+
+} // namespace Evaluation

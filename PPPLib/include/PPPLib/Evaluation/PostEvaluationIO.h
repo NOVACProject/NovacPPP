@@ -72,8 +72,7 @@ public:
         const std::unique_ptr<CScanResult>& result,
         const novac::CScanFileHandler* scan,
         const Configuration::CInstrumentLocation* instrLocation,
-        const novac::CFitWindow* window,
-        Meteorology::WindField& windField);
+        const novac::CFitWindow* window);
 
     /** Appends the evaluation result to the pak-file summary log file.
         @param result - a CScanResult holding information about the result
@@ -83,9 +82,6 @@ public:
     static RETURN_CODE AppendToPakFileSummaryFile(
         const std::string& outputDirectory,
         const std::unique_ptr<CScanResult>& result,
-        const novac::CScanFileHandler* scan,
-        const Configuration::CInstrumentLocation* instrLocation,
-        const novac::CFitWindow* window,
-        Meteorology::WindField& windField);
+        const novac::CScanFileHandler* scan);
 };
 }

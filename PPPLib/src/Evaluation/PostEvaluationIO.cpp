@@ -394,8 +394,7 @@ RETURN_CODE Evaluation::PostEvaluationIO::AppendToEvaluationSummaryFile(
     const std::unique_ptr<CScanResult>& result,
     const novac::CScanFileHandler* scan,
     const Configuration::CInstrumentLocation* /*instrLocation*/,
-    const novac::CFitWindow* window,
-    Meteorology::WindField& /*windField*/)
+    const novac::CFitWindow* window)
 {
     novac::CString evalSummaryLog;
     evalSummaryLog.Format("%s/%s/EvaluationSummary_%s.csv",
@@ -448,10 +447,7 @@ RETURN_CODE Evaluation::PostEvaluationIO::AppendToEvaluationSummaryFile(
 RETURN_CODE Evaluation::PostEvaluationIO::AppendToPakFileSummaryFile(
     const std::string& outputDirectory,
     const std::unique_ptr<Evaluation::CScanResult>& result,
-    const novac::CScanFileHandler* scan,
-    const Configuration::CInstrumentLocation* /*instrLocation*/,
-    const novac::CFitWindow* /*window*/,
-    Meteorology::WindField& /*windField*/)
+    const novac::CScanFileHandler* scan)
 {
     novac::CString pakSummaryLog;
     bool fWriteHeaderLine = false;

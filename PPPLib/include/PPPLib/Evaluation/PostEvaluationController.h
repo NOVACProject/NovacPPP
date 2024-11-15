@@ -44,14 +44,11 @@ public:
             there can be more than one valid fit-window for each spectrometer at each
             given time. The evaluation will only be performed for the fit-window with the
             given name. If this is empty then the first valid fit-window will be used
-        @param txtfileName - if not NULL then this novac::CString will on return be filled
-            with the full path and filename of the generated txt-file containing the evaluation
-            results
         @param plumeProperties - if not NULL then this will on return be filled
             with the properties of the evaluated scan.
         @return the collected scan result, if the evaluation succeeded and the scan is good enough to calculate a flux from.
         @return nullptr if the scan evaluation failed or the scan is not good enough to calculate a flux from. */
-    std::unique_ptr<CExtendedScanResult> EvaluateScan(const novac::CString& pakFileName, const novac::CString& fitWindowName);
+    std::unique_ptr<CExtendedScanResult> EvaluateScan(const std::string& pakFileName, const novac::CString& fitWindowName);
 
 
 private:

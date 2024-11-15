@@ -366,15 +366,37 @@ void EvaluateScansThread(
     const CContinuationOfProcessing& continuation,
     CPostProcessingStatistics& processingStats)
 {
-    std::string fileName;
+    std::string pakFileName;
 
     // create a new CPostEvaluationController
     Evaluation::CPostEvaluationController eval{ log, setup, userSettings, continuation, processingStats };
 
     // while there are more .pak-files
-    while (s_pakFilesRemaining.PopFront(fileName))
+    while (s_pakFilesRemaining.PopFront(pakFileName))
     {
-        novac::LogContext context(novac::LogContext::FileName, novac::GetFileName(fileName));
+        novac::LogContext context(novac::LogContext::FileName, novac::GetFileName(pakFileName));
+
+        // Verify that the scan file is readable and that the scan started in the time interval set.
+        CScanFileHandler scan(log);
+        if (!scan.CheckScanFile(context, pakFileName))
+        {
+            std::stringstream message;
+            message << "Could not read received pak file. ";
+            if (scan.m_lastErrorMessage.size() > 0)
+            {
+                message << " (" << scan.m_lastErrorMessage << ")";
+            }
+            log.Error(context, message.str());
+            continue;
+        }
+        if (scan.GetScanStartTime() < userSettings.m_fromDate || scan.GetScanStartTime() > userSettings.m_toDate)
+        {
+            std::stringstream message;
+            message << "Ignoring scan with start time: " << scan.GetScanStartTime() << " which is outside of the set time interval [";
+            message << userSettings.m_fromDate << " to " << userSettings.m_toDate << "].";
+            log.Information(context, message.str());
+            continue;
+        }
 
         // evaluate the .pak-file in all the specified fit-windows and retrieve the name of the 
         // eval-logs. If any of the fit-windows fails then the scan is not inserted.
@@ -384,7 +406,7 @@ void EvaluateScansThread(
         {
             for (size_t fitWindowIndex = 0; fitWindowIndex < userSettings.m_nFitWindowsToUse; ++fitWindowIndex)
             {
-                auto result = eval.EvaluateScan(fileName, userSettings.m_fitWindowsToUse[fitWindowIndex]);
+                auto result = eval.EvaluateScan(pakFileName, userSettings.m_fitWindowsToUse[fitWindowIndex]);
 
                 if (result == nullptr)
                 {
