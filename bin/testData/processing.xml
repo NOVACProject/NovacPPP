@@ -2,7 +2,6 @@
 <!-- This is the configuration file for the processing of scans in the NOVAC Post Processing Program -->
 <NovacPostProcessing>
 	<MaxThreadNum>4</MaxThreadNum>
-	<StartNow>0</StartNow>
 	<outputdirectory>~/Novac/Piton de la Fournaise/OutputFeb2017UTC/</outputdirectory>
 	<tempdirectory>~/Novac/Piton de la Fournaise/Temp/</tempdirectory>
 	<mode>Flux</mode>
@@ -13,8 +12,8 @@
 	<LocalDirectory>C:\Temp\</LocalDirectory>
 	<IncludeSubDirs_Local>1</IncludeSubDirs_Local>
 	<FTPDirectory>ftp://129.16.35.206/piton_de_la_fournaise/</FTPDirectory>
-	<IncludeSubDirs_FTP>1</IncludeSubDirs_FTP>
-	<UploadResults>0</UploadResults>
+	<IncludeSubDirs_FTP>1</IncludeSubDirs_FTP> <!-- Using '1' as a boolean 'true' -->
+	<UploadResults>false</UploadResults> <!-- Using 'false' as a boolean -->
 	<WindFieldFile>~/Novac/Piton de la Fournaise/wind_pdf_2017_meteoFrance_UTC_novac.wxml</WindFieldFile>
 	<WindFileOption>0</WindFileOption>
 	<PlumeAltitudeFile>S2000</PlumeAltitudeFile>

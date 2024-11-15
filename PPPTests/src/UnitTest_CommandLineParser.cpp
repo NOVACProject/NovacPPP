@@ -185,7 +185,7 @@ TEST_CASE("IncludeSubDirs_Local overrides default", "[CommandLineParser][Configu
     std::string setExePath;
     std::vector<std::string>arguments = { "--IncludeSubDirs_Local=0" };
     Configuration::CUserConfiguration userSettings;
-    REQUIRE(userSettings.m_includeSubDirectories_Local == 1); // check assumption here
+    REQUIRE(userSettings.m_includeSubDirectories_Local); // check assumption here
     novac::CVolcanoInfo volcanoes;
     novac::ConsoleLog logger;
 
@@ -193,7 +193,7 @@ TEST_CASE("IncludeSubDirs_Local overrides default", "[CommandLineParser][Configu
     CommandLineParser::ParseCommandLineOptions(arguments, userSettings, volcanoes, setExePath, logger);
 
     // Assert
-    REQUIRE(userSettings.m_includeSubDirectories_Local == 0);
+    REQUIRE(userSettings.m_includeSubDirectories_Local == false);
 }
 
 TEST_CASE("IncludeSubDirs_FTP overrides default", "[CommandLineParser][Configuration]")
@@ -202,7 +202,7 @@ TEST_CASE("IncludeSubDirs_FTP overrides default", "[CommandLineParser][Configura
     std::string setExePath;
     std::vector<std::string>arguments = { "--IncludeSubDirs_FTP=0" };
     Configuration::CUserConfiguration userSettings;
-    REQUIRE(userSettings.m_includeSubDirectories_FTP == 1); // check assumption here
+    REQUIRE(userSettings.m_includeSubDirectories_FTP); // check assumption here
     novac::CVolcanoInfo volcanoes;
     novac::ConsoleLog logger;
 
@@ -210,7 +210,7 @@ TEST_CASE("IncludeSubDirs_FTP overrides default", "[CommandLineParser][Configura
     CommandLineParser::ParseCommandLineOptions(arguments, userSettings, volcanoes, setExePath, logger);
 
     // Assert
-    REQUIRE(userSettings.m_includeSubDirectories_FTP == 0);
+    REQUIRE(userSettings.m_includeSubDirectories_FTP == false);
 }
 
 TEST_CASE("FTPDirectory overrides default", "[CommandLineParser][Configuration]")
@@ -270,7 +270,7 @@ TEST_CASE("UploadResults overrides default", "[CommandLineParser][Configuration]
     std::string setExePath;
     std::vector<std::string>arguments = { "--UploadResults=1" };
     Configuration::CUserConfiguration userSettings;
-    REQUIRE(userSettings.m_uploadResults == 0); // check assumption here
+    REQUIRE(userSettings.m_uploadResults == false); // check assumption here
     novac::CVolcanoInfo volcanoes;
     novac::ConsoleLog logger;
 
@@ -278,7 +278,7 @@ TEST_CASE("UploadResults overrides default", "[CommandLineParser][Configuration]
     CommandLineParser::ParseCommandLineOptions(arguments, userSettings, volcanoes, setExePath, logger);
 
     // Assert
-    REQUIRE(userSettings.m_uploadResults == 1);
+    REQUIRE(userSettings.m_uploadResults == true);
 }
 
 TEST_CASE("mode overrides default", "[CommandLineParser][Configuration]")

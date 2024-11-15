@@ -119,19 +119,23 @@ public:
     std::string m_LocalDirectory = "C:\\Novac\\Data\\";
 #define str_LocalDirectory "LocalDirectory"
 
-    /** This is non-zero if we should include sub-directories to 'm_LocalDirectory'
-        in our search for data */
-    int m_includeSubDirectories_Local = 1;
-#define   str_includeSubDirectories_Local "IncludeSubDirs_Local"
+    /** This is true if we should include sub-directories to 'm_LocalDirectory' in our search for data */
+    bool m_includeSubDirectories_Local = true;
+#define str_includeSubDirectories_Local "IncludeSubDirs_Local"
+
+    /* This is true if we should use 'pattern matching' for the local .pak files,
+        meaning we should only include .pak files where the filename indicates that the file is generated using a configured device during the 
+        specified time. False meaning that all .pak files are included. */
+    bool m_useFilenamePatternMatching_Local = true;
+#define str_filenamePatternMatching_Local "FilenamePatternMatching_Local"
 
     /** The full path to a directory on a FTP - server where we should scan for data files */
     std::string m_FTPDirectory;
-#define   str_FTPDirectory "FTPDirectory"
+#define str_FTPDirectory "FTPDirectory"
 
-    /** This is non-zero if we should include sub-directories to 'm_FTPDirectory'
-        in our search for data */
-    int m_includeSubDirectories_FTP = 1;
-#define   str_includeSubDirectories_FTP "IncludeSubDirs_FTP"
+    /** This is true if we should include sub-directories to 'm_FTPDirectory' in our search for data */
+    bool m_includeSubDirectories_FTP = true;
+#define str_includeSubDirectories_FTP "IncludeSubDirs_FTP"
 
     /** The username and password to log in to the FTP-server */
     std::string m_FTPUsername;
@@ -146,7 +150,7 @@ public:
 
     /** This is true if we should upload the results (FluxLogs etc) to the
         NovacFTP server.*/
-    int   m_uploadResults = 0;
+    bool m_uploadResults = false;
 #define  str_uploadResults "UploadResults"
 
     // ------------------------------------------------------------------------

@@ -90,7 +90,7 @@ static void CheckForSpectraOnFTPServer(novac::ILogger& log, novac::LogContext co
     }
 }
 
-static std::vector<std::string> LocatePakFiles(novac::ILogger& log, novac::LogContext context, const Configuration::CUserConfiguration& userSettings )
+static std::vector<std::string> LocatePakFiles(novac::ILogger& log, novac::LogContext context, const Configuration::CUserConfiguration& userSettings)
 {
     std::vector<std::string> pakFileList;
 
@@ -99,12 +99,19 @@ static std::vector<std::string> LocatePakFiles(novac::ILogger& log, novac::LogCo
         novac::LogContext localContext = context.With(novac::LogContext::Directory, userSettings.m_LocalDirectory);
         log.Information(localContext, "Searching for .pak files");
 
-        const bool includeSubDirs = (userSettings.m_includeSubDirectories_Local > 0);
         Filesystem::FileSearchCriterion limits;
-        limits.startTime = userSettings.m_fromDate;
-        limits.endTime = userSettings.m_toDate;
         limits.fileExtension = ".pak";
-        Filesystem::SearchDirectoryForFiles(userSettings.m_LocalDirectory, includeSubDirs, pakFileList, &limits);
+        if (userSettings.m_useFilenamePatternMatching_Local)
+        {
+            limits.startTime = userSettings.m_fromDate;
+            limits.endTime = userSettings.m_toDate;
+        }
+        else
+        {
+            limits.startTime = CDateTime::MinValue();
+            limits.endTime = CDateTime::MinValue();
+        }
+        Filesystem::SearchDirectoryForFiles(userSettings.m_LocalDirectory, userSettings.m_includeSubDirectories_Local, pakFileList, &limits);
 
         std::stringstream msg;
         msg << pakFileList.size() << " .pak files found";
@@ -1648,12 +1655,11 @@ std::vector<Evaluation::CExtendedScanResult> CPostProcessing::LocateEvaluationLo
     context = context.With(novac::LogContext::Directory, directory);
     m_log.Information(context, "Searching for evaluation log files in directory.");
 
-    const bool includeSubDirs = (m_userSettings.m_includeSubDirectories_Local > 0);
     Filesystem::FileSearchCriterion limits;
     limits.startTime = m_userSettings.m_fromDate;
     limits.endTime = m_userSettings.m_toDate;
     limits.fileExtension = "_flux.txt";
-    Filesystem::SearchDirectoryForFiles(directory, includeSubDirs, filenames, &limits);
+    Filesystem::SearchDirectoryForFiles(directory, m_userSettings.m_includeSubDirectories_Local, filenames, &limits);
 
 
     novac::CString messageToUser;

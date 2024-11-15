@@ -1,4 +1,5 @@
 #include <PPPLib/File/Filesystem.h>
+#include <SpectralEvaluation/File/File.h>
 #include <PPPLib/MFC/CFileUtils.h>
 #include <Poco/DirectoryIterator.h>
 #include <Poco/Exception.h>
@@ -23,7 +24,7 @@ void SearchDirectoryForFiles(const std::string& path, bool includeSubdirectories
 
             ++dir; // go to next file in the directory
 
-            if (novac::Equals(dir.name(), ".") || novac::Equals(dir.name(), ".."))
+            if (novac::EqualsIgnoringCase(dir.name(), ".") || novac::EqualsIgnoringCase(dir.name(), ".."))
             {
                 continue;
             }
@@ -58,12 +59,12 @@ void SearchDirectoryForFiles(const std::string& path, bool includeSubdirectories
                     {
                         continue;
                     }
-                    const std::string currentFileExtension = filename.substr(filename.size() - criteria->fileExtension.size(), criteria->fileExtension.size());
-                    if (!novac::Equals(currentFileExtension, criteria->fileExtension))
+                    const std::string currentFileExtension = novac::GetFileExtension(filename);
+                    if (!novac::EqualsIgnoringCase(currentFileExtension, criteria->fileExtension))
                     {
                         continue;
                     }
-                    if (novac::Equals(criteria->fileExtension, ".pak"))
+                    if (novac::EqualsIgnoringCase(criteria->fileExtension, ".pak"))
                     {
                         if (novac::CFileUtils::IsIncompleteFile(filename))
                         {

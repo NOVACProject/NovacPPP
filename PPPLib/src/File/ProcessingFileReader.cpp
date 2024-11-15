@@ -171,10 +171,15 @@ void CProcessingFileReader::ReadProcessingFile(const novac::CString& filename, C
             continue;
         }
 
-        // If we've found the local directory where to search for data
         if (Equals(szToken, str_includeSubDirectories_Local, strlen(str_includeSubDirectories_Local)))
         {
-            Parse_IntItem(ENDTAG(str_includeSubDirectories_Local), settings.m_includeSubDirectories_Local);
+            Parse_BoolItem(ENDTAG(str_includeSubDirectories_Local), settings.m_includeSubDirectories_Local);
+            continue;
+        }
+
+        if (Equals(szToken, str_filenamePatternMatching_Local, strlen(str_filenamePatternMatching_Local)))
+        {
+            Parse_BoolItem(ENDTAG(str_filenamePatternMatching_Local), settings.m_useFilenamePatternMatching_Local);
             continue;
         }
 
@@ -202,14 +207,14 @@ void CProcessingFileReader::ReadProcessingFile(const novac::CString& filename, C
         // If we've found the FTP password
         if (Equals(szToken, str_includeSubDirectories_FTP, strlen(str_includeSubDirectories_FTP)))
         {
-            Parse_IntItem(ENDTAG(str_includeSubDirectories_FTP), settings.m_includeSubDirectories_FTP);
+            Parse_BoolItem(ENDTAG(str_includeSubDirectories_FTP), settings.m_includeSubDirectories_FTP);
             continue;
         }
 
         // If we should upload the results to the NovacFTP server at the end...
         if (Equals(szToken, str_uploadResults, strlen(str_uploadResults)))
         {
-            Parse_IntItem(ENDTAG(str_uploadResults), settings.m_uploadResults);
+            Parse_BoolItem(ENDTAG(str_uploadResults), settings.m_uploadResults);
             continue;
         }
 
@@ -648,14 +653,15 @@ RETURN_CODE CProcessingFileReader::WriteProcessingFile(const novac::CString& fil
 
     // the location of the .pak-files to use
     PrintParameter(f, 1, str_LocalDirectory, settings.m_LocalDirectory);
-    PrintParameter(f, 1, str_includeSubDirectories_Local, settings.m_includeSubDirectories_Local);
+    PrintParameter(f, 1, str_includeSubDirectories_Local, settings.m_includeSubDirectories_Local ? 1 : 0);
+    PrintParameter(f, 1, str_filenamePatternMatching_Local, settings.m_useFilenamePatternMatching_Local ? 1 : 0);
     PrintParameter(f, 1, str_FTPDirectory, settings.m_FTPDirectory);
-    PrintParameter(f, 1, str_includeSubDirectories_FTP, settings.m_includeSubDirectories_FTP);
+    PrintParameter(f, 1, str_includeSubDirectories_FTP, settings.m_includeSubDirectories_FTP ? 1 : 0);
     PrintParameter(f, 1, str_FTPUsername, settings.m_FTPUsername);
     PrintParameter(f, 1, str_FTPPassword, settings.m_FTPPassword);
 
     // Uploading of the results?
-    PrintParameter(f, 1, str_uploadResults, settings.m_uploadResults);
+    PrintParameter(f, 1, str_uploadResults, settings.m_uploadResults ? 1 : 0);
 
     // the wind-field file
     PrintParameter(f, 1, str_windFieldFile, settings.m_windFieldFile);

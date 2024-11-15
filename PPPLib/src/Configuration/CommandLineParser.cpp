@@ -127,9 +127,22 @@ void CommandLineParser::ParseCommandLineOptions(
         // The options for the local directory
         if (novac::Equals(currentToken, FLAG(str_includeSubDirectories_Local), strlen(FLAG(str_includeSubDirectories_Local))))
         {
-            if (1 == sscanf(currentToken.c_str() + strlen(FLAG(str_includeSubDirectories_Local)), "%d", &userSettings.m_includeSubDirectories_Local))
+            int parsedValue = 0;
+            if (1 == sscanf(currentToken.c_str() + strlen(FLAG(str_includeSubDirectories_Local)), "%d", &parsedValue))
             {
+                userSettings.m_includeSubDirectories_Local = (parsedValue != 0);
                 log.Information(context.With("cmd", str_includeSubDirectories_Local), "Updated includeSubDirectories_Local");
+            }
+            token = tokenizer.NextToken();
+            continue;
+        }
+        if (novac::Equals(currentToken, FLAG(str_filenamePatternMatching_Local), strlen(FLAG(str_filenamePatternMatching_Local))))
+        {
+            int parsedValue = 0;
+            if (1 == sscanf(currentToken.c_str() + strlen(FLAG(str_filenamePatternMatching_Local)), "%d", &parsedValue))
+            {
+                userSettings.m_useFilenamePatternMatching_Local = (parsedValue != 0);
+                log.Information(context.With("cmd", str_filenamePatternMatching_Local), "Updated useFilenamePatternMatching_Local");
             }
             token = tokenizer.NextToken();
             continue;
@@ -154,8 +167,10 @@ void CommandLineParser::ParseCommandLineOptions(
         // The options for the FTP directory
         if (novac::Equals(currentToken, FLAG(str_includeSubDirectories_FTP), strlen(FLAG(str_includeSubDirectories_FTP))))
         {
-            if (1 == sscanf(currentToken.c_str() + strlen(FLAG(str_includeSubDirectories_FTP)), "%d", &userSettings.m_includeSubDirectories_FTP))
+            int parsedValue = 0;
+            if (1 == sscanf(currentToken.c_str() + strlen(FLAG(str_includeSubDirectories_FTP)), "%d", &parsedValue))
             {
+                userSettings.m_includeSubDirectories_FTP = (parsedValue != 0);
                 log.Information(context.With("cmd", str_includeSubDirectories_FTP), "Updated include FTP sub directories");
             }
             token = tokenizer.NextToken();
@@ -201,8 +216,10 @@ void CommandLineParser::ParseCommandLineOptions(
         // If we should upload the results to the NovacFTP server at the end...
         if (novac::Equals(currentToken, FLAG(str_uploadResults), strlen(FLAG(str_uploadResults))))
         {
-            if (1 == sscanf(currentToken.c_str() + strlen(FLAG(str_uploadResults)), "%d", &userSettings.m_uploadResults))
+            int parsedValue = 0;
+            if (1 == sscanf(currentToken.c_str() + strlen(FLAG(str_uploadResults)), "%d", &parsedValue))
             {
+                userSettings.m_uploadResults = (parsedValue != 0);
                 log.Information(context.With("cmd", str_uploadResults), "Updated upload results");
             }
             token = tokenizer.NextToken();

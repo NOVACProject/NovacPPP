@@ -283,6 +283,33 @@ int CXMLFileReader::Parse_IntItem(const novac::CString& label, int& number, std:
     return 0;
 }
 
+int CXMLFileReader::Parse_BoolItem(const novac::CString& label, bool& value)
+{
+    while (nullptr != (szToken = NextToken()))
+    {
+        if (IsClosingTag(label, szToken))
+        {
+            return 1;
+        }
+
+        if (novac::EqualsIgnoringCase(szToken, "true"))
+        {
+            value = true;
+        }
+        else if (novac::EqualsIgnoringCase(szToken, "false"))
+        {
+            value = false;
+        }
+        else
+        {
+            const int number = std::atoi(szToken);
+            value = (number != 0);
+        }
+    }
+
+    return 0;
+}
+
 int CXMLFileReader::Parse_SizeItem(const novac::CString& label, size_t& number)
 {
     while (nullptr != (szToken = NextToken()))
